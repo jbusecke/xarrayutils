@@ -5,8 +5,51 @@ import numpy as np
 import xarray as xr
 from scipy.signal import filtfilt, butter, gaussian
 from numpy_utils import numpy_block_aggregate
+from dask.array import coarsen
 
-def aggregate(dar,blocks,func=np.nanmean,debug=False):
+def aggregate(da,blocks,func=np.nanmean,debug=False):
+    """
+    Aggregation method for xarray.
+
+    Somewhat of a crutch, waiting for xarray.apply. Relatively fast implementation
+    of a block average
+
+    TODO:
+    Better diagnostics
+    Examples
+    Give the array a better name and some other attributes
+    Build in a check if the size is even dividable otherwise it gives some obscure
+    error : conflicting sizes for dimension 'lon': length 2 on the data but length 3 on coordinate 'lon'
+
+    """
+    block_dict = dict((da.get_axis_num(x), y) for x, y in blocks)
+
+    # !!! should excess be trimmed?
+    da_coarse = coarsen(func,da.data,block_dict,trim_excess=False)
+
+    old_coords = da.coords
+    new_coords = dict([])
+
+    for cc in old_coords.keys():
+        # This caused some problems, when the new coords were dask arrays
+        # Not sure such a brute force conversion is needed...
+        new_coords[cc] = np.array(old_coords[cc].values)
+
+    for dd in blocks:
+        new_coords[dd[0]] = new_coords[dd[0]][0:-1:dd[1]]
+
+    if debug:
+        print 'da.dims'
+        print da.dims
+        print 'new_coords'
+        print new_coords
+        print '++++'
+
+    da_coarse = xr.DataArray(da_coarse,dims=da.dims,coords=new_coords)
+    return da_coarse
+
+
+def aggregate_old(dar,blocks,func=np.nanmean,debug=False):
     """
     Aggregation method for xarray.
 
@@ -23,7 +66,7 @@ def aggregate(dar,blocks,func=np.nanmean,debug=False):
     """
 
     try:
-        numpy_dims = [dar.dims.index(a[0]) for a in blocks]
+        numpy_dims = [dar.get_axis_num(a[0]) for a in blocks]
     except ValueError:
         raise RuntimeError('Block specifier not found. Likely a typo or missing dims in da')
 
@@ -36,7 +79,7 @@ def aggregate(dar,blocks,func=np.nanmean,debug=False):
     for aa in numpy_blocks:
         new_shape[aa[0]] = new_shape[aa[0]]/aa[1]
 
-    coarse = dar.data.map_blocks(numpy_block_aggregate,chunks=new_shape,blocks=numpy_blocks)
+    coarse = dar.data.map_blocks(numpy_block_aggregate,dtype=np.float64,chunks=new_shape,blocks=numpy_blocks)
     old_coords = dar.coords
     new_coords = dict([])
 
