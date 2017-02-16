@@ -7,25 +7,67 @@ from scipy.signal import filtfilt, butter, gaussian
 from numpy_utils import numpy_block_aggregate
 from dask.array import coarsen
 
-def aggregate(da,blocks,func=np.nanmean,debug=False):
+def aggregate(da,blocks,func=np.nanmean,trim_excess=False):
     """
-    Aggregation method for xarray.
+    Performs efficient block averaging in one or multiple dimensions.
 
-    Somewhat of a crutch, waiting for xarray.apply. Relatively fast implementation
-    of a block average
+    Parameters
+    ----------
+    da : xarray DataArray
+    blocks : list
+        List of tuples containing the dimension and interval to aggregate over
+    func : function
+        Aggregation function.Defaults to numpy.nanmean
 
-    TODO:
-    Better diagnostics
+    Returns
+    -------
+    da_agg : xarray Data
+        Aggregated array
+
     Examples
-    Give the array a better name and some other attributes
-    Build in a check if the size is even dividable otherwise it gives some obscure
-    error : conflicting sizes for dimension 'lon': length 2 on the data but length 3 on coordinate 'lon'
+    --------
+    >>> from xarrayutils import aggregate
+    >>> import numpy as np
+    >>> import xarray as xr
+    >>> import matplotlib.pyplot as plt
+    >>> %matplotlib inline
+    >>> import dask.array as da
 
+    >>> x = np.arange(-10,10)
+    >>> y = np.arange(-10,10)
+    >>> xx,yy = np.meshgrid(x,y)
+    >>> z = xx**2-yy**2
+    >>> a = xr.DataArray(da.from_array(z, chunks=(20, 20)),coords={'x':x,'y':y},dims=['y','x'])
+    >>> print a
+
+    <xarray.DataArray 'array-7e422c91624f207a5f7ebac426c01769' (y: 20, x: 20)>
+    dask.array<array-7..., shape=(20, 20), dtype=int64, chunksize=(20, 20)>
+    Coordinates:
+      * y        (y) int64 -10 -9 -8 -7 -6 -5 -4 -3 -2 -1 0 1 2 3 4 5 6 7 8 9
+      * x        (x) int64 -10 -9 -8 -7 -6 -5 -4 -3 -2 -1 0 1 2 3 4 5 6 7 8 9
+
+    >>> blocks = [('x',2),('y',5)]
+    >>> a_coarse = aggregate(a,blocks,func=np.mean)
+    >>> print a_coarse
+
+    <xarray.DataArray 'array-7e422c91624f207a5f7ebac426c01769' (y: 2, x: 10)>
+    dask.array<coarsen..., shape=(2, 10), dtype=float64, chunksize=(2, 10)>
+    Coordinates:
+      * y        (y) int64 -10 0
+      * x        (x) int64 -10 -8 -6 -4 -2 0 2 4 6 8
+    Attributes:
+        Coarsened with: <function mean at 0x111754230>
+        Coarsenblocks: [('x', 2), ('y', 10)]
     """
-    block_dict = dict((da.get_axis_num(x), y) for x, y in blocks)
+    try:
+        block_dict = dict((da.get_axis_num(x), y) for x, y in blocks)
+    except ValueError:
+        raise RuntimeError("'blocks' contains non matching dimension")
+
+
 
     # !!! should excess be trimmed?
-    da_coarse = coarsen(func,da.data,block_dict,trim_excess=False)
+    da_coarse = coarsen(func,da.data,block_dict,trim_excess=trim_excess)
 
     old_coords = da.coords
     new_coords = dict([])
@@ -35,17 +77,15 @@ def aggregate(da,blocks,func=np.nanmean,debug=False):
         # Not sure such a brute force conversion is needed...
         new_coords[cc] = np.array(old_coords[cc].values)
 
+
+
     for dd in blocks:
         new_coords[dd[0]] = new_coords[dd[0]][0:-1:dd[1]]
 
-    if debug:
-        print 'da.dims'
-        print da.dims
-        print 'new_coords'
-        print new_coords
-        print '++++'
+    attrs = {'Coarsened with':str(func),'Coarsenblocks':str(blocks)}
 
-    da_coarse = xr.DataArray(da_coarse,dims=da.dims,coords=new_coords)
+    da_coarse = xr.DataArray(da_coarse,dims=da.dims,coords=new_coords,\
+                    name=da.name,attrs=attrs)
     return da_coarse
 
 
