@@ -19,8 +19,8 @@ def gradient(grid,a,location='center',recenter=False):
         shift_idx = [0,1]
         ref_x = grid.XG
         ref_y = grid.YG
-        dx = a.dxC
-        dy = a.dyC
+        dx = grid.dxC
+        dy = grid.dyC
 
     if len(b.shape)==2:
         raise RuntimeError('this should never happen...!!!')
