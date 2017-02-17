@@ -6,26 +6,28 @@ Code specific to xarrays created with xmitgcm
 import numpy as np
 import xarray as xr
 
-def gradient(a,b,location='center',recenter=False):
+def gradient(grid,a,location='center',recenter=False):
     'a is the complete dataset and b is the dataarray to perform the grad on'
+    # grid = b
     if location=='grid':
         shift_idx = [-1,0]
-        ref_x = a.TRAC01
-        ref_y = a.TRAC01
-        dx = a.dxG
-        dy = a.dyG
+        ref_x = grid.XC
+        ref_y = grid.YC
+        dx = grid.dxG
+        dy = grid.dyG
     elif location=='center':
         shift_idx = [0,1]
-        ref_x = a.UVEL
-        ref_y = a.VVEL
+        ref_x = grid.XG
+        ref_y = grid.YG
         dx = a.dxC
         dy = a.dyC
 
     if len(b.shape)==2:
+        raise RuntimeError('this should never happen...!!!')
         ref_x = ref_x.mean(dim='time')
         ref_y = ref_y.mean(dim='time')
 
-    diff_x_raw = b.roll(i=shift_idx[0]).data-b.roll(i=shift_idx[1]).data
+    diff_x_raw = a.roll(i=shift_idx[0]).data-b.roll(i=shift_idx[1]).data
     diff_x = xr.DataArray(diff_x_raw,dims=ref_x.dims,coords=ref_x.coords)
 
 
