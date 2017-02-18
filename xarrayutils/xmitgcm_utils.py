@@ -6,46 +6,82 @@ Code specific to xarrays created with xmitgcm
 import numpy as np
 import xarray as xr
 
-def gradient(grid,a,location='center',recenter=False):
-    'a is the complete dataset and b is the dataarray to perform the grad on'
-    # grid = b
-    if location=='grid':
-        shift_idx = [-1,0]
-        ref_x = grid.XC
-        ref_y = grid.YC
-        dx = grid.dxG
-        dy = grid.dyG
-    elif location=='center':
-        shift_idx = [0,1]
-        ref_x = grid.XG
-        ref_y = grid.YG
-        dx = grid.dxC
-        dy = grid.dyC
+def matching_coords(grid,dims):
+    #Fill in all coordinates from grid that match the new dims
+    new_coords = []
+    for kk in grid.coords.keys():
+        check = list(grid[kk].dims)
+        if all([a in dims for a in check]):
+            new_coords.append(kk)
 
-    if len(b.shape)==2:
-        raise RuntimeError('this should never happen...!!!')
-        ref_x = ref_x.mean(dim='time')
-        ref_y = ref_y.mean(dim='time')
+    new_coords_dict = dict([])
+    for ii in new_coords:
+        new_coords_dict[ii] = grid[ii]
+    return new_coords_dict
 
-    diff_x_raw = a.roll(i=shift_idx[0]).data-b.roll(i=shift_idx[1]).data
-    diff_x = xr.DataArray(diff_x_raw,dims=ref_x.dims,coords=ref_x.coords)
+def gradient1d(grid,ar,dim='i'):
+    if 'i' == dim:
+            dx = 'dxG'
+            swap_dim = 'i_g'
+            add_coords = []
+    elif 'j' == dim:
+            dx = 'dyG'
+            swap_dim = 'j_g'
+            add_coords = []
+    elif 'i_g' == dim:
+            dx = 'dxC'
+            swap_dim = 'i'
+            add_coords = []
+    elif 'j_g' == dim:
+            dx = 'dyG'
+            swap_dim = 'j'
+            add_coords = []
+
+    if '_g' in dim:
+        # This might have to be expanded with the vertical suffixes
+        shift_idx = np.array([-1,0])
+    else:
+        shift_idx = np.array([0,1])
+
+    new_dims = list(ar.dims)
+    new_dims[new_dims.index(dim)] = swap_dim
+
+    new_coords = matching_coords(grid,new_dims)
+
+    diff_x_raw = ar.roll(**{dim:shift_idx[0]})-ar.roll(**{dim:shift_idx[1]})
+    grad_x = xr.DataArray(diff_x_raw.data/grid[dx].data,dims=new_dims,coords=new_coords)
+    return grad_x
 
 
-    diff_y_raw = b.roll(j=shift_idx[0]).data-b.roll(j=shift_idx[1]).data
-    diff_y = xr.DataArray(diff_y_raw,dims=ref_y.dims,coords=ref_y.coords)
+def gradient(grid,ar,recenter=False,debug=False):
+    '''
+    grid is the complete dataset and a is the dataarray to perform the grad on
+    '''
 
-    grad_x = diff_x/dx
-    grad_y = diff_y/dy
+    if debug:
+        print ar.dims
+    # auto assign the correct gradient in each dimension
+    dims = np.array(ar.dims)
+
+    x_dim = dims[np.array(['i' in a[0] for a in dims])][0]
+    y_dim = dims[np.array(['j' in a[0] for a in dims])][0]
+    # z_dim = dims[np.array(['k' in a[0] for a in dims])]
+    # this needs to be somewhat variable...maybe fill the nonexisting gradients
+    # with nans? Or have varible output?
+
+    grad_x = gradient1d(grid,ar,dim=x_dim)
+    grad_y = gradient1d(grid,ar,dim=y_dim)
 
     if recenter:
-        grad_x = interpolate_from_W_to_C(a,grad_x)
-        grad_y = interpolate_from_S_to_C(a,grad_y)
+        grad_x = interpolate_from_W_to_C(grid,grad_x)
+        grad_y = interpolate_from_S_to_C(grid,grad_y)
 
     return grad_x,grad_y
 
 def interpolate_from_W_to_C(a,b):
     """
     Interp values from western boundary to cell center
+    !!!These need to be generalized
     """
     ref = a.TRAC01
     if len(b.shape)==2:
