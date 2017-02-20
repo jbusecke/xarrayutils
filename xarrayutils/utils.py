@@ -6,8 +6,9 @@ import xarray as xr
 from scipy.signal import filtfilt, butter, gaussian
 from numpy_utils import numpy_block_aggregate
 from dask.array import coarsen
+import warnings
 
-def aggregate(da,blocks,func=np.nanmean,trim_excess=False):
+def aggregate(da,blocks,func=np.nanmean,trim_excess=False,debug=False):
     """
     Performs efficient block averaging in one or multiple dimensions.
 
@@ -59,6 +60,9 @@ def aggregate(da,blocks,func=np.nanmean,trim_excess=False):
         Coarsened with: <function mean at 0x111754230>
         Coarsenblocks: [('x', 2), ('y', 10)]
     """
+
+    # Check if the given array has the dimension specified in blocks
+    # blocks =
     try:
         block_dict = dict((da.get_axis_num(x), y) for x, y in blocks)
     except ValueError:
@@ -69,20 +73,21 @@ def aggregate(da,blocks,func=np.nanmean,trim_excess=False):
     # !!! should excess be trimmed?
     da_coarse = coarsen(func,da.data,block_dict,trim_excess=trim_excess)
 
-    old_coords = da.coords
+    # for now default to only the dims
     new_coords = dict([])
+    # for cc in da.coords.keys():
+    warnings.warn("WARNING: only dimensions are carried over as coordinates")
+    for cc in list(da.dims):
 
-    for cc in old_coords.keys():
-        # This caused some problems, when the new coords were dask arrays
-        # Not sure such a brute force conversion is needed...
-        new_coords[cc] = np.array(old_coords[cc].values)
-
-
-
-    for dd in blocks:
-        new_coords[dd[0]] = new_coords[dd[0]][0:-1:dd[1]]
+        new_coords[cc] = da.coords[cc]
+        for dd in blocks:
+            if dd[0] in list(da.coords[cc].dims):
+                new_coords[cc] = new_coords[cc].isel(**{dd[0]:slice(0,-1,dd[1])})
 
     attrs = {'Coarsened with':str(func),'Coarsenblocks':str(blocks)}
+    if debug:
+        print 'dims',da.dims
+        print 'coords',new_coords
 
     da_coarse = xr.DataArray(da_coarse,dims=da.dims,coords=new_coords,\
                     name=da.name,attrs=attrs)
