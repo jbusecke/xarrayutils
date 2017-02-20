@@ -111,6 +111,7 @@ def interpolateGtoC(grid,x,dim='x'):
         swap_dim = 'i'
         x_name = 'X'
         method_x = 'wrap'
+        # method_x = 'pad'
         method_y = 'roll'
     elif dim == 'y':
         old_dim = 'j_g'
@@ -119,15 +120,16 @@ def interpolateGtoC(grid,x,dim='x'):
         method_x = 'pad'
         method_y = 'roll'
 
-    dx = raw_diff(grid,grid[x_name+'G'],old_dim,method=method_x)
-    dy = raw_diff(grid,x,old_dim,method=method_y)
+    dx = raw_diff(grid,grid[x_name+'G'],old_dim,method=method_x).data
+    dy = raw_diff(grid,x,old_dim,method=method_y).data
 
-    dx_new = grid[x_name+'G']-\
-        reassign_grid(grid,grid[x_name+'C'],swap_dim,old_dim)
+    dx_new = grid[x_name+'G'].data-grid[x_name+'C'].data
 
-    y1 = x
+    y1 = x.data
 
     out = y1+dy*dx_new/dx
+    out = xr.DataArray(out,coords=x.coords,dims=x.dims)
+
     return reassign_grid(grid,out,old_dim,swap_dim)
 
 
