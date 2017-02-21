@@ -8,7 +8,7 @@ from numpy_utils import numpy_block_aggregate
 from dask.array import coarsen
 import warnings
 
-def aggregate(da,blocks,func=np.nanmean,trim_excess=False,debug=False):
+def aggregate(da,blocks,func=np.nanmean,trim_excess=True,debug=False):
     """
     Performs efficient block averaging in one or multiple dimensions.
 
@@ -70,7 +70,7 @@ def aggregate(da,blocks,func=np.nanmean,trim_excess=False,debug=False):
 
 
 
-    # !!! should excess be trimmed?
+    # !!! should excess be trimmed? I set it to true now because regridding it with 1 is not constistient
     da_coarse = coarsen(func,da.data,block_dict,trim_excess=trim_excess)
 
     # for now default to only the dims
