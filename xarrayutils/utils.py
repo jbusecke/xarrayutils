@@ -3,7 +3,7 @@ from future.utils import iteritems
 import numpy as np
 import xarray as xr
 from scipy.signal import filtfilt, butter, gaussian
-from numpy_utils import numpy_block_aggregate
+from .numpy_utils import numpy_block_aggregate
 from dask.array import coarsen
 import warnings
 
