@@ -1,9 +1,11 @@
+
+from __future__ import print_function
+from future.utils import iteritems
+import numpy as np
+import scipy.interpolate as spi
 """
 Lower Level implementation in numpy and dask
 """
-
-import numpy as np
-import scipy.interpolate as spi
 
 
 def numpy_block_aggregate(a,blocks,func=np.nanmean):
@@ -92,13 +94,13 @@ def interp_map_regular_grid(a,x,y,x_i,y_i,method='linear',debug=False,wrap=True)
         a = a[[-1]+range(a.shape[0])+[0],:]
 
     if debug:
-        print 'a shape',a.shape
-        print 'x shape',x.shape
-        print 'y shape',y.shape
-        print 'x values',x[:]
-        print 'y values',y[:]
-        print 'x_i values',x_i[:]
-        print 'y_i values',y_i[:]
+        print('a shape',a.shape)
+        print('x shape',x.shape)
+        print('y shape',y.shape)
+        print('x values',x[:])
+        print('y values',y[:])
+        print('x_i values',x_i[:])
+        print('y_i values',y_i[:])
 
     xx_i,yy_i = np.meshgrid(x_i,y_i)
     f = spi.RegularGridInterpolator((x, y),a.T,method=method,bounds_error=False)
@@ -133,11 +135,11 @@ def interp_map_irregular_grid(a,x,y,x_i,y_i,method='linear',debug=False):
     a = a[[-1]+range(a.shape[0])+[0],:]
 
     if debug:
-        print 'a shape',a.shape
-        print 'x shape',xx.shape
-        print 'y shape',yy.shape
-        print 'x values',xx[0,:]
-        print 'y values',yy[:,0]
+        print('a shape',a.shape)
+        print('x shape',xx.shape)
+        print('y shape',yy.shape)
+        print('x values',xx[0,:])
+        print('y values',yy[:,0])
 
     points = np.vstack((xx.flatten(),yy.flatten())).T
     values = a.flatten()

@@ -1,6 +1,12 @@
 """
 Collection of several useful routines for xarray
 """
+"""
+Lower Level implementation in numpy and dask
+"""
+
+from __future__ import print_function
+from future.utils import iteritems
 import numpy as np
 import xarray as xr
 from scipy.signal import filtfilt, butter, gaussian
@@ -86,8 +92,8 @@ def aggregate(da,blocks,func=np.nanmean,trim_excess=True,debug=False):
 
     attrs = {'Coarsened with':str(func),'Coarsenblocks':str(blocks)}
     if debug:
-        print 'dims',da.dims
-        print 'coords',new_coords
+        print('dims',da.dims)
+        print('coords',new_coords)
 
     da_coarse = xr.DataArray(da_coarse,dims=da.dims,coords=new_coords,\
                     name=da.name,attrs=attrs)
@@ -137,11 +143,11 @@ def aggregate_old(dar,blocks,func=np.nanmean,debug=False):
         new_coords[dd[0]] = new_coords[dd[0]][0:-1:dd[1]]
 
     if debug:
-        print 'dar.dims'
-        print dar.dims
-        print 'new_coords'
-        print new_coords
-        print '++++'
+        print('dar.dims')
+        print(dar.dims)
+        print('new_coords')
+        print(new_coords)
+        print('++++')
 
     da_coarse = xr.DataArray(coarse,dims=dar.dims,coords=new_coords)
     return da_coarse
@@ -174,14 +180,14 @@ def fancymean(raw,dim=None,axis=None,method='arithmetic',weights=None,debug=Fals
         if isinstance(raw,xr.Dataset):
             axis = raw[raw.data_vars.keys()[0]].get_axis_num(dim)
             if debug:
-                print 'dim ',dim,' changed to axis ',axis
+                print('dim ',dim,' changed to axis ',axis)
         elif isinstance(raw,xr.DataArray):
             axis = raw.get_axis_num(dim)
             if debug:
-                print 'dim ',dim,' changed to axis ',axis
+                print('dim ',dim,' changed to axis ',axis)
 
     if debug:
-        print 'axis',axis
+        print('axis',axis)
 
 
     if weights==None:
@@ -205,26 +211,23 @@ def fancymean(raw,dim=None,axis=None,method='arithmetic',weights=None,debug=Fals
         down = w
         out = up.sum(axis=axis)/down.sum(axis=axis)
     elif method == 'geometric':
-        # print 'non positive values in geometric mean omitted'
-        # eliminate the non positive values
         w = w.where(raw>0)
         raw = raw.where(raw>0)
         up = np.log10(raw)*w
         down = w
         out = 10**(up.sum(axis=axis)/down.sum(axis=axis))
     elif method == 'harmonic':
-        # print 'zero values in harmonic mean omitted'
         w = w.where(raw!=0)
         raw = raw.where(raw!=0)
         up = w/raw
         down = w
         out = down.sum(axis=axis)/up.sum(axis=axis)
     if debug:
-        print 'w',w.shape
-        print 'raw',raw.shape
-        print 'up',up.shape
-        print 'down',down.shape
-        print 'out',out.shape
+        print('w',w.shape)
+        print('raw',raw.shape)
+        print('up',up.shape)
+        print('down',down.shape)
+        print('out',out.shape)
 
     return out
 
@@ -240,9 +243,9 @@ def timefilter(xr_in,steps,step_spec,timename='time',filtertype='gaussian',stdev
         b = win/win.sum()
         if np.nansum(win)==0:
             raise RuntimeError('window to short for time interval')
-            print 'win_length',str(win_length)
-            print 'stddev',str(stdev)
-            print 'win',str(win)
+            print('win_length',str(win_length))
+            print('stddev',str(stdev))
+            print('win',str(win))
 
     filtered = filtfilt(b,a, xr_in.data,axis=timedim,padtype=None,padlen=0)
     out = xr.DataArray(filtered,dims=xr_in.dims,coords=xr_in.coords,attrs=xr_in.attrs)

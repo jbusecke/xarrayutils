@@ -1,14 +1,14 @@
-"""
-Code specific to xarrays created with xmitgcm
-
-"""
-
+from __future__ import print_function
+from future.utils import iteritems
 import numpy as np
 import xarray as xr
 import warnings
 import dask.array as da_ar
 from utils import aggregate
+"""
+Code specific to xarrays created with xmitgcm
 
+"""
 
 def matching_coords(grid,dims):
     #Fill in all coordinates from grid that match the new dims
@@ -72,7 +72,7 @@ def gradient(grid,ar,recenter=False,debug=False):
     '''
 
     if debug:
-        print ar.dims
+        print(ar.dims)
     # auto assign the correct gradient in each dimension
     dims = np.array(ar.dims)
 
