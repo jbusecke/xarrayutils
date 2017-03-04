@@ -1,10 +1,3 @@
-"""
-Collection of several useful routines for xarray
-"""
-"""
-Lower Level implementation in numpy and dask
-"""
-
 from __future__ import print_function
 from future.utils import iteritems
 import numpy as np
@@ -13,6 +6,14 @@ from scipy.signal import filtfilt, butter, gaussian
 from numpy_utils import numpy_block_aggregate
 from dask.array import coarsen
 import warnings
+
+"""
+Collection of several useful routines for xarray
+"""
+"""
+Lower Level implementation in numpy and dask
+"""
+
 
 def aggregate(da,blocks,func=np.nanmean,trim_excess=True,debug=False):
     """
