@@ -19,6 +19,7 @@ Lower Level implementation in numpy and dask
 def aggregate(da,blocks,func=np.nanmean,trim_excess=True,debug=False):
     """
     Performs efficient block averaging in one or multiple dimensions.
+    Only works on regular grid dimensions.
 
     Parameters
     ----------
@@ -68,9 +69,15 @@ def aggregate(da,blocks,func=np.nanmean,trim_excess=True,debug=False):
         Coarsened with: <function mean at 0x111754230>
         Coarsenblocks: [('x', 2), ('y', 10)]
     """
+    #Check data type of blocks
+    # TODO write test
+    if (not all(isinstance(n[0], str) for n in blocks) or
+        not all(isinstance(n[1], int) for n in blocks)):
+        print('blocks input',str(blocks))
+        raise RuntimeError("block dimension must be dtype(str), e.g. ('lon',4)")
+
 
     # Check if the given array has the dimension specified in blocks
-    # blocks =
     try:
         block_dict = dict((da.get_axis_num(x), y) for x, y in blocks)
     except ValueError:
@@ -79,6 +86,11 @@ def aggregate(da,blocks,func=np.nanmean,trim_excess=True,debug=False):
 
 
     # !!! should excess be trimmed? I set it to true now because regridding it with 1 is not constistient
+    if debug:
+        print('func',func)
+        print('data',da.data)
+        print('block_dict',block_dict)
+        print('blocks',blocks)
     da_coarse = coarsen(func,da.data,block_dict,trim_excess=trim_excess)
 
     # for now default to only the dims
@@ -99,59 +111,6 @@ def aggregate(da,blocks,func=np.nanmean,trim_excess=True,debug=False):
 
     da_coarse = xr.DataArray(da_coarse,dims=da.dims,coords=new_coords,\
                     name=da.name,attrs=attrs)
-    return da_coarse
-
-
-def aggregate_old(dar,blocks,func=np.nanmean,debug=False):
-    """
-    Aggregation method for xarray.
-
-    Somewhat of a crutch, waiting for xarray.apply. Relatively fast implementation
-    of a block average
-
-    TODO:
-    Better diagnostics
-    Examples
-    Give the array a better name and some other attributes
-    Build in a check if the size is even dividable otherwise it gives some obscure
-    error : conflicting sizes for dimension 'lon': length 2 on the data but length 3 on coordinate 'lon'
-
-    """
-
-    try:
-        numpy_dims = [dar.get_axis_num(a[0]) for a in blocks]
-    except ValueError:
-        raise RuntimeError('Block specifier not found. Likely a typo or missing dims in da')
-
-    numpy_blocks = [tuple([a,b[1]]) for a,b in zip(numpy_dims,blocks)]
-
-    # not 100% happy with this since the first element of chunks is a 3 element tuple,
-    # but in most cases this should work regardless since we mostly chunk in time
-    new_shape = [a[0] for a in dar.chunks]
-    # Construct new shape. Needed for dask
-    for aa in numpy_blocks:
-        new_shape[aa[0]] = new_shape[aa[0]]/aa[1]
-
-    coarse = dar.data.map_blocks(numpy_block_aggregate,dtype=np.float64,chunks=new_shape,blocks=numpy_blocks)
-    old_coords = dar.coords
-    new_coords = dict([])
-
-    for cc in old_coords.keys():
-        # This caused some problems, when the new coords were dask arrays
-        # Not sure such a brute force conversion is needed...
-        new_coords[cc] = np.array(old_coords[cc].values)
-
-    for dd in blocks:
-        new_coords[dd[0]] = new_coords[dd[0]][0:-1:dd[1]]
-
-    if debug:
-        print('dar.dims')
-        print(dar.dims)
-        print('new_coords')
-        print(new_coords)
-        print('++++')
-
-    da_coarse = xr.DataArray(coarse,dims=dar.dims,coords=new_coords)
     return da_coarse
 
 def fancymean(raw,dim=None,axis=None,method='arithmetic',weights=None,debug=False):
