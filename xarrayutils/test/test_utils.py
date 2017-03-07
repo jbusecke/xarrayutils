@@ -5,6 +5,11 @@ import xarray as xr
 import numpy as np
 import os
 
+
+def dummy_test()
+    assert 1==1
+
+
 # aggregate
 # Test if exception is raised when dimensions are mislabeled
 
