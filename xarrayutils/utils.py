@@ -419,3 +419,6 @@ def corrmap(a,b,shifts=0,\
     out_p['timeshifts'] = shifts
 
     return out_c,out_p,out_s
+
+def dummy_function():
+    return 1

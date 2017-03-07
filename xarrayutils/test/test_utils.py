@@ -4,10 +4,10 @@ import pytest
 import xarray as xr
 import numpy as np
 import os
-
+from xarrayutils.utils import dummy_function
 
 def dummy_test():
-    assert 1==1
+    assert dummy_function()==1
 
 
 # aggregate
