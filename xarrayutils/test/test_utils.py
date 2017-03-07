@@ -1,13 +1,12 @@
-from __future__ import print_function
-from future.utils import iteritems
 import pytest
 import xarray as xr
 import numpy as np
 import os
 from xarrayutils.utils import dummy_function
 
-def dummy_test():
-    assert dummy_function()==1
+def test_dummy():
+    dummy_function()
+    assert 1==1
 
 
 # aggregate
