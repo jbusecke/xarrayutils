@@ -14,7 +14,18 @@ Collection of several useful routines for xarray
 """
 Lower Level implementation in numpy and dask
 """
+def aggregate_w_nanmean(da,weights,blocks,kwargs):
+    """
+    weighted nanmean for xarrays
+    """
+    # make sure that the missing values are exactly equal to each otherwise
+    area = area.where(~np.isnan(da))
+    if not np.all(np.isnan(da),np.isnan(area)):
+        raise RuntimeError('area cannot have more missing values then the data array')
 
+    area_sum = aggregate(area,blocks,func=np.sum,**kwargs)
+    da_sum   = aggregate(da*area,blocks,func=np.sum,**kwargs)
+    return da_sum/area_sum
 
 def aggregate(da,blocks,func=np.nanmean,trim_excess=True,debug=False):
     """
