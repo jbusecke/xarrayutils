@@ -4,6 +4,7 @@ import numpy as np
 import xarray as xr
 from scipy.signal import filtfilt, butter, gaussian
 from dask.array import coarsen
+from dask.array.core import Array
 import warnings
 
 from .numpy_utils import numpy_block_aggregate
@@ -14,27 +15,27 @@ Collection of several useful routines for xarray
 """
 Lower Level implementation in numpy and dask
 """
-def aggregate_w_nanmean(da,weights,blocks,kwargs):
+def aggregate_w_nanmean(da,weights,blocks,**kwargs):
     """
     weighted nanmean for xarrays
     """
     # make sure that the missing values are exactly equal to each otherwise
-    area = area.where(~np.isnan(da))
-    if not np.all(np.isnan(da),np.isnan(area)):
-        raise RuntimeError('area cannot have more missing values then the data array')
+    weights = weights.where(~np.isnan(da))
+    if not np.all(np.isnan(da)==np.isnan(weights)):
+        raise RuntimeError('weights cannot have more missing values then the data array')
 
-    area_sum = aggregate(area,blocks,func=np.sum,**kwargs)
-    da_sum   = aggregate(da*area,blocks,func=np.sum,**kwargs)
-    return da_sum/area_sum
+    weights_sum = aggregate(weights,blocks,func=np.nansum,**kwargs)
+    da_sum   = aggregate(da*weights,blocks,func=np.nansum,**kwargs)
+    return da_sum/weights_sum
 
-def aggregate(da,blocks,func=np.nanmean,trim_excess=True,debug=False):
+def aggregate(da,blocks,func=np.nanmean,debug=False):
     """
     Performs efficient block averaging in one or multiple dimensions.
     Only works on regular grid dimensions.
 
     Parameters
     ----------
-    da : xarray DataArray
+    da : xarray DataArray (must be a dask array!)
     blocks : list
         List of tuples containing the dimension and interval to aggregate over
     func : function
@@ -80,6 +81,9 @@ def aggregate(da,blocks,func=np.nanmean,trim_excess=True,debug=False):
         Coarsened with: <function mean at 0x111754230>
         Coarsenblocks: [('x', 2), ('y', 10)]
     """
+    # Check if the input is a dask array (I might want to convert this automaticlaly in the future)
+    if not isinstance(da.data,Array):
+        raise RuntimeError('data array data must be a dask array')
     #Check data type of blocks
     # TODO write test
     if (not all(isinstance(n[0], str) for n in blocks) or
@@ -87,22 +91,19 @@ def aggregate(da,blocks,func=np.nanmean,trim_excess=True,debug=False):
         print('blocks input',str(blocks))
         raise RuntimeError("block dimension must be dtype(str), e.g. ('lon',4)")
 
-
     # Check if the given array has the dimension specified in blocks
     try:
         block_dict = dict((da.get_axis_num(x), y) for x, y in blocks)
     except ValueError:
         raise RuntimeError("'blocks' contains non matching dimension")
 
+    # Check the size of the excess in each aggregated axis
+    blocks = [(a[0],a[1],da.shape[da.get_axis_num(a[0])] % a[1]) for a in blocks]
+    print(blocks)
+    print(da)
 
-
-    # !!! should excess be trimmed? I set it to true now because regridding it with 1 is not constistient
-    if debug:
-        print('func',func)
-        print('data',da.data)
-        print('block_dict',block_dict)
-        print('blocks',blocks)
-    da_coarse = coarsen(func,da.data,block_dict,trim_excess=trim_excess)
+    # for now default to trimming the excess
+    da_coarse = coarsen(func,da.data,block_dict,trim_excess=True)
 
     # for now default to only the dims
     new_coords = dict([])
@@ -113,13 +114,9 @@ def aggregate(da,blocks,func=np.nanmean,trim_excess=True,debug=False):
         new_coords[cc] = da.coords[cc]
         for dd in blocks:
             if dd[0] in list(da.coords[cc].dims):
-                new_coords[cc] = new_coords[cc].isel(**{dd[0]:slice(0,-1,dd[1])})
+                new_coords[cc] = new_coords[cc].isel(**{dd[0]:slice(0,-(1+dd[2]),dd[1])})
 
     attrs = {'Coarsened with':str(func),'Coarsenblocks':str(blocks)}
-    if debug:
-        print('dims',da.dims)
-        print('coords',new_coords)
-
     da_coarse = xr.DataArray(da_coarse,dims=da.dims,coords=new_coords,\
                     name=da.name,attrs=attrs)
     return da_coarse
@@ -419,6 +416,3 @@ def corrmap(a,b,shifts=0,\
     out_p['timeshifts'] = shifts
 
     return out_c,out_p,out_s
-
-def dummy_function():
-    return 1
