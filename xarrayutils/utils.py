@@ -99,18 +99,16 @@ def aggregate(da,blocks,func=np.nanmean,debug=False):
 
     # Check the size of the excess in each aggregated axis
     blocks = [(a[0],a[1],da.shape[da.get_axis_num(a[0])] % a[1]) for a in blocks]
-    print(blocks)
-    print(da)
 
     # for now default to trimming the excess
     da_coarse = coarsen(func,da.data,block_dict,trim_excess=True)
+
 
     # for now default to only the dims
     new_coords = dict([])
     # for cc in da.coords.keys():
     warnings.warn("WARNING: only dimensions are carried over as coordinates")
     for cc in list(da.dims):
-
         new_coords[cc] = da.coords[cc]
         for dd in blocks:
             if dd[0] in list(da.coords[cc].dims):

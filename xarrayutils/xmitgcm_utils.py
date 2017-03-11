@@ -57,6 +57,7 @@ def gradient1d(grid,ar,dim='i'):
     diff_x_raw = ar.roll(**{dim:shift_idx[0]}).data-ar.roll(**{dim:shift_idx[1]}).data
     # This needs to be implemented with custom diff (using ;wrap option)
     # Also this needs to land on the new
+
     grad_x = xr.DataArray(diff_x_raw/dx_data,dims=new_dims,coords=c)
     return grad_x
 
