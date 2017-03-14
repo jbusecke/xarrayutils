@@ -107,7 +107,7 @@ def interpolate_from_S_to_C(grid,x):
     """
     return interpolateGtoC(grid,x,dim='y')
 
-def interpolateGtoC(grid,x,dim='x'):
+def interpolateGtoC(grid,x,dim='x',debug=False):
     if dim == 'x':
         old_dim = 'i_g'
         swap_dim = 'i'
@@ -141,12 +141,16 @@ def interpolateGtoC(grid,x,dim='x'):
     dy     = dy.data
     y1     = x.data
 
+    if debug:
+        print('dx',dx)
+        print('dx_new',dx_new)
+        print('dy',dx_new)
+        print('y1',y1)
+
     out = y1+dy*dx_new/dx
     out = xr.DataArray(out,coords=x.coords,dims=x.dims)
 
     return reassign_grid(grid,out,old_dim,swap_dim)
-
-
 
 def raw_diff(grid,x,dim,method='pad',wrap_ref=360.0,shift_grid=False):
 
