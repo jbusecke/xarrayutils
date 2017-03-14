@@ -36,8 +36,6 @@ from . datasets import dataarray_2d_example,dataarray_2d_ones,dataarray_2d_ones_
 def test_aggregate_regular_func(dataarray_2d_example,func,expected_result):
     blocks = [('i',3),('j',3)]
     a = aggregate(dataarray_2d_example,blocks,func=func)
-    print(a.data.compute())
-    print(expected_result)
     assert_allclose(a.data.compute(),expected_result)
 
 @pytest.mark.parametrize(
@@ -96,4 +94,3 @@ def test_aggregate_w_nanmean(dataarray_2d_ones,dataarray_2d_ones_nan):
         data = dataarray_2d_ones
         weights = dataarray_2d_ones_nan
         a = aggregate_w_nanmean(data,weights,blocks)
-        assert_allclose(a.data.compute(),expected_result)

@@ -103,6 +103,19 @@ def get_dx(grid,da,axis):
             hfac = grid._ds.dyG
     return dx
 
+def matching_coords(grid,dims):
+    #Fill in all coordinates from grid that match the new dims
+    c = []
+    for kk in grid.coords.keys():
+        check = list(grid[kk].dims)
+        if all([a in dims for a in check]):
+            c.append(kk)
+
+    c_dict = dict([])
+    for ii in c:
+        c_dict[ii] = grid[ii]
+    return c_dict
+
 # Discontinued functions
 def interpolate_from_W_to_C(grid,x):
     raise RuntimeError('not supported anymore, use xgcm')
@@ -117,18 +130,6 @@ def raw_diff(grid,x,dim,method='pad',wrap_ref=360.0,shift_grid=False):
     raise RuntimeError('not supported anymore, use xgcm')
 
 
-    # def matching_coords(grid,dims):
-    #     #Fill in all coordinates from grid that match the new dims
-    #     c = []
-    #     for kk in grid.coords.keys():
-    #         check = list(grid[kk].dims)
-    #         if all([a in dims for a in check]):
-    #             c.append(kk)
-    #
-    #     c_dict = dict([])
-    #     for ii in c:
-    #         c_dict[ii] = grid[ii]
-    #     return c_dict
 
     # def gradient1d(grid,ar,dim='i'):
     #     if 'i' == dim:
