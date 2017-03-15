@@ -25,12 +25,13 @@ def gradient1d(grid,data,axis,debug=False):
     da_i : xarray.DataArray
         gradient along axis
     """
-    dx = get_dx(grid,data,axis)
+    delta = grid.diff(data, axis)
+    dx    = get_dx(grid,delta,axis)
     # mask = get_hfac(grid,dx)
     # *mask
     if dx is None:
         raise RuntimeError('grid distance could not be extracted check grid input')
-    return grid.diff(data, axis)/dx
+    return delta/dx
 
 def gradient(grid,data,interpolate=False,debug=False):
     """compute the gradient in x,y direction (optional interpolation between grid variables).
