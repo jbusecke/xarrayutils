@@ -7,8 +7,6 @@ from dask.array import coarsen
 from dask.array.core import Array
 import warnings
 
-from .numpy_utils import numpy_block_aggregate
-
 """
 Collection of several useful routines for xarray
 """

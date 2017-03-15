@@ -58,3 +58,7 @@ target/
 
 # notebook
 .ipynb_checkpoints/*
+
+# notebook example files
+*.nc
+*.zip

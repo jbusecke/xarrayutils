@@ -3,15 +3,15 @@ from future.utils import iteritems
 import numpy as np
 import xarray as xr
 import warnings
-import dask.array as da_ar
 
-from .utils import aggregate
+
+from . utils import aggregate
 """
 Code specific to xarrays created with xmitgcm
 
 """
 
-def gradient1d(grid,data,axis):
+def gradient1d(grid,data,axis,debug=True):
     """Calculate gradient along single axis.
     PARAMETERS
     ----------
@@ -27,6 +27,10 @@ def gradient1d(grid,data,axis):
     """
     dx = get_dx(grid,data,axis)
     mask = get_hfac(grid,dx)
+    if debug:
+        print('dx.dims',dx.dims.keys())
+        print('dx',dx)
+        print('mask',mask)
     return grid.diff(data, axis)/dx*mask
 
 def gradient(grid,data,interpolate=False):
@@ -64,43 +68,44 @@ def gradient(grid,data,interpolate=False):
     return grad_x,grad_y
 
 # Silly functions
-def get_hfac(grid,da):
+def get_hfac(grid,data):
+    # TODO: This is not general enough...need to
     """Figure out the correct hfac given array dimensions."""
     hfac = None
-    if 'XC' in da.dims and 'YC' in da.dims and 'hFacC' in grid._ds:
+    if 'i' in data.dims and 'j' in data.dims and 'hFacC' in grid._ds:
         hfac = grid._ds.hFacC
-    if 'XC' in da.dims and 'YG' in da.dims and 'hFacS' in grid._ds:
+    if 'i' in data.dims and 'j_g' in data.dims and 'hFacS' in grid._ds:
         hfac = grid._ds.hFacS
-    if 'XG' in da.dims and 'YC' in da.dims and 'hFacW' in grid._ds:
+    if 'i_g' in data.dims and 'j' in data.dims and 'hFacW' in grid._ds:
         hfac = grid._ds.hFacW
     return hfac
 
-def get_dx(grid,da,axis):
+def get_dx(grid,data,axis):
     """Figure out the correct hfac given array dimensions."""
     dx = None
     if axis == 'X':
-        if 'XC' in da.dims and 'YC' in da.dims and 'dxC' in grid._ds:
+        if 'i' in data.dims and 'j' in data.dims and 'dxC' in grid._ds:
             dx = grid._ds.dxC
-        if 'XG' in da.dims and 'YC' in da.dims and 'dxG' in grid._ds:
-            hfac = grid._ds.dxG
+        if 'i_g' in data.dims and 'j' in data.dims and 'dxG' in grid._ds:
+            dx = grid._ds.dxG
 
         # Is this right or is there a different dxC for the vorticity cell?
-        if 'XC' in da.dims and 'YG' in da.dims and 'dxC' in grid._ds:
+        if 'i' in data.dims and 'j_g' in data.dims and 'dxC' in grid._ds:
             dx = grid._ds.dxC
-        if 'XG' in da.dims and 'YG' in da.dims and 'dxG' in grid._ds:
-            hfac = grid._ds.dxG
+        if 'i_g' in data.dims and 'j_g' in data.dims and 'dxG' in grid._ds:
+            dx = grid._ds.dxG
 
     elif axis == 'Y':
-        if 'XC' in da.dims and 'YC' in da.dims and 'dyC' in grid._ds:
+        if 'i' in data.dims and 'j' in data.dims and 'dyC' in grid._ds:
             dx = grid._ds.dyC
-        if 'XC' in da.dims and 'YG' in da.dims and 'dyG' in grid._ds:
-            hfac = grid._ds.dyG
+        if 'i' in data.dims and 'j_g' in data.dims and 'dyG' in grid._ds:
+            dx = grid._ds.dyG
 
         # Is this right or is there a different dxC for the vorticity cell?
-        if 'XG' in da.dims and 'YC' in da.dims and 'dyC' in grid._ds:
+        if 'i_g' in data.dims and 'j' in data.dims and 'dyC' in grid._ds:
             dx = grid._ds.dyC
-        if 'XG' in da.dims and 'YG' in da.dims and 'dyG' in grid._ds:
-            hfac = grid._ds.dyG
+        if 'i_g' in data.dims and 'j_g' in data.dims and 'dyG' in grid._ds:
+            dx = grid._ds.dyG
     return dx
 
 def matching_coords(grid,dims):
@@ -167,20 +172,3 @@ def raw_diff(grid,x,dim,method='pad',wrap_ref=360.0,shift_grid=False):
     #
     #     grad_x = xr.DataArray(diff_x_raw/dx_data,dims=new_dims,coords=c)
     #     return grad_x
-
-    # def reassign_grid(grid,x,old,new,debug=False):
-    #     dims = list(x.dims)
-    #     dims[dims.index(old)] = new
-    #     if new in list(grid.dims):
-    #         rename_switch = False
-    #     else:
-    #         rename_switch = True
-    #
-    #     coords = dict([])
-    #     for ii in dims:
-    #         if ii == new and rename_switch:
-    #             coords[ii] = grid[old].rename({old:new})
-    #         else:
-    #             coords[ii] = grid[ii]
-    #
-    #     return xr.DataArray(x.data,coords=coords,dims=dims)

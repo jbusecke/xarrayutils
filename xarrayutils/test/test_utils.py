@@ -7,20 +7,6 @@ from numpy.testing import assert_allclose
 
 from . datasets import dataarray_2d_example,dataarray_2d_ones,dataarray_2d_ones_nan
 
-# def test_aggregate_input():
-#     with pytest.raises(RuntimeError):
-
-
-# @pytest.mark.parametrize(
-#     'f','expected_result',[
-#         (np.nanmean,
-#         [[1,3],
-#         [2,4]]
-#         ),
-#         (np.mean,
-#         [[np.nan,3],
-#         [2,4]]
-#         )])
 @pytest.mark.parametrize(
     "func,expected_result",[
         (np.nanmean,
