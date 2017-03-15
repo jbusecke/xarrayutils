@@ -28,11 +28,11 @@ def gradient1d(grid,data,axis,debug=False):
     dx = get_dx(grid,data,axis)
     # mask = get_hfac(grid,dx)
     # *mask
-    if debug:
-        print('dx',dx)
+    if dx is None:
+        raise RuntimeError('grid distance could not be extracted check grid input')
     return grid.diff(data, axis)/dx
 
-def gradient(grid,data,interpolate=False):
+def gradient(grid,data,interpolate=False,debug=False):
     """compute the gradient in x,y direction (optional interpolation between grid variables).
 
         PARAMETERS
@@ -57,8 +57,8 @@ def gradient(grid,data,interpolate=False):
             It could be good to implement different order gradients later
         """
 
-    grad_x = gradient1d(grid,data,'X')
-    grad_y = gradient1d(grid,data,'Y')
+    grad_x = gradient1d(grid,data,'X',debug=debug)
+    grad_y = gradient1d(grid,data,'Y',debug=debug)
 
     if interpolate:
         grad_x = grid.interp(grad_x,'X')
@@ -83,28 +83,30 @@ def get_dx(grid,data,axis):
     """Figure out the correct hfac given array dimensions."""
     dx = None
     if axis == 'X':
-        if 'i' in data.dims and 'j' in data.dims and 'dxC' in grid._ds:
-            dx = grid._ds.dxC
-        if 'i_g' in data.dims and 'j' in data.dims and 'dxG' in grid._ds:
+        if 'i' in data.dims and 'j' in data.dims and 'dxG' in grid._ds:
+            dx = grid.interp(grid._ds.dxG,'Y')
+        # Is this right or is there a different dxC for the vorticity cell?
+        if 'i' in data.dims and 'j_g' in data.dims and 'dxG' in grid._ds:
             dx = grid._ds.dxG
 
-        # Is this right or is there a different dxC for the vorticity cell?
-        if 'i' in data.dims and 'j_g' in data.dims and 'dxC' in grid._ds:
+        if 'i_g' in data.dims and 'j' in data.dims and 'dxC' in grid._ds:
             dx = grid._ds.dxC
-        if 'i_g' in data.dims and 'j_g' in data.dims and 'dxG' in grid._ds:
-            dx = grid._ds.dxG
+        # Is this right or is there a different dxC for the vorticity cell?
+        if 'i_g' in data.dims and 'j_g' in data.dims and 'dxC' in grid._ds:
+            dx = grid.interp(grid._ds.dxC,'Y')
 
     elif axis == 'Y':
-        if 'i' in data.dims and 'j' in data.dims and 'dyC' in grid._ds:
-            dx = grid._ds.dyC
-        if 'i' in data.dims and 'j_g' in data.dims and 'dyG' in grid._ds:
+        if 'i' in data.dims and 'j' in data.dims and 'dyG' in grid._ds:
+            dx = grid.interp(grid._ds.dyG,'X')
+        # Is this right or is there a different dxC for the vorticity cell?
+        if 'i_g' in data.dims and 'j' in data.dims and 'dyG' in grid._ds:
             dx = grid._ds.dyG
 
-        # Is this right or is there a different dxC for the vorticity cell?
-        if 'i_g' in data.dims and 'j' in data.dims and 'dyC' in grid._ds:
+        if 'i' in data.dims and 'j_g' in data.dims and 'dyC' in grid._ds:
             dx = grid._ds.dyC
-        if 'i_g' in data.dims and 'j_g' in data.dims and 'dyG' in grid._ds:
-            dx = grid._ds.dyG
+        # Is this right or is there a different dxC for the vorticity cell?
+        if 'i_g' in data.dims and 'j_g' in data.dims and 'dyC' in grid._ds:
+            dx = grid.interp(grid._ds.dyC,'X')
     return dx
 
 def matching_coords(grid,dims):

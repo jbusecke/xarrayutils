@@ -47,10 +47,10 @@ def raw_diff(grid,x,dim,method='pad',wrap_ref=360.0,shift_grid=False):
 
     return diff
 
-def inferGfromC(grid,x,dim,method='wrap'):
+def inferGfromC(grid,x,dim,method='wrap',namesuffix='G',dimsuffix='_g'):
     dx = raw_diff(grid,x,dim,method=method)
     x_out = x-(dx/2)
-    out = reassign_grid(grid,x_out,dim,dim+'_g')
+    out = reassign_grid(grid,x_out,dim,dim+dimsuffix)
 
     # this could probably be accomplished with the interpolation once done
     return out
