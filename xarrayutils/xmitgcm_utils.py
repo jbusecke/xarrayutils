@@ -11,7 +11,7 @@ Code specific to xarrays created with xmitgcm
 
 """
 
-def gradient1d(grid,data,axis,debug=True):
+def gradient1d(grid,data,axis,debug=False):
     """Calculate gradient along single axis.
     PARAMETERS
     ----------
@@ -26,12 +26,11 @@ def gradient1d(grid,data,axis,debug=True):
         gradient along axis
     """
     dx = get_dx(grid,data,axis)
-    mask = get_hfac(grid,dx)
+    # mask = get_hfac(grid,dx)
+    # *mask
     if debug:
-        print('dx.dims',dx.dims.keys())
         print('dx',dx)
-        print('mask',mask)
-    return grid.diff(data, axis)/dx*mask
+    return grid.diff(data, axis)/dx
 
 def gradient(grid,data,interpolate=False):
     """compute the gradient in x,y direction (optional interpolation between grid variables).

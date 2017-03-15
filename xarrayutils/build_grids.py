@@ -72,8 +72,24 @@ def get_dims_from_comodo_axes(ds,axis):
 
 
 def grid_aggregate(grid,axis_bins):
-    # apply the same bins to all dims
-    #TODO put only the axes in and then deduce the
+    """aggregate a grid dataset compatible with xgcm
+
+    PARAMETERS
+    ----------
+    grid : xarray.Dataset (Attributes compatible with xgcm required)
+    axis_bins : list of tuples with axis specifier (e.g. 'X',see xgcm) and
+        Aggregation interval
+
+    RETURNS
+    -------
+    grid_c : xarray.Dataset
+        aggregated dataset
+
+    TODO
+    ----
+        generalise the treatment of coordinates. So far this is very specific to
+        mitgcm output
+    """
     bins = []
     for tt in axis_bins:
         bins = bins+[(a,tt[1]) for a in get_dims_from_comodo_axes(grid,tt[0])]
@@ -98,13 +114,8 @@ def grid_aggregate(grid,axis_bins):
     c['XC'] = aggregate(temp['XC'],[a for a in bins if a in temp['XC'].dims],np.mean)
     c['YC'] = aggregate(temp['YC'],[a for a in bins if a in temp['YC'].dims],np.mean)
     # I am not sure how to aggregate the other things...
-    print('I am not sure if the treatment of hFac is correct!')
-    c['hFacW'] = aggregate(temp['hFacW'],[a for a in bins if a in temp['hFacW'].dims],np.prod)
-    c['hFacS'] = aggregate(temp['hFacS'],[a for a in bins if a in temp['hFacS'].dims],np.prod)
-    c['hFacC'] = aggregate(temp['hFacC'],[a for a in bins if a in temp['hFacC'].dims],np.prod)
 
     out = out.assign_coords(**c)
-
     out = rebuild_grid(out)
     return out
 
