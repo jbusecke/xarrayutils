@@ -11,7 +11,7 @@ Code specific to xarrays created with xmitgcm
 
 """
 
-def gradient1d(grid,data,axis,debug=False):
+def derivative(grid,data,axis,debug=False):
     """Calculate gradient along single axis.
     PARAMETERS
     ----------
@@ -57,8 +57,8 @@ def gradient(grid,data,interpolate=False,debug=False):
             It could be good to implement different order gradients later
         """
 
-    grad_x = gradient1d(grid,data,'X',debug=debug)
-    grad_y = gradient1d(grid,data,'Y',debug=debug)
+    grad_x = derivative(grid,data,'X',debug=debug)
+    grad_y = derivative(grid,data,'Y',debug=debug)
 
     if interpolate:
         grad_x = grid.interp(grad_x,'X')
@@ -124,53 +124,53 @@ def matching_coords(grid,dims):
 
 
 # Discontinued functions
-def interpolate_from_W_to_C(grid,x):
-    raise RuntimeError('not supported anymore, use xgcm')
-
-def interpolate_from_S_to_C(grid,x):
-    raise RuntimeError('not supported anymore, use xgcm')
-
-def interpolateGtoC(grid,x,dim='x',debug=False):
-    raise RuntimeError('not supported anymore, use xgcm')
-
-def raw_diff(grid,x,dim,method='pad',wrap_ref=360.0,shift_grid=False):
-    raise RuntimeError('not supported anymore, use xgcm')
-
-
-
-    # def gradient1d(grid,ar,dim='i'):
-    #     if 'i' == dim:
-    #             dx = 'dxG'
-    #             swap_dim = 'i_g'
-    #             add_coords = []
-    #     elif 'j' == dim:
-    #             dx = 'dyG'
-    #             swap_dim = 'j_g'
-    #             add_coords = []
-    #     elif 'i_g' == dim:
-    #             dx = 'dxC'
-    #             swap_dim = 'i'
-    #             add_coords = []
-    #     elif 'j_g' == dim:
-    #             dx = 'dyG'
-    #             swap_dim = 'j'
-    #             add_coords = []
-    #
-    #     if '_g' in dim:
-    #         # This might have to be expanded with the vertical suffixes
-    #         shift_idx = np.array([-1,0])
-    #     else:
-    #         shift_idx = np.array([0,1])
-    #
-    #     new_dims = list(ar.dims)
-    #     new_dims[new_dims.index(dim)] = swap_dim
-    #
-    #     c = matching_coords(grid,new_dims)
-    #
-    #     dx_data = grid[dx].data
-    #     diff_x_raw = ar.roll(**{dim:shift_idx[0]}).data-ar.roll(**{dim:shift_idx[1]}).data
-    #     # This needs to be implemented with custom diff (using ;wrap option)
-    #     # Also this needs to land on the new
-    #
-    #     grad_x = xr.DataArray(diff_x_raw/dx_data,dims=new_dims,coords=c)
-    #     return grad_x
+# def interpolate_from_W_to_C(grid,x):
+#     raise RuntimeError('not supported anymore, use xgcm')
+#
+# def interpolate_from_S_to_C(grid,x):
+#     raise RuntimeError('not supported anymore, use xgcm')
+#
+# def interpolateGtoC(grid,x,dim='x',debug=False):
+#     raise RuntimeError('not supported anymore, use xgcm')
+#
+# def raw_diff(grid,x,dim,method='pad',wrap_ref=360.0,shift_grid=False):
+#     raise RuntimeError('not supported anymore, use xgcm')
+#
+#
+#
+#     # def derivative(grid,ar,dim='i'):
+#     #     if 'i' == dim:
+#     #             dx = 'dxG'
+#     #             swap_dim = 'i_g'
+#     #             add_coords = []
+#     #     elif 'j' == dim:
+#     #             dx = 'dyG'
+#     #             swap_dim = 'j_g'
+#     #             add_coords = []
+#     #     elif 'i_g' == dim:
+#     #             dx = 'dxC'
+#     #             swap_dim = 'i'
+#     #             add_coords = []
+#     #     elif 'j_g' == dim:
+#     #             dx = 'dyG'
+#     #             swap_dim = 'j'
+#     #             add_coords = []
+#     #
+#     #     if '_g' in dim:
+#     #         # This might have to be expanded with the vertical suffixes
+#     #         shift_idx = np.array([-1,0])
+#     #     else:
+#     #         shift_idx = np.array([0,1])
+#     #
+#     #     new_dims = list(ar.dims)
+#     #     new_dims[new_dims.index(dim)] = swap_dim
+#     #
+#     #     c = matching_coords(grid,new_dims)
+#     #
+#     #     dx_data = grid[dx].data
+#     #     diff_x_raw = ar.roll(**{dim:shift_idx[0]}).data-ar.roll(**{dim:shift_idx[1]}).data
+#     #     # This needs to be implemented with custom diff (using ;wrap option)
+#     #     # Also this needs to land on the new
+#     #
+#     #     grad_x = xr.DataArray(diff_x_raw/dx_data,dims=new_dims,coords=c)
+#     #     return grad_x
