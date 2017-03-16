@@ -7,56 +7,56 @@ import warnings
 
 from . utils import aggregate
 
-def raw_diff(grid,x,dim,method='pad',wrap_ref=360.0,shift_grid=False):
+# def raw_diff(grid,x,dim,method='pad',wrap_ref=360.0,shift_grid=False):
+#
+#     if method == 'pad':
+#         #shift automatically pads the 'shifted around' values with nan
+#         x2 = x.shift(**{dim:-1}).copy()
+#         x1 = x.shift(**{dim:0}).copy()
+#     elif method in ['roll','wrap']:
+#         x2 = x.roll(**{dim:-1}).copy()
+#         x1 = x.roll(**{dim:0}).copy()
+#     else:
+#         raise RuntimeError("'method' not recognized")
+#
+#     if method == 'wrap':
+#         warnings.warn("WARNING: option 'wrap' loads the dask array into memory")
+#         x2.load()
+#         x2[{dim:-1}] = x2[{dim:-1}]+wrap_ref
+#         # This is highly problematic when swap_dims is activated in xmitgcm/open_mdsdataset
+#         # Because one cannot replace index variables!
+#
+#     diff_raw = x2.data-x1.data
+#
+#     # Do i need the grid input here? Not really since
+#     # I am keeping the dims and coords the same
+#
+#     # c = dict([])
+#     # for ii in x.coords.keys():
+#     #         c[ii] = grid[ii]
+#
+#     # So lets try this...
+#     c = dict([])
+#     for ii in x.coords.keys():
+#             c[ii] = x.coords[ii]
+#
+#     diff = xr.DataArray(diff_raw,coords=x.coords,dims=x.dims)
+#     # This purposely does not switch the dims from grid to center at this point,
+#     # That needs to be set in the calling routine.
+#     # if the method is not wrap and it makes sense the border has to be set to nan...
+#
+#     return diff
 
-    if method == 'pad':
-        #shift automatically pads the 'shifted around' values with nan
-        x2 = x.shift(**{dim:-1}).copy()
-        x1 = x.shift(**{dim:0}).copy()
-    elif method in ['roll','wrap']:
-        x2 = x.roll(**{dim:-1}).copy()
-        x1 = x.roll(**{dim:0}).copy()
-    else:
-        raise RuntimeError("'method' not recognized")
-
-    if method == 'wrap':
-        warnings.warn("WARNING: option 'wrap' loads the dask array into memory")
-        x2.load()
-        x2[{dim:-1}] = x2[{dim:-1}]+wrap_ref
-        # This is highly problematic when swap_dims is activated in xmitgcm/open_mdsdataset
-        # Because one cannot replace index variables!
-
-    diff_raw = x2.data-x1.data
-
-    # Do i need the grid input here? Not really since
-    # I am keeping the dims and coords the same
-
-    # c = dict([])
-    # for ii in x.coords.keys():
-    #         c[ii] = grid[ii]
-
-    # So lets try this...
-    c = dict([])
-    for ii in x.coords.keys():
-            c[ii] = x.coords[ii]
-
-    diff = xr.DataArray(diff_raw,coords=x.coords,dims=x.dims)
-    # This purposely does not switch the dims from grid to center at this point,
-    # That needs to be set in the calling routine.
-    # if the method is not wrap and it makes sense the border has to be set to nan...
-
-    return diff
-
-def inferGfromC(grid,x,dim,method='wrap',namesuffix='G',dimsuffix='_g'):
-    dx = raw_diff(grid,x,dim,method=method)
-    x_out = x-(dx/2)
-    out = reassign_grid(grid,x_out,dim,dim+dimsuffix)
-
-    # this could probably be accomplished with the interpolation once done
-    return out
-# Test: Convert the actual XC into XG and check if they match
-# test =  inferGfromC(grid_diag,ds_diag.YC,'j',method='roll')
-# np.all(np.all(np.isclose(test.data,ds_diag.YG.data),axis=1)[0:-1]
+# def inferGfromC(grid,x,dim,method='wrap',namesuffix='G',dimsuffix='_g'):
+#     dx = raw_diff(grid,x,dim,method=method)
+#     x_out = x-(dx/2)
+#     out = reassign_grid(grid,x_out,dim,dim+dimsuffix)
+#
+#     # this could probably be accomplished with the interpolation once done
+#     return out
+# # Test: Convert the actual XC into XG and check if they match
+# # test =  inferGfromC(grid_diag,ds_diag.YC,'j',method='roll')
+# # np.all(np.all(np.isclose(test.data,ds_diag.YG.data),axis=1)[0:-1]
 
 def get_dims_from_comodo_axes(ds,axis):
     dims = ds.dims.keys()
@@ -106,7 +106,7 @@ def grid_aggregate(grid,axis_bins):
 
     temp = dict([])
     for ff in grid.coords.keys():
-        temp[ff] = xr.DataArray(da.from_array(grid[ff].data,chunks=grid[ff].shape),
+        temp[ff] = xr.DataArray(da.from_array(grid[ff].data,chunks=grid[ff].data.shape),
                                 coords=grid[ff].coords,dims=grid[ff].dims)
 
     c = dict([])
@@ -119,61 +119,114 @@ def grid_aggregate(grid,axis_bins):
     out = rebuild_grid(out)
     return out
 
-def reassign_grid(grid,x,old,new,debug=False):
-    dims = list(x.dims)
-    dims[dims.index(old)] = new
-    if new in list(grid.dims):
-        rename_switch = False
-    else:
-        rename_switch = True
+# def reassign_grid(grid,x,old,new,debug=False):
+#     dims = list(x.dims)
+#     dims[dims.index(old)] = new
+#     if new in list(grid.dims):
+#         rename_switch = False
+#     else:
+#         rename_switch = True
+#
+#     coords = dict([])
+#     for ii in dims:
+#         if ii == new and rename_switch:
+#             coords[ii] = grid[old].rename({old:new})
+#         else:
+#             coords[ii] = grid[ii]
+#
+#     return xr.DataArray(x.data,coords=coords,dims=dims)
 
-    coords = dict([])
-    for ii in dims:
-        if ii == new and rename_switch:
-            coords[ii] = grid[old].rename({old:new})
-        else:
-            coords[ii] = grid[ii]
+def replace_neg_wrap(data,val):
+    idx = data.data<0
+    data.data[idx] = data.data[idx]+val
+    return data
 
-    return xr.DataArray(x.data,coords=coords,dims=dims)
+def rebuild_grid(grid,
+        x_index_name='i',
+        y_index_name='j',
+        x_name='X',
+        y_name='Y',
+        g_index_suffix='_g',
+        g_suffix='G',
+        c_suffix='C',
+        g_shift=-0.5,
+        x_wrap=360,
+        y_wrap=180):
+        """rebuild a xgcm compatible grid from scratch
+        """
+        grid.coords[x_index_name+g_index_suffix] = xr.DataArray(
+            grid.coords[x_index_name].data,
+            coords={x_index_name+g_index_suffix:([x_index_name+g_index_suffix,],
+            grid.coords[x_index_name].data)},
+            dims=[x_index_name+g_index_suffix,])
 
-def rebuild_grid(grid):
-        # These are not general enough...need to rewrite them for any xgcm file
-        c = dict([])
-        c['XC'] = grid['XC']
-        c['YC'] = grid['YC']
+        grid.coords[y_index_name+g_index_suffix] = xr.DataArray(
+            grid.coords[y_index_name].data,
+            coords={y_index_name+g_index_suffix:([y_index_name+g_index_suffix,],
+            grid.coords[y_index_name].data)},
+            dims=[y_index_name+g_index_suffix,])
 
-        c['XG'] = inferGfromC(grid,c['XC'],'i',method='wrap')
-        c['YG'] = inferGfromC(grid,c['YC'],'j',method='roll')
+        # assign xgcm compatible attributes
+        grid[x_index_name].attrs={'axis': 'X',
+                         'standard_name': 'x_grid_index',
+                         'long_name': 'x-dimension of the grid',
+                         }
+        grid[y_index_name].attrs={'axis': 'Y',
+                         'standard_name': 'y_grid_index',
+                         'long_name': 'y-dimension of the grid',
+                         }
+        grid[x_index_name+g_index_suffix].attrs={'axis': 'X',
+                         'standard_name': 'x_grid_index',
+                         'long_name': 'x-dimension of the grid',
+                         'c_grid_axis_shift': g_shift}
+        grid[y_index_name+g_index_suffix].attrs={'axis': 'Y',
+                         'standard_name': 'y_grid_index',
+                         'long_name': 'y-dimension of the grid',
+                         'c_grid_axis_shift': g_shift}
 
-        temp = raw_diff(grid,c['XC'],'i',method='wrap')
-        c['dxC'],_ = dll_dist(grid,temp,temp,c['XG'],c['YC'])
+        xgrid=xgcm.Grid(grid)
 
-        temp = raw_diff(grid,c['YC'],'j',method='roll')
-        _,c['dyC'] = dll_dist(grid,temp,temp,c['XC'],c['YG'])
+        #Construct the grid coordinates
+        grid.coords[x_name+g_suffix] = \
+            xgrid.interp(xgrid.interp(grid.coords[x_name+c_suffix],'X'),'Y')
+        grid.coords[y_name+g_suffix] = \
+            xgrid.interp(xgrid.interp(grid.coords[y_name+c_suffix],'Y'),'X')
 
-        temp = raw_diff(grid,c['XG'],'i_g',method='wrap')
-        c['dxG'],_ = dll_dist(grid,temp,temp,c['XC'],c['YG'])
+        grid.coords['dx'+c_suffix] = xgrid.diff(grid.coords[x_name+c_suffix],'X')
+        grid.coords['dy'+c_suffix] = xgrid.diff(grid.coords[y_name+c_suffix],'Y')
 
-        temp = raw_diff(grid,c['YG'],'j_g',method='roll')
-        _,c['dyG'] = dll_dist(grid,temp,temp,c['XG'],c['YC'])
+        grid.coords['dx'+g_suffix] = xgrid.diff(grid.coords[x_name+g_suffix],'X')
+        grid.coords['dy'+g_suffix] = xgrid.diff(grid.coords[y_name+g_suffix],'Y')
 
-        grid = grid.assign_coords(**c)
-        grid['i'].attrs = {'axis': 'X',
-                          'standard_name': 'x_grid_index',
-                          'long_name': 'x-dimension of the grid'}
-        grid['i_g'].attrs = {'axis': 'X',
-                          'standard_name': 'x_grid_index_at_u_location',
-                          'long_name': 'x-dimension of the grid',
-                          'c_grid_axis_shift': -0.5}
+        # Fix up the discontuity (!!!this should be done automatically this
+        # is not very robust and terrbily verbose)
 
-        grid['j'].attrs = {'axis': 'Y',
-                          'standard_name': 'y_grid_index',
-                          'long_name': 'y-dimension of the grid'}
-        grid['j_g'].attrs = {'axis': 'Y',
-                          'standard_name': 'y_grid_index_at_u_location',
-                          'long_name': 'y-dimension of the grid',
-                          'c_grid_axis_shift': -0.5}
-        # patch the attributes to the
+        # load all coordinates (later wrap em again into dask array)
+        for vv in grid.coords.keys():
+            grid.coords[vv].load()
+        # TODO write some sort of check for this and rewrap them into dask arrays
+
+        x_discont_idx = grid.coords['dx'+c_suffix].data<0
+        y_discont_idx = grid.coords['dy'+c_suffix].data<0
+
+        grid.coords[x_name+g_suffix].data[x_discont_idx] = \
+            grid.coords[x_name+g_suffix].data[x_discont_idx]-x_wrap/2.0
+        grid.coords[y_name+g_suffix].data[y_discont_idx] = \
+            grid.coords[y_name+g_suffix].data[y_discont_idx]-y_wrap/2.0
+
+        grid.coords['dx'+c_suffix].data[x_discont_idx] = \
+            grid.coords['dx'+c_suffix].data[x_discont_idx]+x_wrap
+        grid.coords['dy'+c_suffix].data[y_discont_idx] = \
+            grid.coords['dy'+c_suffix].data[y_discont_idx]+y_wrap
+
+        x_discont_idx = grid.coords['dx'+g_suffix].data<0
+        y_discont_idx = grid.coords['dy'+g_suffix].data<0
+
+        grid.coords['dx'+g_suffix].data[x_discont_idx] = \
+            grid.coords['dx'+g_suffix].data[x_discont_idx]+x_wrap/2
+        grid.coords['dy'+g_suffix].data[y_discont_idx] = \
+            grid.coords['dy'+g_suffix].data[y_discont_idx]+y_wrap/2
+
         return grid
 
 
