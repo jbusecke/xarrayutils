@@ -27,8 +27,7 @@ def gradient1d(grid,data,axis,debug=False):
     """
     delta = grid.diff(data, axis)
     dx    = get_dx(grid,delta,axis)
-    # mask = get_hfac(grid,dx)
-    # *mask
+
     if dx is None:
         raise RuntimeError('grid distance could not be extracted check grid input')
     return delta/dx
@@ -66,7 +65,6 @@ def gradient(grid,data,interpolate=False,debug=False):
         grad_y = grid.interp(grad_y,'Y')
 
     return grad_x,grad_y
-
 # Silly functions
 def get_hfac(grid,data):
     # TODO: This is not general enough...need to
@@ -122,6 +120,8 @@ def matching_coords(grid,dims):
     for ii in c:
         c_dict[ii] = grid[ii]
     return c_dict
+
+
 
 # Discontinued functions
 def interpolate_from_W_to_C(grid,x):

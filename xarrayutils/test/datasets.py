@@ -46,6 +46,31 @@ dataarrays= {
         'dyG': (['j','i_g'], grid_dyG),
         'dyC': (['j_g','i'], grid_dyC)},
         ),
+    'datagrid_w_attrs': xr.Dataset(
+        coords={
+        'j': (['j',], grid_j, {'axis': 'Y',
+                         'standard_name': 'y_grid_index_at_v_location',
+                         'long_name': 'y-dimension of the grid'}),
+        'j_g': (['j_g',], grid_j, {'axis': 'Y',
+                         'standard_name': 'y_grid_index',
+                         'long_name': 'y-dimension of the grid',
+                         'c_grid_axis_shift': -0.5}),
+        'i': (['i',], grid_i, {'axis': 'X',
+                         'standard_name': 'x_grid_index',
+                         'long_name': 'x-dimension of the grid'}),
+        'i_g': (['i_g',], grid_i, {'axis': 'X',
+                         'standard_name': 'x_grid_index_at_u_location',
+                         'long_name': 'x-dimension of the grid',
+                         'c_grid_axis_shift': -0.5}),
+        'XC': (['j','i'], grid_XC),
+        'YC': (['j','i'], grid_YC),
+        'XG': (['j_g','i_g'], grid_XG),
+        'YG': (['j_g','i_g'], grid_YG),
+        'dxG': (['j_g','i'], grid_dxG),
+        'dxC': (['j','i_g'], grid_dxC),
+        'dyG': (['j','i_g'], grid_dyG),
+        'dyC': (['j_g','i'], grid_dyC)},
+        ),
     'dataarray_2d_example': xr.DataArray(
         da.from_array(a_2d_nan,a_2d_nan.shape,name='a_2d_nan'),
         coords={'j': (['j',], np.arange(0,6)),
@@ -83,7 +108,11 @@ def dataarray_2d_ones_nan(request):
 def datagrid_dimtest(request):
     return dataarrays[request.param]
 
-datagrid_dimtest
+@pytest.fixture(params=['datagrid_w_attrs'])
+def datagrid_w_attrs(request):
+    return dataarrays[request.param]
+
+
 # @pytest.fixture(scope="module", params=['nonperiodic_1d'])
 # def nonperiodic_1d(request):
 #     return datasets[request.param]
