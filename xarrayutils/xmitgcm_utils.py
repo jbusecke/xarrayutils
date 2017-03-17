@@ -65,6 +65,17 @@ def gradient(grid,data,interpolate=False,debug=False):
         grad_y = grid.interp(grad_y,'Y')
 
     return grad_x,grad_y
+
+def laplacian(grid,data):
+    gradx,grady = gradient(grid,data)
+    grad2x,_    = gradient(grid,gradx)
+    _,grad2y    = gradient(grid,grady)
+    return grad2y+grad2x
+
+def gradient_sq_amplitude(grid,data):
+    gradx,grady = gradient(grid,data,interpolate=True)
+    return gradx**2+grady**2
+
 # Silly functions
 def get_hfac(grid,data):
     # TODO: This is not general enough...need to
