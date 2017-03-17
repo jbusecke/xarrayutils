@@ -19,12 +19,45 @@ def get_dims_from_comodo_axes(ds,axis):
                             pick_dims.append(dd)
     return pick_dims
 
-def replace_neg_wrap(data,val):
-    idx = data.data<0
-    data.data[idx] = data.data[idx]+val
-    return data
+def wrap_func(grid,data,dim,wrap,func='diff',idx=0):
+    """interpolates data over discontuity (e.g. longitude values)
 
-def rebuild_grid(grid,
+        TODO
+        ----
+        Write tests that runs np and dask arrays through this
+    """
+    if isinstance(data.data,da.Array):
+        data.load()
+        redask = 1
+    else:
+        redask = 0
+
+    if func =='diff':
+        out  = grid.diff(data,dim)
+    elif func == 'interp':
+        out  = grid.interp(data,dim)
+        # when interpolating the discontinuty gets halved
+        wrap = - wrap/2
+    else:
+        raise RuntimeError("`func` argument not recognized")
+
+    target_dim = [a for a in out.dims
+                    if a in xgcm.comodo.get_axis_coords(grid._ds,dim)]
+    if len(target_dim) == 1:
+        target_dim=target_dim[0]
+    else:
+        raise RuntimeError('more then one target dim found')
+
+    # TODO the idx should be determined by a combo of the c grid shift and func
+    out[{target_dim:idx}] = out[{target_dim:idx}] + wrap
+
+    if redask:
+        out.data = da.from_array(out.data,out.data.shape)
+    return out
+
+
+def rebuild_grid(
+        grid,
         x_index_name='i',
         y_index_name='j',
         x_name='X',
@@ -34,7 +67,8 @@ def rebuild_grid(grid,
         c_suffix='C',
         g_shift=-0.5,
         x_wrap=360,
-        y_wrap=180):
+        y_wrap=180,
+        ll_dist = True):
         """rebuild a xgcm compatible grid from scratch
         """
         grid.coords[x_index_name+g_index_suffix] = xr.DataArray(
@@ -64,68 +98,107 @@ def rebuild_grid(grid,
                          'standard_name': 'y_grid_index_at_v_location',
                          'long_name': 'y-dimension of the grid',
                          'c_grid_axis_shift': g_shift}
-
         xgrid=xgcm.Grid(grid)
 
-        #Construct the grid coordinates
-        grid.coords[x_name+g_suffix] = \
-            xgrid.interp(xgrid.interp(grid.coords[x_name+c_suffix],'X'),'Y')
-        grid.coords[y_name+g_suffix] = \
-            xgrid.interp(xgrid.interp(grid.coords[y_name+c_suffix],'Y'),'X')
+        # #Construct the grid coordinates
+        tempa = grid.coords[x_name+g_suffix] = \
+            wrap_func(xgrid,grid.coords[x_name+c_suffix],
+            'X',
+            x_wrap,
+            func='interp',
+            idx=0)
+        tempb = grid.coords[y_name+g_suffix] = \
+            wrap_func(xgrid,grid.coords[y_name+c_suffix],
+            'Y',
+            y_wrap,
+            func='interp',
+            idx=0)
 
-        grid.coords['dx'+c_suffix] = xgrid.diff(grid.coords[x_name+c_suffix],'X')
-        grid.coords['dy'+c_suffix] = xgrid.diff(grid.coords[y_name+c_suffix],'Y')
+        grid.coords[x_name+g_suffix] = xgrid.interp(tempa,'Y')
+        grid.coords[y_name+g_suffix] = xgrid.interp(tempb,'X')
 
-        grid.coords['dx'+g_suffix] = xgrid.diff(grid.coords[x_name+g_suffix],'X')
-        grid.coords['dy'+g_suffix] = xgrid.diff(grid.coords[y_name+g_suffix],'Y')
+        ##############
+        # cell lengths
+        ##############
 
-        # Fix up the discontuity (!!!this should be done automatically this
-        # is not very robust and terrbily verbose)
+        #
+        grid.coords['dx'+c_suffix] = wrap_func(
+                                        xgrid,
+                                        grid.coords[x_name+c_suffix],
+                                        'X',
+                                        x_wrap,
+                                        idx= 0)
+        grid.coords['dy'+c_suffix] = wrap_func(
+                                        xgrid,
+                                        grid.coords[y_name+c_suffix],
+                                        'Y',
+                                        y_wrap,
+                                        idx= 0)
 
-        # load all coordinates (later wrap em again into dask array)
-        for vv in grid.coords.keys():
-            grid.coords[vv].load()
-        # TODO write some sort of check for this and rewrap them into dask arrays
+        grid.coords['dx'+g_suffix] = wrap_func(
+                                        xgrid,
+                                        grid.coords[x_name+g_suffix],
+                                        'X',
+                                        x_wrap,
+                                        idx=-1)
+        grid.coords['dy'+g_suffix] = wrap_func(
+                                        xgrid,
+                                        grid.coords[y_name+g_suffix],
+                                        'Y',
+                                        y_wrap,
+                                        idx=-1)
 
-        x_discont_idx = grid.coords['dx'+c_suffix].data<0
-        y_discont_idx = grid.coords['dy'+c_suffix].data<0
+        if ll_dist:
+            grid.coords['dx'+c_suffix],grid.coords['dy'+c_suffix] = dll_dist(
+                    grid.coords['dx'+c_suffix],
+                    grid.coords['dy'+c_suffix],
+                    grid.coords[x_name+c_suffix],
+                    grid.coords[y_name+c_suffix])
 
-        grid.coords[x_name+g_suffix].data[x_discont_idx] = \
-            grid.coords[x_name+g_suffix].data[x_discont_idx]-x_wrap/2.0
-        grid.coords[y_name+g_suffix].data[y_discont_idx] = \
-            grid.coords[y_name+g_suffix].data[y_discont_idx]-y_wrap/2.0
-
-        grid.coords['dx'+c_suffix].data[x_discont_idx] = \
-            grid.coords['dx'+c_suffix].data[x_discont_idx]+x_wrap
-        grid.coords['dy'+c_suffix].data[y_discont_idx] = \
-            grid.coords['dy'+c_suffix].data[y_discont_idx]+y_wrap
-
-        x_discont_idx = grid.coords['dx'+g_suffix].data<0
-        y_discont_idx = grid.coords['dy'+g_suffix].data<0
-
-        grid.coords['dx'+g_suffix].data[x_discont_idx] = \
-            grid.coords['dx'+g_suffix].data[x_discont_idx]+x_wrap/2
-        grid.coords['dy'+g_suffix].data[y_discont_idx] = \
-            grid.coords['dy'+g_suffix].data[y_discont_idx]+y_wrap/2
-
+            grid.coords['dx'+g_suffix],grid.coords['dy'+g_suffix] = dll_dist(
+                    grid.coords['dx'+g_suffix],
+                    grid.coords['dy'+g_suffix],
+                    grid.coords[x_name+g_suffix],
+                    grid.coords[y_name+g_suffix]
+                    )
         return grid
 
-#TODO build a check into the xcoordinates if they are ll or distance
-def dll_dist(grid,dlon,dlat,lon,lat,lon_dim='i',lat_dim='j'):
+
+def dll_dist(dlon,dlat,lon,lat,xarray=True):
+    """Converts lat/lon differentials into distances
+
+    PARAMETERS
+    ----------
+    dlon : xarray.DataArray longitude differentials
+    dlat : xarray.DataArray latitude differentials
+    lon  : xarray.DataArray longitude values
+    lat  : xarray.DataArray latitude values
+
+    RETURNS
+    -------
+    dx  : xarray.DataArray distance inferred from dlon
+    dy  : xarray.DataArray distance inferred from dlat
+    """
+    if xarray:
+        dx_coords = dlon.coords
+        dx_dims   = dlon.dims
+        dy_coords = dlat.coords
+        dy_dims   = dlat.dims
+        dlon = dlon.data
+        dlat = dlat.data
+        lon  = lon.data
+        lat  = lat.data
+
     # First attempt with super cheap approach...
     #     111km for each deg lat and then scale that by cos(lat) for lon
     dll_factor = 111000.0
+    dx = dlon*np.cos(np.deg2rad(lat))*dll_factor
+    dy = dlat*dll_factor
 
-    # x_coords = dict([])
-    # for xx in list(lon.dims):
-    #     x_coords[xx] = grid[xx]
-    # y_coords = dict([])
-    # for yy in list(lon.dims):
-    #     y_coords[yy] = grid[yy]
-    dx = dlon.data*np.cos(np.deg2rad(lat.data))*dll_factor
-    dx = xr.DataArray(dx,coords=lon.coords,dims=lon.dims)
-    dy = dlat.data*dll_factor
-    dy = xr.DataArray(dy,coords=lat.coords,dims=lat.dims)
+    if xarray:
+        dx = xr.DataArray(dx,coords=dx_coords,dims=dx_dims)
+        dy = xr.DataArray(dy,coords=dy_coords,dims=dy_dims)
+
     return dx,dy
 
 def grid_aggregate(grid,axis_bins):
