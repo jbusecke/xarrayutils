@@ -3,8 +3,7 @@ from future.utils import iteritems
 import numpy as np
 import xarray as xr
 import warnings
-
-from . utils import aggregate
+from .utils import aggregate
 
 def derivative(grid,data,axis,debug=False):
     """Calculate gradient along single axis.
@@ -126,8 +125,6 @@ def matching_coords(grid,dims):
     for ii in c:
         c_dict[ii] = grid[ii]
     return c_dict
-
-
 
 # Discontinued functions
 # def interpolate_from_W_to_C(grid,x):
