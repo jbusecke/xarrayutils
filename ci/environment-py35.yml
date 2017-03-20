@@ -10,4 +10,4 @@ dependencies:
   - pip:
     - codecov
     - pytest-cov
-    - xgcm
+    - "--editable=git+https://github.com/xgcm/xgcm.git@master#egg=xgcm"

@@ -4,12 +4,7 @@ import numpy as np
 import xarray as xr
 import warnings
 
-
 from . utils import aggregate
-"""
-Code specific to xarrays created with xmitgcm
-
-"""
 
 def derivative(grid,data,axis,debug=False):
     """Calculate gradient along single axis.
@@ -68,8 +63,8 @@ def gradient(grid,data,interpolate=False,debug=False):
 
 def laplacian(grid,data):
     gradx,grady = gradient(grid,data)
-    grad2x,_    = gradient(grid,gradx)
-    _,grad2y    = gradient(grid,grady)
+    grad2x,dummy    = gradient(grid,gradx)
+    dummy,grad2y    = gradient(grid,grady)
     return grad2y+grad2x
 
 def gradient_sq_amplitude(grid,data):
