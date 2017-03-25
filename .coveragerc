@@ -10,3 +10,4 @@ exclude_lines =
 ignore_errors = True
 omit = xarrayutils/test/*
        xarrayutils/__init__.py
+       xarrayutils/visualization.py
