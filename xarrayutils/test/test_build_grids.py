@@ -8,9 +8,6 @@ from numpy.testing import assert_allclose
 
 from . datasets import datagrid_dimtest,datagrid_dimtest_ll
 
-def test_(arg):
-    pass
-
 
 @pytest.mark.parametrize("test_coord",
     ['i','j','i_g','j_g','XC','XG','YC','YG','dxC','dxG','dyC','dyG'])
