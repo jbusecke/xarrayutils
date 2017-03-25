@@ -18,8 +18,9 @@ def mitgcm_Movie(ddir,
     ds   = open_mdsdataset(ddir,prefix=prefix,
                             swap_dims=False)
     ds   = ds[varname].where(ds[maskname]==1)
+    run  = os.path.basename(os.path.normpath(ddir))
     odir = ddir+'/movie'
-    Movie(ds,odir,clim=clim)
+    Movie(ds,odir,clim=clim,moviename=run)
 
 def Movie(da,odir,
             varname     = None,
@@ -73,9 +74,9 @@ def Movie(da,odir,
 
     print('+++ Convert frames to video +++')
     query = 'ffmpeg -y -i "frame_%05d.png" -c:v libx264 -preset veryslow \
-        -crf 2 -pix_fmt yuv420p \
-        -framerate 15 \
-        "'+moviename+'.mov"'
+        -crf 6 -pix_fmt yuv420p \
+        -framerate 20 \
+        "'+moviename+'.mp4"'
 
     with cd(odir):
         os.system(query)
@@ -87,8 +88,8 @@ def FramePrint(da,odir=None,
                     clim = None,
                     bgcolor = np.array([1,1,1])*0.3,
                     facecolor = np.array([1,1,1])*0.3,
-                    framewidth  = 1280,
-                    frameheight = 720,
+                    framewidth  = 1920,
+                    frameheight = 1080,
                     dpi         = 100
                     ):
     """Prints the plotted picture to file
