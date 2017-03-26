@@ -14,7 +14,7 @@ def mitgcm_Movie(ddir,
                 prefix=['tracer_snapshots'],
                 maskname='hFacC',
                 varname='TRAC01',
-                clim =[-5,40]):
+                clim =[-1,35]):
     ds   = open_mdsdataset(ddir,prefix=prefix,
                             swap_dims=False)
     ds   = ds[varname].where(ds[maskname]==1)
@@ -29,7 +29,7 @@ def Movie(da,odir,
             plotstyle   = 'simple',
             clim        = None,
             cmap        = None,
-            bgcolor     = np.array([1,1,1])*0.9,
+            bgcolor     = np.array([1,1,1])*0.3,
             framewidth  = 1280,
             frameheight = 720,
             dpi         = 100
@@ -63,10 +63,11 @@ def Movie(da,odir,
                                 clim        = clim,
                                 framewidth  = framewidth,
                                 frameheight = frameheight,
-                                dpi         = dpi
+                                dpi         = dpi,
+                                bgcolor     = bgcolor
                                 )
         if ii % 100 == 0:
-            remaining_time = (len(da.time)-ii)/(time.time() - start_time)/60
+            remaining_time = (len(da.time)-ii)*(time.time() - start_time)/60
             print('FRAME---%04d---' %ii)
             print('Estimated time left : %d minutes' %remaining_time)
 
@@ -118,7 +119,8 @@ def FramePrint(da,odir=None,
 
 def SimplePlot(data,ax,cmap = None,
                         clim = None,
-                        bgcolor = np.array([1,1,1])*0.3):
+                        bgcolor = np.array([1,1,1])*0.3
+                        ):
     if not cmap:
         cmap = plt.cm.Blues
     if not clim:
@@ -128,7 +130,7 @@ def SimplePlot(data,ax,cmap = None,
 
     cmap.set_bad(bgcolor, 1)
     pixels = np.squeeze(np.ma.array(data, mask=np.isnan(data)))
-    h = ax.imshow(pixels,cmap=cmap,clim=clim,aspect='auto')
+    h = ax.imshow(pixels,cmap=cmap,clim=clim,aspect='auto',interpolation='none')
     ax.invert_yaxis()
     return h
 
