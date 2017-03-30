@@ -74,6 +74,10 @@ def Movie(da,odir,
                                 frameheight = frameheight,
                                 dpi         = dpi,
                                 bgcolor     = bgcolor
+                                # this line is some dask 'magic': it parallelizes
+                                # the print function with processes and not threads,
+                                # which is a lot faster for custom functions
+                                # apparently!
                                 ).compute(get=get)
 
     else:
