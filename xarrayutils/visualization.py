@@ -7,8 +7,9 @@ import numpy as np
 import xarray as xr
 from xmitgcm import open_mdsdataset
 # import argparse
-# from dask.diagnostics import ProgressBar
-# from dask.array import from_array
+from dask.diagnostics import ProgressBar
+from dask.array import from_array
+from dask.multiprocessing import get
 
 def mitgcm_Movie(ddir,
                 prefix=['tracer_snapshots'],
@@ -32,7 +33,8 @@ def Movie(da,odir,
             bgcolor     = np.array([1,1,1])*0.3,
             framewidth  = 1280,
             frameheight = 720,
-            dpi         = 100
+            dpi         = 100,
+            dask        = True,
             ):
     # Set defaults:
 
@@ -52,12 +54,19 @@ def Movie(da,odir,
 
     # Annnd here we go
     print('+++ Execute plot function +++')
-    # do it with a simple for loop...can this really be quicker?
-    for ii in range(0,len(da.time)):
-        start_time = time.time()
-        da_slice = da[{framedim:ii}]
-        fig,ax,h = FramePrint(da_slice,
-                                frame       = ii,
+    if dask:
+        data   = da.data
+        frame_axis = da.get_axis_num(framedim)
+        drop_axis = [da.get_axis_num(a) for a in da.dims if not a == framedim]
+        chunks = list(data.shape)
+        chunks[frame_axis] = 1
+        data = data.rechunk(chunks)
+        # with ProgressBar():
+        dummy = data.map_blocks(FramePrint,chunks = [1],
+                                drop_axis = drop_axis,
+                                dtype=np.float64,
+                                dask=dask,
+                                frame_axis = frame_axis,
                                 odir        = odir,
                                 cmap        = cmap,
                                 clim        = clim,
@@ -65,11 +74,28 @@ def Movie(da,odir,
                                 frameheight = frameheight,
                                 dpi         = dpi,
                                 bgcolor     = bgcolor
-                                )
-        if ii % 100 == 0:
-            remaining_time = (len(da.time)-ii)*(time.time() - start_time)/60
-            print('FRAME---%04d---' %ii)
-            print('Estimated time left : %d minutes' %remaining_time)
+                                ).compute(get=get)
+
+    else:
+        # do it with a simple for loop...can this really be quicker?
+        for ii in range(0,len(da.time)):
+            start_time = time.time()
+            da_slice = da[{framedim:ii}]
+            # fig,ax,h = FramePrint(da_slice,
+            dummy = FramePrint(da_slice,
+                                    frame       = ii,
+                                    odir        = odir,
+                                    cmap        = cmap,
+                                    clim        = clim,
+                                    framewidth  = framewidth,
+                                    frameheight = frameheight,
+                                    dpi         = dpi,
+                                    bgcolor     = bgcolor
+                                    )
+            if ii % 100 == 0:
+                remaining_time = (len(da.time)-ii)*(time.time() - start_time)/60
+                print('FRAME---%04d---' %ii)
+                print('Estimated time left : %d minutes' %remaining_time)
 
 
 
@@ -84,14 +110,17 @@ def Movie(da,odir,
         os.system('rm *.png')
 
 def FramePrint(da,odir=None,
-                    frame=0,
+                    frame=None,
                     cmap=None,
                     clim = None,
                     bgcolor = np.array([1,1,1])*0.3,
                     facecolor = np.array([1,1,1])*0.3,
                     framewidth  = 1920,
                     frameheight = 1080,
-                    dpi         = 100
+                    dpi         = 100,
+                    dask        = False,
+                    block_id    = None,
+                    frame_axis  = None
                     ):
     """Prints the plotted picture to file
 
@@ -108,14 +137,22 @@ def FramePrint(da,odir=None,
     ax.set_facecolor(facecolor)
     ax.set_aspect(1, anchor = 'C')
     fig.add_axes(ax)
-    h = SimplePlot(da.data,ax,
+
+    if not dask:
+        data   = da.data
+    else:
+        data   = da
+        frame  = block_id[frame_axis]
+
+    h = SimplePlot(data,ax,
                     cmap=cmap,
                     clim=clim,
                     bgcolor=bgcolor)
     #
     fig.savefig(odir+'/frame_%05d.png' %frame, dpi=fig.dpi)
     plt.close('all')
-    return fig,ax,h
+    # return fig,ax,h,dummy
+    return from_array(np.array([0]),[1])
 
 def SimplePlot(data,ax,cmap = None,
                         clim = None,
