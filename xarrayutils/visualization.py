@@ -1,5 +1,4 @@
 import matplotlib as mpl
-mpl.use('Agg')
 import os
 import time
 import matplotlib.pyplot as plt
@@ -7,38 +6,41 @@ import numpy as np
 import xarray as xr
 from xmitgcm import open_mdsdataset
 # import argparse
-from dask.diagnostics import ProgressBar
+# from dask.diagnostics import ProgressBar
 from dask.array import from_array
 from dask.multiprocessing import get
+mpl.use('Agg')
+
 
 def mitgcm_Movie(ddir,
-                prefix=['tracer_snapshots'],
-                maskname='hFacC',
-                varname='TRAC01',
-                clim =[-1,35]):
-    ds   = open_mdsdataset(ddir,prefix=prefix,
-                            swap_dims=False)
-    ds   = ds[varname].where(ds[maskname]==1)
-    run  = os.path.basename(os.path.normpath(ddir))
+                 prefix=['tracer_snapshots'],
+                 maskname='hFacC',
+                 varname='TRAC01',
+                 clim=[-1,  35]):
+    ds = open_mdsdataset(ddir, prefix=prefix,
+                         swap_dims=False)
+    ds = ds[varname].where(ds[maskname] == 1)
+    run = os.path.basename(os.path.normpath(ddir))
     odir = ddir+'/movie'
-    Movie(ds,odir,clim=clim,moviename=run)
+    Movie(ds, odir, clim=clim, moviename=run)
 
-def Movie(da,odir,
-            varname     = None,
-            framedim    = 'time',
-            moviename   = 'movie',
-            plotstyle   = 'simple',
-            clim        = None,
-            cmap        = None,
-            bgcolor     = np.array([1,1,1])*0.3,
-            framewidth  = 1280,
-            frameheight = 720,
-            dpi         = 100,
-            dask        = True,
-            ):
+
+def Movie(da, odir,
+          varname=None,
+          framedim='time',
+          moviename='movie',
+          plotstyle='simple',
+          clim=None,
+          cmap=None,
+          bgcolor=np.array([1, 1, 1])*0.3,
+          framewidth=1280,
+          frameheight=720,
+          dpi=100,
+          dask=True,
+          ):
     # Set defaults:
 
-    if not isinstance(da,xr.DataArray):
+    if not isinstance(da, xr.DataArray):
         raise RuntimeError('input has to be an xarray DataStructure, instead\
         is '+str(type(da)))
 
@@ -87,7 +89,7 @@ def Movie(da,odir,
             da_slice = da[{framedim:ii}]
             # fig,ax,h = FramePrint(da_slice,
             dummy = FramePrint(da_slice,
-                                    frame       = ii,
+                                    frame=ii,
                                     odir        = odir,
                                     cmap        = cmap,
                                     clim        = clim,
