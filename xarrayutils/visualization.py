@@ -1,4 +1,5 @@
 import matplotlib as mpl
+mpl.use('Agg')
 import os
 import time
 import matplotlib.pyplot as plt
@@ -10,7 +11,6 @@ from dask.multiprocessing import get
 
 # import argparse
 # from dask.diagnostics import ProgressBar
-mpl.use('Agg')
 
 
 def mitgcm_Movie(ddir,
