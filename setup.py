@@ -13,11 +13,11 @@ VERSION = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 QUALIFIER = ''
 
 
-DISTNAME = 'xarraryutils'
+DISTNAME = 'xarrayutils'
 LICENSE = 'MIT'
 AUTHOR = 'Julius Busecke'
 AUTHOR_EMAIL = 'julius@ldeo.columbia.edu'
-URL = 'https://github.com/jbusecke/xarraryutils'
+URL = 'https://github.com/jbusecke/xarrayutils'
 CLASSIFIERS = [
     'Development Status :: 4 - Beta',
     'License :: OSI Approved :: Apache Software License',

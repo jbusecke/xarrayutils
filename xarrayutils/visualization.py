@@ -5,10 +5,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 from xmitgcm import open_mdsdataset
-# import argparse
-# from dask.diagnostics import ProgressBar
 from dask.array import from_array
 from dask.multiprocessing import get
+
+# import argparse
+# from dask.diagnostics import ProgressBar
 mpl.use('Agg')
 
 
@@ -138,11 +139,14 @@ def FramePrint(da,odir=None,
 
     fig = MovieFrame(framewidth,frameheight,dpi)
     # TODO plotsyle options
-    ax = plt.Axes(fig, [0., 0., 1., 1.])
+
+    # ax = plt.Axes(fig, [0., 0., 1., 1.])
+    # fig.add_axes(ax)
+    ax = fig.add_axes([0,0,1,1])
     ax.set_axis_off()
     ax.set_facecolor(facecolor)
     ax.set_aspect(1, anchor = 'C')
-    fig.add_axes(ax)
+
 
     if not dask:
         data   = da.data
