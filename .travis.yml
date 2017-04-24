@@ -37,6 +37,8 @@ install:
 # That turns out to be necessary for py.test to correctly collect the tests
 # and for coverage to work properly.
 # It is very complicated and confusing.
+before_script:
+  - flake8 . --ignore=E402
 
 script:
   - py.test xarrayutils -v --cov=xarrayutils --cov-config .coveragerc --cov-report term-missing
@@ -44,4 +46,3 @@ script:
 
 after_success:
   - codecov
-  - flake8 .
