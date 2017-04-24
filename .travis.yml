@@ -44,3 +44,4 @@ script:
 
 after_success:
   - codecov
+  - flake8 .

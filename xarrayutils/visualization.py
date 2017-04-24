@@ -38,6 +38,7 @@ def Movie(da, odir,
           frameheight=720,
           dpi=100,
           dask=True,
+          delete=True,
           ):
     # Set defaults:
 
@@ -114,7 +115,7 @@ def Movie(da, odir,
 
     with cd(odir):
         excode = os.system(query)
-        if excode == 0:
+        if excode == 0 and delete:
             os.system('rm *.png')
 
 def FramePrint(da,odir=None,
