@@ -14,7 +14,7 @@ def get_dims_from_comodo_axes(ds, axis):
         if ds[dd].attrs.keys():
             if 'standard_name' in ds[dd].attrs.keys():
                 if 'axis' in ds[dd].attrs.keys():
-                    if axis.lower()+'_grid_index' \
+                    if axis.lower() + '_grid_index' \
                      in ds[dd].attrs['standard_name']:
                         if axis in ds[dd].attrs['axis']:
                             pick_dims.append(dd)

@@ -38,7 +38,7 @@ install:
 # and for coverage to work properly.
 # It is very complicated and confusing.
 before_script:
-  - flake8 . --ignore=E402,F401,F811,W391
+  - flake8 . --ignore=E402,F401,F403,F811,W391
 
 script:
   - py.test xarrayutils -v --cov=xarrayutils --cov-config .coveragerc --cov-report term-missing
