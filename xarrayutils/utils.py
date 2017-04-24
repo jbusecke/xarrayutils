@@ -168,7 +168,7 @@ def fancymean(raw, dim=None, axis=None, method='arithmetic',
 
     if weights is None:
         w = 1
-    elif isinstance(weights, basestring):
+    elif isinstance(weights, str):
         w = raw[weights]
     elif isinstance(weights, np.ndarray):
         w = xr.DataArray(np.ones_like(raw.data),
