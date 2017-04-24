@@ -38,8 +38,12 @@ def Movie(da, odir,
           dpi=100,
           dask=True,
           delete=True,
+          ffmpeg=True,
           ):
     # Set defaults:
+    if not ffmpeg and delete:
+        raise RuntimeError('raw picture deletion makes only \
+            sense if ffmpeg conversion is enabled')
 
     if not isinstance(da, xr.DataArray):
         raise RuntimeError('input has to be an xarray DataStructure, instead\
@@ -110,7 +114,8 @@ def Movie(da, odir,
         "' + moviename + '.mp4"'
 
     with cd(odir):
-        excode = os.system(query)
+        if ffmpeg:
+            excode = os.system(query)
         if excode == 0 and delete:
             os.system('rm *.png')
 
