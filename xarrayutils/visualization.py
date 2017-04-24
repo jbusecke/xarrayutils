@@ -112,8 +112,9 @@ def Movie(da, odir,
         "'+moviename+'.mp4"'
 
     with cd(odir):
-        os.system(query)
-        os.system('rm *.png')
+        excode = os.system(query)
+        if excode == 0:
+            os.system('rm *.png')
 
 def FramePrint(da,odir=None,
                     frame=None,
