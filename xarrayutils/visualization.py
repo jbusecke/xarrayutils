@@ -17,12 +17,11 @@ def mitgcm_Movie(ddir,
                  prefix=['tracer_snapshots'],
                  maskname='hFacC',
                  varname='TRAC01',
-                 clim=[-1,  35]):
-    ds = open_mdsdataset(ddir, prefix=prefix,
-                         swap_dims=False)
+                 clim=[-1, 35]):
+    ds = open_mdsdataset(ddir, prefix=prefix, swap_dims=False)
     ds = ds[varname].where(ds[maskname] == 1)
     run = os.path.basename(os.path.normpath(ddir))
-    odir = ddir+'/movie'
+    odir = ddir + '/movie'
     Movie(ds, odir, clim=clim, moviename=run)
 
 
@@ -33,7 +32,7 @@ def Movie(da, odir,
           plotstyle='simple',
           clim=None,
           cmap=None,
-          bgcolor=np.array([1, 1, 1])*0.3,
+          bgcolor=np.array([1, 1, 1]) * 0.3,
           framewidth=1280,
           frameheight=720,
           dpi=100,
@@ -44,7 +43,7 @@ def Movie(da, odir,
 
     if not isinstance(da, xr.DataArray):
         raise RuntimeError('input has to be an xarray DataStructure, instead\
-        is '+str(type(da)))
+        is ' + str(type(da)))
 
     if not os.path.exists(odir):
         os.makedirs(odir)
@@ -99,7 +98,8 @@ def Movie(da, odir,
                        bgcolor=bgcolor
                        )
             if ii % 100 == 0:
-                remaining_time = (len(da.time)-ii)*(time.time()-start_time)/60
+                remaining_time = (len(da.time) - ii) * \
+                    (time.time() - start_time) / 60
                 print('FRAME---%04d---' % ii)
                 print('Estimated time left : %d minutes' % remaining_time)
 
@@ -107,7 +107,7 @@ def Movie(da, odir,
     query = 'ffmpeg -y -i "frame_%05d.png" -c:v libx264 -preset veryslow \
         -crf 6 -pix_fmt yuv420p \
         -framerate 20 \
-        "'+moviename+'.mp4"'
+        "' + moviename + '.mp4"'
 
     with cd(odir):
         excode = os.system(query)
@@ -120,8 +120,8 @@ def FramePrint(da,
                frame=None,
                cmap=None,
                clim=None,
-               bgcolor=np.array([1, 1, 1])*0.3,
-               facecolor=np.array([1, 1, 1])*0.3,
+               bgcolor=np.array([1, 1, 1]) * 0.3,
+               facecolor=np.array([1, 1, 1]) * 0.3,
                framewidth=1920,
                frameheight=1080,
                dpi=100,
@@ -138,7 +138,7 @@ def FramePrint(da,
         raise RuntimeError('need an output directory')
 
     fig = MovieFrame(framewidth, frameheight, dpi)
-    # TODO plotsyle options
+# TODO plotsyle options
 
     # ax = plt.Axes(fig, [0., 0., 1., 1.])
     # fig.add_axes(ax)
@@ -158,7 +158,7 @@ def FramePrint(da,
                clim=clim,
                bgcolor=bgcolor)
     #
-    fig.savefig(odir+'/frame_%05d.png' % frame, dpi=fig.dpi)
+    fig.savefig(odir + '/frame_%05d.png' % frame, dpi=fig.dpi)
     plt.close('all')
     # return fig,ax,h,dummy
     return from_array(np.array([0]), [1])
@@ -166,7 +166,7 @@ def FramePrint(da,
 
 def SimplePlot(data, ax, cmap=None,
                clim=None,
-               bgcolor=np.array([1, 1, 1])*0.3
+               bgcolor=np.array([1, 1, 1]) * 0.3
                ):
     if not cmap:
         cmap = plt.cm.Blues
@@ -185,13 +185,14 @@ def SimplePlot(data, ax, cmap=None,
 
 def MovieFrame(framewidth, frameheight, dpi):
     fig = plt.figure(frameon=False)
-    fig.set_size_inches(framewidth/dpi,
-                        frameheight/dpi)
+    fig.set_size_inches(framewidth / dpi,
+                        frameheight / dpi)
     return fig
 
 
 class cd:
     """Context manager for changing the current working directory"""
+
     def __init__(self, newPath):
         self.newPath = os.path.expanduser(newPath)
 

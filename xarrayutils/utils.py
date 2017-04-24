@@ -26,8 +26,8 @@ def aggregate_w_nanmean(da, weights, blocks, **kwargs):
         then the data array')
 
     weights_sum = aggregate(weights, blocks, func=np.nansum, **kwargs)
-    da_sum = aggregate(da*weights, blocks, func=np.nansum, **kwargs)
-    return da_sum/weights_sum
+    da_sum = aggregate(da * weights, blocks, func=np.nansum, **kwargs)
+    return da_sum / weights_sum
 
 
 def aggregate(da, blocks, func=np.nanmean, debug=False):
@@ -119,7 +119,8 @@ def aggregate(da, blocks, func=np.nanmean, debug=False):
         for dd in blocks:
             if dd[0] in list(da.coords[cc].dims):
                 new_coords[cc] = \
-                    new_coords[cc].isel(**{dd[0]: slice(0, -(1+dd[2]), dd[1])})
+                    new_coords[cc].isel(
+                        **{dd[0]: slice(0, -(1 + dd[2]), dd[1])})
 
     attrs = {'Coarsened with': str(func), 'Coarsenblocks': str(blocks)}
     da_coarse = xr.DataArray(da_coarse, dims=da.dims, coords=new_coords,
@@ -165,7 +166,7 @@ def fancymean(raw, dim=None, axis=None, method='arithmetic',
     if debug:
         print('axis', axis)
 
-    if weights == None:
+    if weights is None:
         w = 1
     elif isinstance(weights, basestring):
         w = raw[weights]
@@ -176,28 +177,28 @@ def fancymean(raw, dim=None, axis=None, method='arithmetic',
     # make sure the w array is the same size as the raw array
     # This way also nans will be propagated correctly in a bidirectional way
     ones = raw.copy()
-    ones = (ones*0)+1
-    w = w*ones
+    ones = (ones * 0) + 1
+    w = w * ones
     # now transpose the w array to the same axisorder as raw
     order = raw.dims
     w = w.transpose(*order)
 
     if method == 'arithmetic':
-        up = raw*w
+        up = raw * w
         down = w
-        out = up.sum(axis=axis)/down.sum(axis=axis)
+        out = up.sum(axis=axis) / down.sum(axis=axis)
     elif method == 'geometric':
         w = w.where(raw > 0)
         raw = raw.where(raw > 0)
-        up = np.log10(raw)*w
+        up = np.log10(raw) * w
         down = w
-        out = 10**(up.sum(axis=axis)/down.sum(axis=axis))
+        out = 10**(up.sum(axis=axis) / down.sum(axis=axis))
     elif method == 'harmonic':
         w = w.where(raw != 0)
         raw = raw.where(raw != 0)
-        up = w/raw
+        up = w / raw
         down = w
-        out = down.sum(axis=axis)/up.sum(axis=axis)
+        out = down.sum(axis=axis) / up.sum(axis=axis)
     if debug:
         print('w', w.shape)
         print('raw', raw.shape)
@@ -216,10 +217,10 @@ def timefilter(xr_in, steps,
     cut_dt = np.timedelta64(steps, step_spec)
 
     if filtertype == 'gaussian':
-        win_length = (cut_dt/dt).astype(int)
+        win_length = (cut_dt / dt).astype(int)
         a = [1.0]
-        win = gaussian(win_length, std=(float(win_length)*stdev))
-        b = win/win.sum()
+        win = gaussian(win_length, std=(float(win_length) * stdev))
+        b = win / win.sum()
         if np.nansum(win) == 0:
             raise RuntimeError('window to short for time interval')
             print('win_length', str(win_length))
@@ -232,7 +233,7 @@ def timefilter(xr_in, steps,
     out.attrs.update({'filterlength': (steps, step_spec),
                       'filtertype': filtertype})
     if xr_in.name:
-        out.name = xr_in.name+'_lowpassed'
+        out.name = xr_in.name + '_lowpassed'
     return out
 
 
@@ -260,7 +261,7 @@ def extractBoxes(da, bo, xname=None, yname=None, xdim='i', ydim='j',
     """
 
     if not type(xname) == type(yname):
-            raise RuntimeError('xname and yname need to be the same type')
+        raise RuntimeError('xname and yname need to be the same type')
 
     timeseries = []
     for ii, bb in enumerate(bo.keys()):
@@ -313,7 +314,7 @@ def composite(data, index, bounds):
         bounds = float(bounds)
 
     if isinstance(bounds, float):
-        bounds = [-bounds*np.std(index), bounds*np.std(index)]
+        bounds = [-bounds * np.std(index), bounds * np.std(index)]
 
     if len(bounds) != 2:
         raise RuntimeError('bounds can only have 1 or two elements')
@@ -339,7 +340,6 @@ def corrmap(a, b, shifts=0,
             b_x_dim='i', b_y_dim='j',
             b_x_coord=None, b_y_coord=None,
             t_dim='time', debug=True):
-
     """
     a -- input
     b -- target ()
@@ -381,15 +381,15 @@ def corrmap(a, b, shifts=0,
 
         s = a.mean(dim=t_dim).copy()
         s[:] = np.nan
-        s.name = a.name+' regressed onto '+b.name
+        s.name = a.name + ' regressed onto ' + b.name
 
         c = a.mean(dim=t_dim).copy()
         c[:] = np.nan
-        c.name = 'Corr coeff '+a.name+'/'+b.name
+        c.name = 'Corr coeff ' + a.name + '/' + b.name
 
         p = a.mean(dim=t_dim).copy()
         p[:] = np.nan
-        p.name = 'p value '+a.name+'/'+b.name
+        p.name = 'p value ' + a.name + '/' + b.name
 
         for ii in range(len(a[a_x_dim])):
             for jj in range(len(a[a_y_dim])):
@@ -439,7 +439,7 @@ def corrmap(a, b, shifts=0,
                 idx = np.logical_and(~np.isnan(y), ~np.isnan(x))
                 if y[idx].size:
                     s[{a_x_dim: ii, a_y_dim: jj}], _, c[{a_x_dim: ii,
-                                                        a_y_dim: jj}],\
+                                                         a_y_dim: jj}],\
                         p[{a_x_dim: ii, a_y_dim: jj}], _ = linregress(x[idx],
                                                                       y[idx])
         slope.append(s)

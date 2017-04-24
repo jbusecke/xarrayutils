@@ -15,7 +15,7 @@ def get_dims_from_comodo_axes(ds, axis):
             if 'standard_name' in ds[dd].attrs.keys():
                 if 'axis' in ds[dd].attrs.keys():
                     if axis.lower() + '_grid_index' \
-                     in ds[dd].attrs['standard_name']:
+                            in ds[dd].attrs['standard_name']:
                         if axis in ds[dd].attrs['axis']:
                             pick_dims.append(dd)
     return pick_dims
@@ -39,12 +39,12 @@ def wrap_func(grid, data, dim, wrap, func='diff', idx=0):
     elif func == 'interp':
         out = grid.interp(data, dim)
         # when interpolating the discontinuty gets halved
-        wrap = - wrap/2
+        wrap = - wrap / 2
     else:
         raise RuntimeError("`func` argument not recognized")
 
     target_dim = [a for a in out.dims
-                  if a in xgcm.comodo.get_axis_coords(grid._ds,  dim)]
+                  if a in xgcm.comodo.get_axis_coords(grid._ds, dim)]
     if len(target_dim) == 1:
         target_dim = target_dim[0]
     else:
@@ -71,103 +71,103 @@ def rebuild_grid(
         x_wrap=360,
         y_wrap=180,
         ll_dist=True):
-        """rebuild a xgcm compatible grid from scratch
-        """
-        grid.coords[x_index_name+g_index_suffix] = xr.DataArray(
-            grid.coords[x_index_name].data,
-            coords={x_index_name+g_index_suffix:
-                    ([x_index_name+g_index_suffix, ],
-                     grid.coords[x_index_name].data)},
-            dims=[x_index_name+g_index_suffix, ])
+    """rebuild a xgcm compatible grid from scratch
+    """
+    grid.coords[x_index_name + g_index_suffix] = xr.DataArray(
+        grid.coords[x_index_name].data,
+        coords={x_index_name + g_index_suffix:
+                ([x_index_name + g_index_suffix, ],
+                 grid.coords[x_index_name].data)},
+        dims=[x_index_name + g_index_suffix, ])
 
-        grid.coords[y_index_name+g_index_suffix] = xr.DataArray(
-            grid.coords[y_index_name].data,
-            coords={y_index_name+g_index_suffix:
-                    ([y_index_name+g_index_suffix, ],
-                     grid.coords[y_index_name].data)},
-            dims=[y_index_name+g_index_suffix, ])
+    grid.coords[y_index_name + g_index_suffix] = xr.DataArray(
+        grid.coords[y_index_name].data,
+        coords={y_index_name + g_index_suffix:
+                ([y_index_name + g_index_suffix, ],
+                 grid.coords[y_index_name].data)},
+        dims=[y_index_name + g_index_suffix, ])
 
-        # assign xgcm compatible attributes
-        grid[x_index_name].attrs = {'axis': 'X',
-                                    'standard_name': 'x_grid_index',
-                                    'long_name': 'x-dimension of the grid'}
-        grid[y_index_name].attrs = {'axis': 'Y',
-                                    'standard_name': 'y_grid_index',
-                                    'long_name': 'y-dimension of the grid'}
-        grid[x_index_name+g_index_suffix].attrs = \
-            {'axis': 'X',
-             'standard_name': 'x_grid_index_at_u_location',
-             'long_name': 'x-dimension of the grid',
-             'c_grid_axis_shift': g_shift}
-        grid[y_index_name+g_index_suffix].attrs = \
-            {'axis': 'Y',
-             'standard_name': 'y_grid_index_at_v_location',
-             'long_name': 'y-dimension of the grid',
-             'c_grid_axis_shift': g_shift}
-        xgrid = xgcm.Grid(grid)
+    # assign xgcm compatible attributes
+    grid[x_index_name].attrs = {'axis': 'X',
+                                'standard_name': 'x_grid_index',
+                                'long_name': 'x-dimension of the grid'}
+    grid[y_index_name].attrs = {'axis': 'Y',
+                                'standard_name': 'y_grid_index',
+                                'long_name': 'y-dimension of the grid'}
+    grid[x_index_name + g_index_suffix].attrs = \
+        {'axis': 'X',
+         'standard_name': 'x_grid_index_at_u_location',
+         'long_name': 'x-dimension of the grid',
+         'c_grid_axis_shift': g_shift}
+    grid[y_index_name + g_index_suffix].attrs = \
+        {'axis': 'Y',
+         'standard_name': 'y_grid_index_at_v_location',
+         'long_name': 'y-dimension of the grid',
+         'c_grid_axis_shift': g_shift}
+    xgrid = xgcm.Grid(grid)
 
-        # #Construct the grid coordinates
-        tempa = grid.coords[x_name+g_suffix] = \
-            wrap_func(xgrid, grid.coords[x_name+c_suffix],
-                      'X',
-                      x_wrap,
-                      func='interp',
-                      idx=0)
-        tempb = grid.coords[y_name+g_suffix] = \
-            wrap_func(xgrid, grid.coords[y_name+c_suffix],
-                      'Y',
-                      y_wrap,
-                      func='interp',
-                      idx=0)
+    # #Construct the grid coordinates
+    tempa = grid.coords[x_name + g_suffix] = \
+        wrap_func(xgrid, grid.coords[x_name + c_suffix],
+                  'X',
+                  x_wrap,
+                  func='interp',
+                  idx=0)
+    tempb = grid.coords[y_name + g_suffix] = \
+        wrap_func(xgrid, grid.coords[y_name + c_suffix],
+                  'Y',
+                  y_wrap,
+                  func='interp',
+                  idx=0)
 
-        grid.coords[x_name+g_suffix] = xgrid.interp(tempa, 'Y')
-        grid.coords[y_name+g_suffix] = xgrid.interp(tempb, 'X')
+    grid.coords[x_name + g_suffix] = xgrid.interp(tempa, 'Y')
+    grid.coords[y_name + g_suffix] = xgrid.interp(tempb, 'X')
 
-        ##############
-        # cell lengths
-        ##############
+    ##############
+    # cell lengths
+    ##############
 
-        #
-        grid.coords['dx'+c_suffix] = wrap_func(
-                                        xgrid,
-                                        grid.coords[x_name+c_suffix],
-                                        'X',
-                                        x_wrap,
-                                        idx=0)
-        grid.coords['dy'+c_suffix] = wrap_func(
-                                        xgrid,
-                                        grid.coords[y_name+c_suffix],
-                                        'Y',
-                                        y_wrap,
-                                        idx=0)
+    #
+    grid.coords['dx' + c_suffix] = wrap_func(
+        xgrid,
+        grid.coords[x_name + c_suffix],
+        'X',
+        x_wrap,
+        idx=0)
+    grid.coords['dy' + c_suffix] = wrap_func(
+        xgrid,
+        grid.coords[y_name + c_suffix],
+        'Y',
+        y_wrap,
+        idx=0)
 
-        grid.coords['dx'+g_suffix] = wrap_func(
-                                        xgrid,
-                                        grid.coords[x_name+g_suffix],
-                                        'X',
-                                        x_wrap,
-                                        idx=-1)
-        grid.coords['dy'+g_suffix] = wrap_func(
-                                        xgrid,
-                                        grid.coords[y_name+g_suffix],
-                                        'Y',
-                                        y_wrap,
-                                        idx=-1)
+    grid.coords['dx' + g_suffix] = wrap_func(
+        xgrid,
+        grid.coords[x_name + g_suffix],
+        'X',
+        x_wrap,
+        idx=-1)
+    grid.coords['dy' + g_suffix] = wrap_func(
+        xgrid,
+        grid.coords[y_name + g_suffix],
+        'Y',
+        y_wrap,
+        idx=-1)
 
-        if ll_dist:
-            grid.coords['dx'+c_suffix], grid.coords['dy'+c_suffix] = dll_dist(
-                    grid.coords['dx'+c_suffix],
-                    grid.coords['dy'+c_suffix],
-                    grid.coords[x_name+c_suffix],
-                    grid.coords[y_name+c_suffix])
+    if ll_dist:
+        grid.coords['dx' + c_suffix], grid.coords['dy' + c_suffix] = dll_dist(
+            grid.coords['dx' + c_suffix],
+            grid.coords['dy' + c_suffix],
+            grid.coords[x_name + c_suffix],
+            grid.coords[y_name + c_suffix])
 
-            grid.coords['dx'+g_suffix], grid.coords['dy'+g_suffix] = dll_dist(
-                    grid.coords['dx'+g_suffix],
-                    grid.coords['dy'+g_suffix],
-                    grid.coords[x_name+g_suffix],
-                    grid.coords[y_name+g_suffix]
-                    )
-        return grid
+        grid.coords['dx' + g_suffix], grid.coords['dy' + g_suffix] = dll_dist(
+            grid.coords['dx' + g_suffix],
+            grid.coords['dy' + g_suffix],
+            grid.coords[x_name + g_suffix],
+            grid.coords[y_name + g_suffix]
+        )
+    return grid
 
 
 def dll_dist(dlon, dlat, lon, lat, xarray=True):
@@ -198,8 +198,8 @@ def dll_dist(dlon, dlat, lon, lat, xarray=True):
     # First attempt with super cheap approach...
     #     111km for each deg lat and then scale that by cos(lat) for lon
     dll_factor = 111000.0
-    dx = dlon*np.cos(np.deg2rad(lat))*dll_factor
-    dy = dlat*dll_factor
+    dx = dlon * np.cos(np.deg2rad(lat)) * dll_factor
+    dy = dlat * dll_factor
 
     if xarray:
         dx = xr.DataArray(dx, coords=dx_coords, dims=dx_dims)
@@ -229,8 +229,8 @@ def grid_aggregate(grid, axis_bins):
     """
     bins = []
     for tt in axis_bins:
-        bins = bins+[(a, tt[1]) for a in
-                     get_dims_from_comodo_axes(grid, tt[0])]
+        bins = bins + [(a, tt[1]) for a in
+                       get_dims_from_comodo_axes(grid, tt[0])]
 
     new_dims = dict([])
     for dd in grid.dims.keys():

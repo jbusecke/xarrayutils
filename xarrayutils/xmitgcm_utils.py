@@ -21,7 +21,7 @@ def derivative(grid, data, axis, debug=False):
     if dx is None:
         raise RuntimeError('grid distance could not be \
                             extracted check grid input')
-    return delta/dx
+    return delta / dx
 
 
 def gradient(grid, data, interpolate=False, debug=False):
@@ -64,12 +64,12 @@ def laplacian(grid, data):
     gradx, grady = gradient(grid, data)
     grad2x, dummy = gradient(grid, gradx)
     dummy, grad2y = gradient(grid, grady)
-    return grad2y+grad2x
+    return grad2y + grad2x
 
 
 def gradient_sq_amplitude(grid, data):
     gradx, grady = gradient(grid, data, interpolate=True)
-    return gradx**2+grady**2
+    return gradx ** 2 + grady ** 2
 
 
 # Silly functions
