@@ -2,7 +2,7 @@ from __future__ import print_function
 # from future.utils import iteritems
 import numpy as np
 import xarray as xr
-from scipy.signal import filtfilt, butter, gaussian
+from scipy.signal import filtfilt, gaussian
 from dask.array import coarsen
 from dask.array.core import Array
 import warnings
