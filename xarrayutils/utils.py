@@ -237,9 +237,8 @@ def timefilter(xr_in, steps,
     return out
 
 
-def extractBoxes(da, bo, xname=None, yname=None, xdim='i', ydim='j',
-                 tname='time', method='arithmetic', weights=None):
-    """ Extracts average timeseries from boxes
+def extractBoxes(da, bo, xname=None, yname=None, xdim='lon', ydim='lat'):
+    """ Extracts boxes from DataArray
 
 
     Keyword arguments:
@@ -253,11 +252,6 @@ def extractBoxes(da, bo, xname=None, yname=None, xdim='i', ydim='j',
     xname -- coordinate name for x (default: 'None')
     yname -- coordinate name for y (default: 'None')
     xname and yname have to be specified if coordinates are of differnt shape
-
-    tname -- coordinate name for time dimention (default: 'time')
-    method -- choice of method to compute spatial mean. See docs of
-                TracerProcessing.py/xarray_fancymean
-    weights --
     """
 
     if not type(xname) == type(yname):
@@ -269,15 +263,13 @@ def extractBoxes(da, bo, xname=None, yname=None, xdim='i', ydim='j',
         if xname is None:
             box_dict = {xdim: slice(box[0], box[1]),
                         ydim: slice(box[2], box[3])}
-            temp = fancymean(da.loc[box_dict], dim=(xdim, ydim),
-                             method=method, weights=weights)
+            temp = da.loc[box_dict]
         else:
             mask = np.logical_and(np.logical_and(da[xname] > box[0],
                                                  da[xname] < box[1]),
                                   np.logical_and(da[yname] > box[2],
                                                  da[yname] < box[3]))
-            temp = fancymean(da.where(mask), dim=(xdim, ydim),
-                             method=method, weights=weights)
+            temp = da.where(mask)
 
         timeseries.append(temp)
     out = xr.concat(timeseries, 'boxname')
