@@ -8,9 +8,9 @@ import xarray as xr
 from xmitgcm import open_mdsdataset
 from dask.array import from_array
 from dask.multiprocessing import get
+from dask.diagnostics import ProgressBar
 
 # import argparse
-# from dask.diagnostics import ProgressBar
 
 
 def mitgcm_Movie(ddir,
@@ -53,10 +53,10 @@ def Movie(da, odir,
         os.makedirs(odir)
 
     # Infer defaults from data
-    if not clim:
+    if clim is None:
         print('clim will be inferred from data, this can take very long...')
         clim = [da.min(), da.max()]
-    if not cmap:
+    if cmap is None:
         cmap = plt.cm.RdYlBu_r
 
     # Annnd here we go
@@ -68,26 +68,27 @@ def Movie(da, odir,
         chunks = list(data.shape)
         chunks[frame_axis] = 1
         data = data.rechunk(chunks)
-        # with ProgressBar():
-        data.map_blocks(FramePrint, chunks=[1],
-                        drop_axis=drop_axis,
-                        dtype=np.float64,
-                        dask=dask,
-                        frame_axis=frame_axis,
-                        odir=odir,
-                        cmap=cmap,
-                        clim=clim,
-                        framewidth=framewidth,
-                        frameheight=frameheight,
-                        dpi=dpi,
-                        bgcolor=bgcolor
-                        ).compute(get=get)
+        with ProgressBar():
+            data.map_blocks(FramePrint, chunks=[1],
+                            drop_axis=drop_axis,
+                            dtype=np.float64,
+                            dask=dask,
+                            frame_axis=frame_axis,
+                            odir=odir,
+                            cmap=cmap,
+                            clim=clim,
+                            framewidth=framewidth,
+                            frameheight=frameheight,
+                            dpi=dpi,
+                            bgcolor=bgcolor
+                            ).compute(get=get)
     # The .compute(get=get) line is some dask 'magic': it parallelizes the
     # print function with processes and not threads,which is a lot faster
     # for custom functions apparently!
 
     else:
         # do it with a simple for loop...can this really be quicker?
+        print('This is slow! Do it in dask!')
         for ii in range(0, len(da.time)):
             start_time = time.time()
             da_slice = da[{framedim: ii}]
@@ -110,7 +111,7 @@ def Movie(da, odir,
     print('+++ Convert frames to video +++')
     query = 'ffmpeg -y -i "frame_%05d.png" -c:v libx264 -preset veryslow \
         -crf 6 -pix_fmt yuv420p \
-        -framerate 20 \
+        -framerate 15 \
         "' + moviename + '.mp4"'
 
     with cd(odir):
@@ -118,6 +119,32 @@ def Movie(da, odir,
             excode = os.system(query)
         if excode == 0 and delete:
             os.system('rm *.png')
+
+
+def SimplePlot(data, ax, cmap=None,
+               clim=None,
+               bgcolor=np.array([1, 1, 1]) * 0.3
+               ):
+    if cmap is None:
+        cmap = plt.cm.Blues
+    if clim is None:
+        print('clim not defined. Will be deduced from data. \
+        This could have undesired effects for videos')
+        clim = [data.min(), data.max()]
+
+    cmap.set_bad(bgcolor, 1)
+    pixels = np.squeeze(np.ma.array(data, mask=np.isnan(data)))
+    h = ax.imshow(pixels, cmap=cmap, clim=clim,
+                  aspect='auto', interpolation='none')
+    ax.invert_yaxis()
+    return h
+
+
+def MovieFrame(framewidth, frameheight, dpi):
+    fig = plt.figure(frameon=False)
+    fig.set_size_inches(framewidth / dpi,
+                        frameheight / dpi)
+    return fig
 
 
 def FramePrint(da,
@@ -132,7 +159,8 @@ def FramePrint(da,
                dpi=100,
                dask=False,
                block_id=None,
-               frame_axis=None
+               frame_axis=None,
+               plot_func=SimplePlot,
                ):
     """Prints the plotted picture to file
 
@@ -158,41 +186,15 @@ def FramePrint(da,
         data = da
         frame = block_id[frame_axis]
 
-    SimplePlot(data, ax,
-               cmap=cmap,
-               clim=clim,
-               bgcolor=bgcolor)
+    plot_func(data, ax,
+              cmap=cmap,
+              clim=clim,
+              bgcolor=bgcolor)
     #
     fig.savefig(odir + '/frame_%05d.png' % frame, dpi=fig.dpi)
     plt.close('all')
     # return fig,ax,h,dummy
     return from_array(np.array([0]), [1])
-
-
-def SimplePlot(data, ax, cmap=None,
-               clim=None,
-               bgcolor=np.array([1, 1, 1]) * 0.3
-               ):
-    if not cmap:
-        cmap = plt.cm.Blues
-    if not clim:
-        print('clim not defined. Will be deduced from data. \
-        This could have undesired effects for videos')
-        clim = [data.min(), data.max()]
-
-    cmap.set_bad(bgcolor, 1)
-    pixels = np.squeeze(np.ma.array(data, mask=np.isnan(data)))
-    h = ax.imshow(pixels, cmap=cmap, clim=clim,
-                  aspect='auto', interpolation='none')
-    ax.invert_yaxis()
-    return h
-
-
-def MovieFrame(framewidth, frameheight, dpi):
-    fig = plt.figure(frameon=False)
-    fig.set_size_inches(framewidth / dpi,
-                        frameheight / dpi)
-    return fig
 
 
 class cd:
