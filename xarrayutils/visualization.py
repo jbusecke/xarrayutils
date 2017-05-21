@@ -259,14 +259,14 @@ def FramePrint(da,
     fig = MovieFrame(framewidth, frameheight, dpi)
 
     if plot_style == 'simple':
-        print ('Simple Mode')
+        print('Simple Mode')
         SimplePlot(data, fig,
                    cmap=cmap,
                    clim=clim,
                    bgcolor=bgcolor,
                    norm=norm)
     elif plot_style == 'map':
-        print ('Map Mode')
+        print('Map Mode')
         MapPlot(data, fig,
                 cmap=cmap,
                 clim=clim,
