@@ -11,9 +11,6 @@ from dask.array import from_array
 from dask.multiprocessing import get
 from dask.diagnostics import ProgressBar
 
-# import argparse
-
-
 def mitgcm_Movie(ddir,
                  prefix=['tracer_snapshots'],
                  maskname='hFacC',
@@ -69,11 +66,16 @@ def Movie(da, odir,
         else:
             lons = np.array(da[lon].data)
             lats = np.array(da[lat].data)
-            # TODO: meshgrid automatically
+
+            if len(lons.shape) != 2:
+                lons, lats = np.meshgrid(lons, lats)
+
+            time = np.array(da['time'].data)
 
     else:
         lons = None
         lats = None
+        time = None
 
     # Annnd here we go
     print('+++ Execute plot function +++')
@@ -95,12 +97,13 @@ def Movie(da, odir,
                             clim=clim,
                             framewidth=framewidth,
                             frameheight=frameheight,
-                            dpi=dpi,
                             bgcolor=bgcolor,
                             plot_style=plot_style,
                             lons=lons,
                             lats=lats,
-                            norm=norm
+                            time=time,
+                            norm=norm,
+                            dpi=dpi
                             ).compute(get=get)
     # The .compute(get=get) line is some dask 'magic': it parallelizes the
     # print function with processes and not threads,which is a lot faster
@@ -124,7 +127,8 @@ def Movie(da, odir,
                        plot_style=plot_style,
                        lons=lons,
                        lats=lats,
-                       norm=norm
+                       norm=norm,
+                       dpi=dpi
                        )
             if ii % 100 == 0:
                 remaining_time = (len(da.time) - ii) * \
@@ -154,7 +158,7 @@ def SimplePlot(data, fig,
 
     if cmap is None:
         cmap = plt.cm.Blues
-
+    fig.set_frameon(False)
     ax = fig.add_axes([0, 0, 1, 1])
     ax.set_axis_off()
     ax.set_facecolor(bgcolor)
@@ -180,14 +184,14 @@ def MapPlot(data, fig,
             norm=mpl.colors.Normalize(),
             resolution='c',
             proj='robin',
-            lon_0=0
+            lon_0=180
             ):
         if lons is None:
             raise RuntimeError('map plotting needs lons input')
         if lats is None:
             raise RuntimeError('map plotting needs lats input')
         # cmap.set_bad(bgcolor, 1)
-        # ax = fig.add_axes([0.2, 0.2, 0.8, 0.8])
+        # ax = fig.add_axes([0.15, 0.15, 0.85, 0.85])
         # ax.set_axis_off()
         # ax.set_facecolor(facecolor)
         # ax.set_aspect(1, anchor='C')
@@ -201,7 +205,7 @@ def MapPlot(data, fig,
                       linewidth=linewidth,
                       latlon=True)
         # TODO: Customize these eventually?
-        m.drawmapboundary(fill_color=bgcolor, linewidth=1, color='0.75')
+        m.drawmapboundary(fill_color=bgcolor, linewidth=1, color=bgcolor)
         m.drawcoastlines(color='0.75')
         m.fillcontinents(color='0.8')
         cb = m.colorbar(im, "right", size="3%", pad="8%")
@@ -213,7 +217,7 @@ def MapPlot(data, fig,
 
 
 def MovieFrame(framewidth, frameheight, dpi):
-    fig = plt.figure(frameon=False)
+    fig = plt.figure()
     fig.set_size_inches(framewidth / dpi,
                         frameheight / dpi)
     return fig
@@ -235,6 +239,7 @@ def FramePrint(da,
                plot_style='simple',
                lons=None,
                lats=None,
+               time=None,
                norm=mpl.colors.Normalize()
                ):
     """Prints the plotted picture to file
@@ -259,25 +264,25 @@ def FramePrint(da,
     fig = MovieFrame(framewidth, frameheight, dpi)
 
     if plot_style == 'simple':
-        print('Simple Mode')
         SimplePlot(data, fig,
                    cmap=cmap,
                    clim=clim,
                    bgcolor=bgcolor,
                    norm=norm)
     elif plot_style == 'map':
-        print('Map Mode')
         MapPlot(data, fig,
                 cmap=cmap,
                 clim=clim,
                 bgcolor=bgcolor,
                 lons=lons,
                 lats=lats,
-                norm=norm)
+                norm=norm,
+                title=time[frame])
     else:
         raise RuntimeError('plot_style not recognized')
     #
-    fig.savefig(odir + '/frame_%05d.png' % frame, dpi=fig.dpi)
+    fig.savefig(odir + '/frame_%05d.png' % frame, dpi=dpi)
+    # dpi=fig.dpi
     plt.close('all')
     # return fig,ax,h,dummy
     return from_array(np.array([0]), [1])
