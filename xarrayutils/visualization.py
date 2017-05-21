@@ -3,6 +3,7 @@ mpl.use('Agg')
 import os
 import time
 import matplotlib.pyplot as plt
+from mpl_toolkits.basemap import Basemap
 import numpy as np
 import xarray as xr
 from xmitgcm import open_mdsdataset
@@ -29,16 +30,19 @@ def Movie(da, odir,
           varname=None,
           framedim='time',
           moviename='movie',
-          plotstyle='simple',
           clim=None,
           cmap=None,
           bgcolor=np.array([1, 1, 1]) * 0.3,
           framewidth=1280,
           frameheight=720,
           dpi=100,
+          lon=None,
+          lat=None,
           dask=True,
           delete=True,
           ffmpeg=True,
+          plot_style='simple',
+          norm=mpl.colors.Normalize()
           ):
     # Set defaults:
     if not ffmpeg and delete:
@@ -57,7 +61,19 @@ def Movie(da, odir,
         print('clim will be inferred from data, this can take very long...')
         clim = [da.min(), da.max()]
     if cmap is None:
-        cmap = plt.cm.RdYlBu_r
+        cmap = plt.cm.viridis
+
+    if plot_style in ['map']:
+        if None in [lon, lat]:
+            raise RuntimeError('map plotting requires lon and lat')
+        else:
+            lons = np.array(da[lon].data)
+            lats = np.array(da[lat].data)
+            # TODO: meshgrid automatically
+
+    else:
+        lons = None
+        lats = None
 
     # Annnd here we go
     print('+++ Execute plot function +++')
@@ -80,7 +96,11 @@ def Movie(da, odir,
                             framewidth=framewidth,
                             frameheight=frameheight,
                             dpi=dpi,
-                            bgcolor=bgcolor
+                            bgcolor=bgcolor,
+                            plot_style=plot_style,
+                            lons=lons,
+                            lats=lats,
+                            norm=norm
                             ).compute(get=get)
     # The .compute(get=get) line is some dask 'magic': it parallelizes the
     # print function with processes and not threads,which is a lot faster
@@ -100,7 +120,11 @@ def Movie(da, odir,
                        clim=clim,
                        framewidth=framewidth,
                        frameheight=dpi,
-                       bgcolor=bgcolor
+                       bgcolor=bgcolor,
+                       plot_style=plot_style,
+                       lons=lons,
+                       lats=lats,
+                       norm=norm
                        )
             if ii % 100 == 0:
                 remaining_time = (len(da.time) - ii) * \
@@ -108,36 +132,84 @@ def Movie(da, odir,
                 print('FRAME---%04d---' % ii)
                 print('Estimated time left : %d minutes' % remaining_time)
 
-    print('+++ Convert frames to video +++')
     query = 'ffmpeg -y -i "frame_%05d.png" -c:v libx264 -preset veryslow \
         -crf 6 -pix_fmt yuv420p \
-        -framerate 15 \
+        -framerate 10 \
         "' + moviename + '.mp4"'
 
     with cd(odir):
         if ffmpeg:
+            print('+++ Convert frames to video +++')
             excode = os.system(query)
-        if excode == 0 and delete:
-            os.system('rm *.png')
+            if excode == 0 and delete:
+                os.system('rm *.png')
 
 
-def SimplePlot(data, ax, cmap=None,
+def SimplePlot(data, fig,
+               cmap=None,
                clim=None,
-               bgcolor=np.array([1, 1, 1]) * 0.3
+               bgcolor='0.3',
+               norm=mpl.colors.Normalize()
                ):
+
     if cmap is None:
         cmap = plt.cm.Blues
-    if clim is None:
-        print('clim not defined. Will be deduced from data. \
-        This could have undesired effects for videos')
-        clim = [data.min(), data.max()]
 
+    ax = fig.add_axes([0, 0, 1, 1])
+    ax.set_axis_off()
+    ax.set_facecolor(bgcolor)
+    ax.set_aspect(1, anchor='C')
     cmap.set_bad(bgcolor, 1)
     pixels = np.squeeze(np.ma.array(data, mask=np.isnan(data)))
     h = ax.imshow(pixels, cmap=cmap, clim=clim,
-                  aspect='auto', interpolation='none')
+                  aspect='auto', interpolation='none', norm=norm)
     ax.invert_yaxis()
     return h
+
+
+def MapPlot(data, fig,
+            cmap=None,
+            clim=None,
+            bgcolor=np.array([1, 1, 1]) * 0.3,
+            facecolor=np.array([1, 1, 1]) * 0.3,
+            lons=None,
+            lats=None,
+            title=None,
+            label=None,
+            linewidth=None,
+            norm=mpl.colors.Normalize(),
+            resolution='c',
+            proj='robin',
+            lon_0=0
+            ):
+        if lons is None:
+            raise RuntimeError('map plotting needs lons input')
+        if lats is None:
+            raise RuntimeError('map plotting needs lats input')
+        # cmap.set_bad(bgcolor, 1)
+        # ax = fig.add_axes([0.2, 0.2, 0.8, 0.8])
+        # ax.set_axis_off()
+        # ax.set_facecolor(facecolor)
+        # ax.set_aspect(1, anchor='C')
+        m = Basemap(projection=proj, lon_0=lon_0, resolution=resolution)
+        pixels = np.squeeze(np.ma.array(data, mask=np.isnan(data)))
+        im = m.pcolor(np.array(lons), np.array(lats), pixels,
+                      cmap=cmap,
+                      vmin=clim[0],
+                      vmax=clim[1],
+                      norm=norm,
+                      linewidth=linewidth,
+                      latlon=True)
+        # TODO: Customize these eventually?
+        m.drawmapboundary(fill_color=bgcolor, linewidth=1, color='0.75')
+        m.drawcoastlines(color='0.75')
+        m.fillcontinents(color='0.8')
+        cb = m.colorbar(im, "right", size="3%", pad="8%")
+        if label is not None:
+            cb.set_label(label, fontsize=20, labelpad=10)
+        cb.ax.tick_params(labelsize=20)
+        if title is not None:
+            plt.gca().set_title(title, y=1.03, fontsize=20)
 
 
 def MovieFrame(framewidth, frameheight, dpi):
@@ -160,7 +232,10 @@ def FramePrint(da,
                dask=False,
                block_id=None,
                frame_axis=None,
-               plot_func=SimplePlot,
+               plot_style='simple',
+               lons=None,
+               lats=None,
+               norm=mpl.colors.Normalize()
                ):
     """Prints the plotted picture to file
 
@@ -170,26 +245,37 @@ def FramePrint(da,
     if not odir:
         raise RuntimeError('need an output directory')
 
-    fig = MovieFrame(framewidth, frameheight, dpi)
-# TODO plotsyle options
-
-    # ax = plt.Axes(fig, [0., 0., 1., 1.])
-    # fig.add_axes(ax)
-    ax = fig.add_axes([0, 0, 1, 1])
-    ax.set_axis_off()
-    ax.set_facecolor(facecolor)
-    ax.set_aspect(1, anchor='C')
-
     if not dask:
         data = da.data
     else:
         data = da
         frame = block_id[frame_axis]
 
-    plot_func(data, ax,
-              cmap=cmap,
-              clim=clim,
-              bgcolor=bgcolor)
+    if clim is None:
+        print('clim not defined. Will be deduced from data. \
+        This could have undesired effects for videos')
+        clim = [data.min(), data.max()]
+
+    fig = MovieFrame(framewidth, frameheight, dpi)
+
+    if plot_style == 'simple':
+        print ('Simple Mode')
+        SimplePlot(data, fig,
+                   cmap=cmap,
+                   clim=clim,
+                   bgcolor=bgcolor,
+                   norm=norm)
+    elif plot_style == 'map':
+        print ('Map Mode')
+        MapPlot(data, fig,
+                cmap=cmap,
+                clim=clim,
+                bgcolor=bgcolor,
+                lons=lons,
+                lats=lats,
+                norm=norm)
+    else:
+        raise RuntimeError('plot_style not recognized')
     #
     fig.savefig(odir + '/frame_%05d.png' % frame, dpi=fig.dpi)
     plt.close('all')
