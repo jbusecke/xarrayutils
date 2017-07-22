@@ -27,8 +27,8 @@ def interp_map_regular_grid(a, x, y, x_i, y_i,
         y[0] = y[0] - 180
         y[-1] = y[-1] + 180
 
-        a = a[:, [-1] + range(a.shape[1]) + [0]]
-        a = a[[-1] + range(a.shape[0]) + [0], :]
+        a = a[:, [-1] + list(range(a.shape[1])) + [0]]
+        a = a[[-1] + list(range(a.shape[0])) + [0], :]
 
     if debug:
         print('a shape', a.shape)
@@ -58,20 +58,20 @@ def interp_map_irregular_grid(a, x, y, x_i, y_i, method='linear', debug=False):
     xx_i, yy_i = np.meshgrid(x_i, y_i)
 
     # pad margins to avoid nans in the interpolation
-    xx = xx[:, [-1] + range(xx.shape[1]) + [0]]
-    xx = xx[[-1] + range(xx.shape[0]) + [0], :]
+    xx = xx[:, [-1] + list(range(xx.shape[1])) + [0]]
+    xx = xx[[-1] + list(range(xx.shape[0])) + [0], :]
 
     xx[:, 0] = xx[:, 0] - 360
     xx[:, -1] = xx[:, -1] + 360
 
-    yy = yy[:, [-1] + range(yy.shape[1]) + [0]]
-    yy = yy[[-1] + range(yy.shape[0]) + [0], :]
+    yy = yy[:, [-1] + list(range(yy.shape[1])) + [0]]
+    yy = yy[[-1] + list(range(yy.shape[0])) + [0], :]
 
     yy[0, :] = yy[0, :] - 180
     yy[-1, :] = yy[-1, :] + 180
 
-    a = a[:, [-1] + range(a.shape[1]) + [0]]
-    a = a[[-1] + range(a.shape[0]) + [0], :]
+    a = a[:, [-1] + list(range(a.shape[1])) + [0]]
+    a = a[[-1] + list(range(a.shape[0])) + [0], :]
 
     if debug:
         print('a shape', a.shape)
