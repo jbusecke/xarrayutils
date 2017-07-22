@@ -11,6 +11,7 @@ from dask.array import from_array
 from dask.multiprocessing import get
 from dask.diagnostics import ProgressBar
 
+
 def mitgcm_Movie(ddir,
                  prefix=['tracer_snapshots'],
                  maskname='hFacC',
