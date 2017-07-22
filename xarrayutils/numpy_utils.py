@@ -18,8 +18,8 @@ def interp_map_regular_grid(a, x, y, x_i, y_i,
     # in global maps
     if wrap:
 
-        x = x[[-1] + range(x.shape[0]) + [0]]
-        y = y[[-1] + range(y.shape[0]) + [0]]
+        x = x[[-1] + list(range(x.shape[0])) + [0]]
+        y = y[[-1] + list(range(y.shape[0])) + [0]]
 
         x[0] = x[0] - 360
         x[-1] = x[-1] + 360
