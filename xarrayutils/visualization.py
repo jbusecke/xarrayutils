@@ -40,7 +40,8 @@ def Movie(da, odir,
           delete=True,
           ffmpeg=True,
           plot_style='simple',
-          norm=mpl.colors.Normalize()
+          norm=mpl.colors.Normalize(),
+          progbar=False
           ):
     # Set defaults:
     if not ffmpeg and delete:
@@ -87,8 +88,9 @@ def Movie(da, odir,
         chunks = list(data.shape)
         chunks[frame_axis] = 1
         data = data.rechunk(chunks)
-        pbar = ProgressBar()
-        pbar.register()
+        if progbar:
+            pbar = ProgressBar()
+            pbar.register()
         data.map_blocks(FramePrint, chunks=[1],
                         drop_axis=drop_axis,
                         dtype=np.float64,
@@ -107,7 +109,8 @@ def Movie(da, odir,
                         norm=norm,
                         dpi=dpi
                         ).compute(get=get)
-        pbar.unregister()
+        if progbar:
+            pbar.unregister()
     # The .compute(get=get) line is some dask 'magic': it parallelizes the
     # print function with processes and not threads,which is a lot faster
     # for custom functions apparently!
