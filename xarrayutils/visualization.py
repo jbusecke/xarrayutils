@@ -87,29 +87,30 @@ def Movie(da, odir,
         chunks = list(data.shape)
         chunks[frame_axis] = 1
         data = data.rechunk(chunks)
-        with ProgressBar():
-            data.map_blocks(FramePrint, chunks=[1],
-                            drop_axis=drop_axis,
-                            dtype=np.float64,
-                            dask=dask,
-                            frame_axis=frame_axis,
-                            odir=odir,
-                            cmap=cmap,
-                            clim=clim,
-                            framewidth=framewidth,
-                            frameheight=frameheight,
-                            bgcolor=bgcolor,
-                            plot_style=plot_style,
-                            lons=lons,
-                            lats=lats,
-                            time=time,
-                            norm=norm,
-                            dpi=dpi
-                            ).compute(get=get)
+        pbar = ProgressBar()
+        pbar.register()
+        data.map_blocks(FramePrint, chunks=[1],
+                        drop_axis=drop_axis,
+                        dtype=np.float64,
+                        dask=dask,
+                        frame_axis=frame_axis,
+                        odir=odir,
+                        cmap=cmap,
+                        clim=clim,
+                        framewidth=framewidth,
+                        frameheight=frameheight,
+                        bgcolor=bgcolor,
+                        plot_style=plot_style,
+                        lons=lons,
+                        lats=lats,
+                        time=time,
+                        norm=norm,
+                        dpi=dpi
+                        ).compute(get=get)
+        pbar.unregister()
     # The .compute(get=get) line is some dask 'magic': it parallelizes the
     # print function with processes and not threads,which is a lot faster
     # for custom functions apparently!
-
     else:
         # do it with a simple for loop...can this really be quicker?
         print('This is slow! Do it in dask!')
