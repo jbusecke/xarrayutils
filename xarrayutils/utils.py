@@ -470,7 +470,7 @@ def extract_surf(da_ind, da_target, surf_val, dim,
     value to 'surf_val along 'dim'"""
     constant_nan_dims = dict()
     for ll in constant_dims:
-        constant_nan_dims['ll'] = 0
+        constant_nan_dims[ll] = 0
     nanmask = da_ind[constant_nan_dims].isnan()
     ind = find_surf_ind(da_ind.fillna(fill_value), surf_val, dim)
     # Expand ind into full dimensions
