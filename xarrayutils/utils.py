@@ -448,3 +448,25 @@ def corrmap(a, b, shifts=0,
     out_p['timeshifts'] = shifts
 
     return out_c, out_p, out_s
+
+
+def find_surf_ind(da, surf_val, dim):
+    """finds the index along dim that corresponds to the value of
+    da closest to surf_val for each remaining dim"""
+    # TODO can I specify how to handle multiple occurences?
+    # Right now it takes the first occurence"
+    return abs(da-surf_val).argmin(dim)
+
+
+def extract_surf_ind(da, ind, dim):
+    """squash the array to the values defined in ind"""
+    # TODO: This seems error prone...is there another way then using the mean?
+    return da.where(da[dim] == ind).mean(dim)
+
+
+def extract_surf(da_ind, da_target, surf_val, dim):
+    """Extract values of 'da_target' on a surface in 'da_ind', specified as nearest
+    value to 'surf_val along 'dim'"""
+    ind = find_surf_ind(da_ind, surf_val, dim)
+    surf = extract_surf_ind(da_target, ind, dim)
+    return surf
