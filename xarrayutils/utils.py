@@ -481,4 +481,4 @@ def extract_surf(da_ind, da_target, surf_val, dim,
     ind_exp = (da_target.fillna(fill_value)*0)+ind
     surf = extract_surf_ind(da_target, ind_exp, dim)
 
-    return surf.mask(nanmask)
+    return surf.where(~nanmask)
