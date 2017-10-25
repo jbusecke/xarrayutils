@@ -464,9 +464,17 @@ def extract_surf_ind(da, ind, dim):
     return da.where(da[dim] == ind).mean(dim)
 
 
-def extract_surf(da_ind, da_target, surf_val, dim):
+def extract_surf(da_ind, da_target, surf_val, dim,
+                 constant_dims=['time'], fill_value=1000):
     """Extract values of 'da_target' on a surface in 'da_ind', specified as nearest
     value to 'surf_val along 'dim'"""
-    ind = find_surf_ind(da_ind, surf_val, dim)
-    surf = extract_surf_ind(da_target, ind, dim)
-    return surf
+    constant_nan_dims = dict()
+    for ll in constant_dims:
+        constant_nan_dims['ll'] = 0
+    nanmask = da_ind[constant_nan_dims].isnan()
+    ind = find_surf_ind(da_ind.fillna(fill_value), surf_val, dim)
+    # Expand ind into full dimensions
+    ind_exp = (da_target.fillna(fill_value)*0)+ind
+    surf = extract_surf_ind(da_target, ind_exp, dim)
+
+    return surf.mask(nanmask)
