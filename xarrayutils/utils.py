@@ -472,7 +472,9 @@ def extract_surf(da_ind, da_target, surf_val, dim,
     if masking:
         condition = \
             xr.ufuncs.logical_or((da_ind.max(dim) <= surf_val),
-                (da_ind.min(dim) >= surf_val)).any(constant_dims)
+                (da_ind.min(dim) >= surf_val))
+    if constant_dims:
+        condition = condition.any(constant_dims)
 
     da_ind_filled = da_ind.fillna(fill_value)
     ind = find_surf_ind(da_ind_filled, surf_val, dim)
