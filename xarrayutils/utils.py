@@ -465,13 +465,14 @@ def extract_surf_ind(da, ind, dim):
 
 
 def extract_surf(da_ind, da_target, surf_val, dim,
-                 constant_dims=['time'], fill_value=1000):
+                 constant_dims=['time'], fill_value=1000, masking=True):
     """Extract values of 'da_target' on a surface in 'da_ind', specified as nearest
     value to 'surf_val along 'dim'"""
     # Mask out areas where the surface runs into the boundary
-    condition = \
-        xr.ufuncs.logical_or((da_ind.max(dim) <= surf_val),
-                             (da_ind.min(dim) >= surf_val)).any(constant_dims)
+    if masking:
+        condition = \
+            xr.ufuncs.logical_or((da_ind.max(dim) <= surf_val),
+                (da_ind.min(dim) >= surf_val)).any(constant_dims)
 
     da_ind_filled = da_ind.fillna(fill_value)
     ind = find_surf_ind(da_ind_filled, surf_val, dim)
@@ -486,8 +487,9 @@ def extract_surf(da_ind, da_target, surf_val, dim,
 
     # Mask out the regions where the surface outcrops at any point over
     # 'constant_dims'
-    da_target = da_target.where(~condition)
-    target_pos = target_pos.where(~condition)
+    if masking:
+        da_target = da_target.where(~condition)
+        target_pos = target_pos.where(~condition)
 
     surf = da_target.where(found_ind)
     surf_pos = target_pos.where(found_ind)
