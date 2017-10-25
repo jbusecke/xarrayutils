@@ -482,6 +482,10 @@ def extract_surf(da_ind, da_target, surf_val, dim,
 
     target = (da_target[dim]*0)+range(len(da_target[dim]))
     target_exp = target+(da_ind_filled*0)
+    target_pos = da_target[dim]+(da_ind_filled*0)
 
-    surf = da_target.where(target_exp == ind_exp)
-    return surf.mean(dim)
+    found_ind = target_exp == ind_exp
+
+    surf = da_target.where(found_ind)
+    surf_pos = target_pos.where(found_ind)
+    return surf.mean(dim), surf_pos.mean(dim)
