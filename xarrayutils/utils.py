@@ -469,9 +469,13 @@ def extract_surf(da_ind, da_target, surf_val, dim,
     """Extract values of 'da_target' on a surface in 'da_ind', specified as nearest
     value to 'surf_val along 'dim'"""
     constant_nan_dims = dict()
-    for ll in constant_dims:
-        constant_nan_dims[ll] = 0
-    nanmask = da_ind[constant_nan_dims].isnan()
+    if constant_dims is not None:
+        for ll in constant_dims:
+            constant_nan_dims[ll] = 0
+        nanmask = da_ind[constant_nan_dims].isnan()
+    else:
+        nanmask = da_ind.isnan()
+
     ind = find_surf_ind(da_ind.fillna(fill_value), surf_val, dim)
     # Expand ind into full dimensions
     ind_exp = (da_target.fillna(fill_value)*0)+ind
