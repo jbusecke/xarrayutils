@@ -475,8 +475,8 @@ def extract_surf(da_ind, da_target, surf_val, dim,
     # Mask out areas where the surface runs into the boundary
     if masking:
         condition = \
-            xr.ufuncs.logical_or((da_ind.max(dim) <= surf_val),
-                (da_ind.min(dim) >= surf_val))
+            xr.ufuncs.logical_or((da_ind.max(dim) < surf_val),
+                (da_ind.min(dim) > surf_val))
         if constant_dims:
             condition = condition.any(constant_dims)
 
