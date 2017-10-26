@@ -495,4 +495,9 @@ def extract_surf(da_ind, da_target, surf_val, dim,
 
     surf = da_target.where(found_ind)
     surf_pos = target_pos.where(found_ind)
-    return surf.mean(dim), surf_pos.mean(dim)
+
+    surf_out = surf.mean(dim)
+    pos_out = surf_pos.mean(dim)
+    if masking:
+        pos_out = pos_out.where(~xr.ufuncs.isnan(surf_out))
+    return surf_out, pos_out
