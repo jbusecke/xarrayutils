@@ -481,7 +481,10 @@ def extract_surf(da_ind, da_target, surf_val, dim,
             condition = condition.any(constant_dims)
 
     da_ind_filled = da_ind.fillna(fill_value)
-    surf_val_filled = surf_val.fillna(fill_value)
+    if (isinstance(surf_val, float) or isinstance(surf_val, int)):
+        surf_val_filled = surf_val
+    else:
+        surf_val_filled = surf_val.fillna(fill_value)
 
     ind = find_surf_ind(da_ind_filled, surf_val_filled, dim)
     # Expand ind into full dimensions
