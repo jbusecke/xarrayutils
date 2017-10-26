@@ -473,6 +473,8 @@ def extract_surf(da_ind, da_target, surf_val, dim,
     """Extract values of 'da_target' on a surface in 'da_ind', specified as nearest
     value to 'surf_val along 'dim'"""
     # Mask out areas where the surface runs into the boundary
+    da_ind = da_ind.copy()
+    da_target = da_target.copy()
     if masking:
         condition = \
             xr.ufuncs.logical_or((da_ind.max(dim) < surf_val),
@@ -484,7 +486,7 @@ def extract_surf(da_ind, da_target, surf_val, dim,
     if (isinstance(surf_val, float) or isinstance(surf_val, int)):
         surf_val_filled = surf_val
     else:
-        surf_val_filled = surf_val.fillna(fill_value)
+        surf_val_filled = surf_val.fillna(fill_value).copy()
 
     ind = find_surf_ind(da_ind_filled, surf_val_filled, dim)
     # Expand ind into full dimensions
