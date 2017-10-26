@@ -450,18 +450,22 @@ def corrmap(a, b, shifts=0,
     return out_c, out_p, out_s
 
 
+
 def find_surf_ind(da, surf_val, dim):
     """finds the index along dim that corresponds to the value of
     da closest to surf_val for each remaining dim"""
     # TODO can I specify how to handle multiple occurences?
     # Right now it takes the first occurence"
-    return abs(da-surf_val).argmin(dim)
+
+    # Broadcast the surface value to the full shape of da
+    surf_val_exp = (da*0)+surf_val
+    return abs(da-surf_val_exp).argmin(dim)
 
 
-def extract_surf_ind(da, ind, dim):
-    """squash the array to the values defined in ind"""
-    # TODO: This seems error prone...is there another way then using the mean?
-    return da.where(da[dim] == ind).mean(dim)
+# def extract_surf_ind(da, ind, dim):
+#     """squash the array to the values defined in ind"""
+#     # TODO: This seems error prone...is there another way then using the mean?
+#     return da.where(da[dim] == ind).mean(dim)
 
 
 def extract_surf(da_ind, da_target, surf_val, dim,
@@ -473,11 +477,13 @@ def extract_surf(da_ind, da_target, surf_val, dim,
         condition = \
             xr.ufuncs.logical_or((da_ind.max(dim) <= surf_val),
                 (da_ind.min(dim) >= surf_val))
-    if constant_dims:
-        condition = condition.any(constant_dims)
+        if constant_dims:
+            condition = condition.any(constant_dims)
 
     da_ind_filled = da_ind.fillna(fill_value)
-    ind = find_surf_ind(da_ind_filled, surf_val, dim)
+    surf_val_filled = surf_val.fillna(fill_value)
+
+    ind = find_surf_ind(da_ind_filled, surf_val_filled, dim)
     # Expand ind into full dimensions
     ind_exp = (da_ind_filled*0)+ind
 
@@ -499,5 +505,5 @@ def extract_surf(da_ind, da_target, surf_val, dim,
     surf_out = surf.mean(dim)
     pos_out = surf_pos.mean(dim)
     if masking:
-        pos_out = pos_out.where(~xr.ufuncs.isnan(surf_out))
+        pos_out = pos_out.where(~xr.ufuncs.isnan(da_target[dim:0]))
     return surf_out, pos_out
