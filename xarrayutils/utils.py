@@ -508,5 +508,5 @@ def extract_surf(da_ind, da_target, surf_val, dim,
     surf_out = surf.mean(dim)
     pos_out = surf_pos.mean(dim)
     if masking:
-        pos_out = pos_out.where(~xr.ufuncs.isnan(da_target[{dim: 0}]))
+        pos_out = pos_out.where(~xr.ufuncs.isnan(da_ind[{dim: 0}]))
     return surf_out, pos_out
