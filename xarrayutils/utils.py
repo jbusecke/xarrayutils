@@ -272,7 +272,8 @@ def extractBoxes(da, bo, xname=None, yname=None, xdim='lon', ydim='lat'):
             temp = da.where(mask)
 
         timeseries.append(temp)
-    out = xr.concat(timeseries, concat_dim_da(bo.keys(), 'boxname'))
+    boxname_dim = concat_dim_da(list(bo.keys()), 'boxname')
+    out = xr.concat(timeseries, boxname_dim)
     return out
 
 
