@@ -272,8 +272,7 @@ def extractBoxes(da, bo, xname=None, yname=None, xdim='lon', ydim='lat'):
             temp = da.where(mask)
 
         timeseries.append(temp)
-    out = xr.concat(timeseries, 'boxname')
-    out['boxname'] = bo.keys()
+    out = xr.concat(timeseries, concat_dim_da(bo.keys(), 'boxname'))
     return out
 
 
@@ -512,3 +511,11 @@ def extract_surf(da_ind, da_target, surf_val, dim,
     if masking:
         pos_out = pos_out.where(~xr.ufuncs.isnan(da_ind[{dim: 0}]))
     return surf_out, pos_out
+
+
+def concat_dim_da(data, name):
+    """creates an xarray.Dataarray to label the concat dim in xarray.concat.
+    data is the dimension array and name is the name (DuHHHHH)"""
+    return xr.DataArray(data, dims=[name],
+                        coords={name: (name, data)},
+                        name=name)
