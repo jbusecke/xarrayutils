@@ -237,6 +237,12 @@ def timefilter(xr_in, steps,
     return out
 
 
+def extractBox(da, box, xdim='lon', ydim='lat'):
+    box_dict = {xdim: slice(box[0], box[1]),
+                ydim: slice(box[2], box[3])}
+    return da.loc[box_dict]
+
+
 def extractBoxes(da, bo, xname=None, yname=None, xdim='lon', ydim='lat'):
     """ Extracts boxes from DataArray
 
@@ -253,6 +259,7 @@ def extractBoxes(da, bo, xname=None, yname=None, xdim='lon', ydim='lat'):
     yname -- coordinate name for y (default: 'None')
     xname and yname have to be specified if coordinates are of differnt shape
     """
+    raise RuntimeError("this function is hellla slow! DO NOT use on large datasets")
 
     if not type(xname) == type(yname):
         raise RuntimeError('xname and yname need to be the same type')
