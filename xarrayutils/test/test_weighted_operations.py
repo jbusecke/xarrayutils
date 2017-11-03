@@ -14,7 +14,7 @@ def test_weighted_mean():
     # w = xr.DataArray(weight_test, dims=['y'])
 
     a_dsa = xr.DataArray(dsa.from_array(data_test, chunks=chunks),
-                         dims=['x',  'y'])
+                         dims=['x', 'y'])
     w_dsa = xr.DataArray(dsa.from_array(weight_test, chunks=chunks),
                          dims=['y'])
 
