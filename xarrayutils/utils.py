@@ -464,13 +464,14 @@ def find_surf_ind(da, surf_val, dim):
     # Right now it takes the first occurence"
 
     # Broadcast the surface value to the full shape of da
-    surf_val_exp = (da*0)+surf_val
-    return abs(da-surf_val_exp).argmin(dim)
+    surf_val_exp = (da * 0) + surf_val
+    return abs(da - surf_val_exp).argmin(dim)
 
 
 # def extract_surf_ind(da, ind, dim):
 #     """squash the array to the values defined in ind"""
-#     # TODO: This seems error prone...is there another way then using the mean?
+#     # TODO: This seems error prone...is there another way then using
+# the mean?
 #     return da.where(da[dim] == ind).mean(dim)
 
 
@@ -484,7 +485,7 @@ def extract_surf(da_ind, da_target, surf_val, dim,
     if masking:
         condition = \
             xr.ufuncs.logical_or((da_ind.max(dim) < surf_val),
-                (da_ind.min(dim) > surf_val))
+                                 (da_ind.min(dim) > surf_val))
         if constant_dims:
             condition = condition.any(constant_dims)
 
@@ -496,11 +497,11 @@ def extract_surf(da_ind, da_target, surf_val, dim,
 
     ind = find_surf_ind(da_ind_filled, surf_val_filled, dim)
     # Expand ind into full dimensions
-    ind_exp = (da_ind_filled*0)+ind
+    ind_exp = (da_ind_filled * 0)+ind
 
-    target = (da_target[dim]*0)+range(len(da_target[dim]))
-    target_exp = target+(da_ind_filled*0)
-    target_pos = da_target[dim]+(da_ind_filled*0)
+    target = (da_target[dim] * 0)+range(len(da_target[dim]))
+    target_exp = target + (da_ind_filled * 0)
+    target_pos = da_target[dim] + (da_ind_filled * 0)
 
     found_ind = target_exp == ind_exp
 

@@ -7,11 +7,11 @@ from xarrayutils.weighted_operations import _broadcast_weights, weighted_mean
 
 def test_weighted_mean():
     chunks = 1
-    data_test = np.array([[np.nan, 2, np.nan],[2, 2, 4]])
+    data_test = np.array([[np.nan, 2, np.nan], [2, 2, 4]])
     weight_test = np.array([1, 1, 2])
 
-    a = xr.DataArray(data_test, dims=['x', 'y'])
-    w = xr.DataArray(weight_test, dims=['y'])
+    # a = xr.DataArray(data_test, dims=['x', 'y'])
+    # w = xr.DataArray(weight_test, dims=['y'])
 
     a_dsa = xr.DataArray(dsa.from_array(data_test, chunks=chunks),
                          dims=['x',  'y'])
