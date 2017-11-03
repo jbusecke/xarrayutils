@@ -1,5 +1,4 @@
 from __future__ import print_function
-# from future.utils import iteritems
 import numpy as np
 import xarray as xr
 from scipy.signal import filtfilt, gaussian
@@ -259,7 +258,8 @@ def extractBoxes(da, bo, xname=None, yname=None, xdim='lon', ydim='lat'):
     yname -- coordinate name for y (default: 'None')
     xname and yname have to be specified if coordinates are of differnt shape
     """
-    raise RuntimeError("this function is hellla slow! DO NOT use on large datasets")
+    raise RuntimeError("this function is hellla slow! DO NOT use on \
+                       large datasets")
 
     if not type(xname) == type(yname):
         raise RuntimeError('xname and yname need to be the same type')
@@ -455,7 +455,6 @@ def corrmap(a, b, shifts=0,
     out_p['timeshifts'] = shifts
 
     return out_c, out_p, out_s
-
 
 
 def find_surf_ind(da, surf_val, dim):
