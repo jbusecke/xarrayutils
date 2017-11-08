@@ -45,6 +45,7 @@ def weighted_mean(da_data, da_weight, dim=None,
 
     return data.sum(dim)/weight_expanded.sum(dim)
 
+
 def weighted_sum(da_data, da_weight, dim=None,
                  preweighted=False, dimcheck=True):
     """calculate sum of da_data weighted by da_weight
