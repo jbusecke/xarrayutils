@@ -2,8 +2,8 @@ import xarray as xr
 import pytest
 import numpy as np
 import dask.array as dsa
-from xarrayutils.weighted_operations import _broadcast_weights, weighted_mean, \
-weighted_sum
+from xarrayutils.weighted_operations import _broadcast_weights, \
+    weighted_mean, weighted_sum
 
 
 def test_weighted_mean():
@@ -35,7 +35,8 @@ def test_weighted_mean():
 
     assert np.isclose(mean, expected_mean)
     assert np.all(np.isclose(ymean, expected_ymean))
-    assert np.all(np.isclose(xmean,expected_xmean))
+    assert np.all(np.isclose(xmean, expected_xmean))
+
 
 def test_weighted_sum():
     chunks = 1

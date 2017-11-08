@@ -5,9 +5,8 @@ import xarray as xr
 import numpy as np
 
 
-def weighted_mean(da_data, da_weight,
-                  dim=None, preweighted=False,
-                  dimcheck=True):
+def weighted_mean(da_data, da_weight, dim=None,
+                  preweighted=False, dimcheck=True):
     """calculate average of da_data weighted by da_weight
 
     Parameters
@@ -26,8 +25,7 @@ def weighted_mean(da_data, da_weight,
         applied to da_data (True).
     dim_check: Bool, optional
         Activates check for dimension consistency. If dimensions of 'da_weight'
-        do not include all
-        elements of 'dim' error is raise
+        do not include all elements of 'dim' error is raised
     """
 
     # Check dimension consistency
@@ -47,7 +45,8 @@ def weighted_mean(da_data, da_weight,
 
     return data.sum(dim)/weight_expanded.sum(dim)
 
-def weighted_sum(da_data, da_weight, dim=None, preweighted=False, dimcheck=True):
+def weighted_sum(da_data, da_weight, dim=None,
+                 preweighted=False, dimcheck=True):
     """calculate sum of da_data weighted by da_weight
 
     Parameters
@@ -56,15 +55,17 @@ def weighted_sum(da_data, da_weight, dim=None, preweighted=False, dimcheck=True)
     da_data : xarray.DataArray
         Data to be averaged
     da_weight : xarray.DataArray
-        weights to be used during averaging. Dimensions have to be matching with 'da_data'
+        weights to be used during averaging. Dimensions have to be matching
+        with 'da_data'
     dim : {None, str, list}, optional
         Dimensions to average over
     preweighted: Bool, optional
-        Specifies whether weights will be applied (False, default) or have already been
+        Specifies whether weights will be applied (False, default) or have
+        already been
         applied to da_data (True).
     dim_check: Bool, optional
-        Activates check for dimension consistency. If dimensions of 'da_weight' do not include all
-        elements of 'dim' error is raise
+        Activates check for dimension consistency. If dimensions of
+        'da_weight' do not include all elements of 'dim' error is raised
     """
 
     # Check dimension consistency
