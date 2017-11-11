@@ -237,51 +237,86 @@ def timefilter(xr_in, steps,
 
 
 def extractBox(da, box, xdim='lon', ydim='lat'):
-    box_dict = {xdim: slice(box[0], box[1]),
-                ydim: slice(box[2], box[3])}
-    return da.loc[box_dict]
+    print('This is deprecated. Use extractBox_dict')
+    box_dict = {xdim:box[0,1],
+            ydim:box[2,3]}
+    return extractBox_dict(da, box_dict, concat_wrap=True)
+    # box_dict = {xdim: slice(box[0], box[1]),
+    #             ydim: slice(box[2], box[3])}
+    # return da.loc[box_dict]
 
 
-def extractBoxes(da, bo, xname=None, yname=None, xdim='lon', ydim='lat'):
-    """ Extracts boxes from DataArray
+def extractBox_dict(ds, box, concat_wrap=True):
+    """Advanced box extraction from xarray Dataset"""
+    if not isinstance(concat_wrap, dict):
+        concat_wrap_dict=dict()
+        for kk in box.keys():
+            concat_wrap_dict[kk] = concat_wrap
+        concat_wrap = concat_wrap_dict
 
-
-    Keyword arguments:
-    da -- xarray dataarray
-    bo -- dict with box name as keys and box corner
-    values as numpy array ([x0,x1,y0,y1])
-    xdim -- dimension name for x (default: 'lon')
-    ydim -- dimension name for y (default: 'lat')
-
-
-    xname -- coordinate name for x (default: 'None')
-    yname -- coordinate name for y (default: 'None')
-    xname and yname have to be specified if coordinates are of differnt shape
-    """
-    raise RuntimeError("this function is hellla slow! DO NOT use on \
-                       large datasets")
-
-    if not type(xname) == type(yname):
-        raise RuntimeError('xname and yname need to be the same type')
-
-    timeseries = []
-    for ii, bb in enumerate(bo.keys()):
-        box = bo[bb]
-        if xname is None:
-            box_dict = {xdim: slice(box[0], box[1]),
-                        ydim: slice(box[2], box[3])}
-            temp = da.loc[box_dict]
+    ds = ds.copy()
+    for dim in box.keys():
+        ind = box[dim].data
+        wrap = concat_wrap[dim]
+        if np.diff(ind) < 0: #box is defined over a discontinuity
+            dim_data = ds[dim].data
+            split_a = dim_data[dim_data>ind[0]].max()
+            split_b = dim_data[dim_data<ind[1]].min()
+            a = ds.loc[{dim:slice(ind[0],split_a)}]
+            b = ds.loc[{dim:slice(split_b, ind[1])}]
+            if wrap:
+                c = (a, b)
+            else:
+                c = (b, a)
+            ds = xr.concat(c, dim)
         else:
-            mask = np.logical_and(np.logical_and(da[xname] > box[0],
-                                                 da[xname] < box[1]),
-                                  np.logical_and(da[yname] > box[2],
-                                                 da[yname] < box[3]))
-            temp = da.where(mask)
+            ds = ds.loc[{dim:slice(ind[0],ind[1])}]
+    return ds
 
-        timeseries.append(temp)
-    boxname_dim = concat_dim_da(list(bo.keys()), 'boxname')
-    out = xr.concat(timeseries, boxname_dim)
-    return out
+
+# This will be deprecated
+def extractBoxes(da, bo, xname=None, yname=None, xdim='lon', ydim='lat'):
+    raise RuntimeWarning('Hard deprecated. Please use extractBox_dict instead')
+# def extractBoxes(da, bo, xname=None, yname=None, xdim='lon', ydim='lat'):
+#     """ Extracts boxes from DataArray
+#
+#
+#     Keyword arguments:
+#     da -- xarray dataarray
+#     bo -- dict with box name as keys and box corner
+#     values as numpy array ([x0,x1,y0,y1])
+#     xdim -- dimension name for x (default: 'lon')
+#     ydim -- dimension name for y (default: 'lat')
+#
+#
+#     xname -- coordinate name for x (default: 'None')
+#     yname -- coordinate name for y (default: 'None')
+#     xname and yname have to be specified if coordinates are of differnt shape
+#     """
+#     raise RuntimeError("this function is hellla slow! DO NOT use on \
+#                        large datasets")
+#
+#     if not type(xname) == type(yname):
+#         raise RuntimeError('xname and yname need to be the same type')
+#
+#     timeseries = []
+#     for ii, bb in enumerate(bo.keys()):
+#         box = bo[bb]
+#         if xname is None:
+#             box_dict = {xdim: slice(box[0], box[1]),
+#                         ydim: slice(box[2], box[3])}
+#             temp = da.loc[box_dict]
+#         else:
+#             mask = np.logical_and(np.logical_and(da[xname] > box[0],
+#                                                  da[xname] < box[1]),
+#                                   np.logical_and(da[yname] > box[2],
+#                                                  da[yname] < box[3]))
+#             temp = da.where(mask)
+#
+#         timeseries.append(temp)
+#     boxname_dim = concat_dim_da(list(bo.keys()), 'boxname')
+#     out = xr.concat(timeseries, boxname_dim)
+#     return out
 
 
 def composite(data, index, bounds):
