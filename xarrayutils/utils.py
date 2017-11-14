@@ -4,6 +4,8 @@ import xarray as xr
 from scipy.signal import filtfilt, gaussian
 from dask.array import coarsen
 from dask.array.core import Array
+# from scipy import optimize
+import dask.array as dsa
 import warnings
 
 """
@@ -12,6 +14,34 @@ Collection of several useful routines for xarray
 """
 Lower Level implementation in numpy and dask
 """
+
+
+def _lin_trend(y):
+    """ufunc to be used by linear_trend"""
+    x = np.arange(len(y))
+    return np.polyfit(x, y, 1)
+
+
+def linear_trend(da, dim, name='parameter'):
+    """computes linear trend over 'dim' from the da.
+       Slope and intercept of the least square fit are added to a new
+       DataArray which has the dimension 'name' instead of 'dim', containing
+       slope and intercept for each gridpoint
+    """
+    da = da.copy()
+    axis_num = da.get_axis_num(dim)
+
+    dims = list(da.dims)
+    dims[axis_num] = name
+    coords = da.rename({dim: name}).coords
+    coords[name] = ['slope', 'intercept']
+
+    dsk = da.data
+    dsk_trend = dsa.apply_along_axis(_lin_trend, 0, dsk)
+    out = xr.DataArray(dsk_trend, dims=dims, coords=coords)
+    out = out.assign_attrs(linear_trend_dim_range=[da[dim].min().data,
+                                                   da[dim].max().data])
+    return out
 
 
 def aggregate_w_nanmean(da, weights, blocks, **kwargs):
@@ -238,8 +268,8 @@ def timefilter(xr_in, steps,
 
 def extractBox(da, box, xdim='lon', ydim='lat'):
     print('This is deprecated. Use extractBox_dict')
-    box_dict = {xdim:box[0,1],
-            ydim:box[2,3]}
+    box_dict = {xdim: box[0, 1],
+            ydim: box[2, 3]}
     return extractBox_dict(da, box_dict, concat_wrap=True)
     # box_dict = {xdim: slice(box[0], box[1]),
     #             ydim: slice(box[2], box[3])}
@@ -249,7 +279,7 @@ def extractBox(da, box, xdim='lon', ydim='lat'):
 def extractBox_dict(ds, box, concat_wrap=True):
     """Advanced box extraction from xarray Dataset"""
     if not isinstance(concat_wrap, dict):
-        concat_wrap_dict=dict()
+        concat_wrap_dict = dict()
         for kk in box.keys():
             concat_wrap_dict[kk] = concat_wrap
         concat_wrap = concat_wrap_dict
@@ -258,19 +288,19 @@ def extractBox_dict(ds, box, concat_wrap=True):
     for dim in box.keys():
         ind = box[dim].data
         wrap = concat_wrap[dim]
-        if np.diff(ind) < 0: #box is defined over a discontinuity
+        if np.diff(ind) < 0:  # box is defined over a discontinuity
             dim_data = ds[dim].data
-            split_a = dim_data[dim_data>ind[0]].max()
-            split_b = dim_data[dim_data<ind[1]].min()
-            a = ds.loc[{dim:slice(ind[0],split_a)}]
-            b = ds.loc[{dim:slice(split_b, ind[1])}]
+            split_a = dim_data[dim_data > ind[0]].max()
+            split_b = dim_data[dim_data < ind[1]].min()
+            a = ds.loc[{dim: slice(ind[0], split_a)}]
+            b = ds.loc[{dim: slice(split_b, ind[1])}]
             if wrap:
                 c = (a, b)
             else:
                 c = (b, a)
             ds = xr.concat(c, dim)
         else:
-            ds = ds.loc[{dim:slice(ind[0],ind[1])}]
+            ds = ds.loc[{dim: slice(ind[0], ind[1])}]
     return ds
 
 

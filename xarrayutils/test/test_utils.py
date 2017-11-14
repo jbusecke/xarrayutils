@@ -3,11 +3,40 @@ import xarray as xr
 import numpy as np
 import dask.array as dsa
 # import os
-from xarrayutils.utils import aggregate, aggregate_w_nanmean, extractBox_dict
+from xarrayutils.utils import aggregate, aggregate_w_nanmean, extractBox_dict,\
+    linear_trend, _lin_trend
 from numpy.testing import assert_allclose
 
 from . datasets import dataarray_2d_example,\
     dataarray_2d_ones, dataarray_2d_ones_nan
+
+
+# def test_lin_trend():
+#     x =
+
+
+def test_linear_trend():
+    # data = dsa.random.random((4, 5, 3), chunks=(4, 1, 1))
+    data = dsa.from_array(np.random.random([4, 5, 3]), chunks=(4, 1, 1))
+    t = range(4)
+    x = range(5)
+    y = range(3)
+    data_da = xr.DataArray(data, dims=['time',  'x',  'y'],
+                           coords={
+                                   'time': ('time', t),
+                                   'x': ('x', x),
+                                   'y': ('y', y)
+                                    })
+
+    fit_da = linear_trend(data_da, 'time')
+
+    for xi in x:
+        for yi in y:
+            x_fit = t
+            y_fit = data[:, xi, yi]
+            fit = np.polyfit(np.arange(len(y_fit)), y_fit, 1)
+            assert np.allclose(fit, fit_da.sel(x=xi, y=yi).data)
+
 
 @pytest.mark.parametrize("box, concat_wrap, result",
                         [
