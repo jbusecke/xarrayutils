@@ -268,6 +268,7 @@ def extractBox(da, box, xdim='lon', ydim='lat'):
     print('This is deprecated. Use extractBox_dict')
     box_dict = {xdim: box[0, 1],
                 ydim: box[2, 3]}
+
     return extractBox_dict(da, box_dict, concat_wrap=True)
     # box_dict = {xdim: slice(box[0], box[1]),
     #             ydim: slice(box[2], box[3])}
