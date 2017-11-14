@@ -39,8 +39,6 @@ def linear_trend(da, dim, name='parameter'):
     dsk = da.data
     dsk_trend = dsa.apply_along_axis(_lin_trend, 0, dsk)
     out = xr.DataArray(dsk_trend, dims=dims, coords=coords)
-    out = out.assign_attrs(linear_trend_dim_range=[da[dim].min().data,
-                                                   da[dim].max().data])
     return out
 
 
@@ -269,7 +267,7 @@ def timefilter(xr_in, steps,
 def extractBox(da, box, xdim='lon', ydim='lat'):
     print('This is deprecated. Use extractBox_dict')
     box_dict = {xdim: box[0, 1],
-            ydim: box[2, 3]}
+                ydim: box[2, 3]}
     return extractBox_dict(da, box_dict, concat_wrap=True)
     # box_dict = {xdim: slice(box[0], box[1]),
     #             ydim: slice(box[2], box[3])}

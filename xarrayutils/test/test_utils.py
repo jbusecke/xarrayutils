@@ -11,16 +11,19 @@ from . datasets import dataarray_2d_example,\
     dataarray_2d_ones, dataarray_2d_ones_nan
 
 
-# def test_lin_trend():
-#     x =
+def test_lin_trend():
+    y = np.random.random(20)
+    x = np.arange(len(y))
+    fit = np.polyfit(x, y, 1)
+    assert np.allclose(fit, _lin_trend(y))
 
 
 def test_linear_trend():
     # data = dsa.random.random((4, 5, 3), chunks=(4, 1, 1))
-    data = dsa.from_array(np.random.random([4, 5, 3]), chunks=(4, 1, 1))
-    t = range(4)
-    x = range(5)
-    y = range(3)
+    data = dsa.from_array(np.random.random([10, 2, 2]), chunks=(10, 1, 1))
+    t = range(10)
+    x = range(2)
+    y = range(2)
     data_da = xr.DataArray(data, dims=['time',  'x',  'y'],
                            coords={
                                    'time': ('time', t),
@@ -34,84 +37,76 @@ def test_linear_trend():
         for yi in y:
             x_fit = t
             y_fit = data[:, xi, yi]
-            fit = np.polyfit(np.arange(len(y_fit)), y_fit, 1)
+            fit = np.polyfit(x_fit, y_fit, 1)
             assert np.allclose(fit, fit_da.sel(x=xi, y=yi).data)
 
 
 @pytest.mark.parametrize("box, concat_wrap, result",
-                        [
-                        ({'x':np.array([0,1]),
-                          'y':np.array([0,1])},
+                         [({'x': np.array([0, 1]),
+                           'y': np.array([0, 1])},
                           True,
                           np.array([[0, 0],
-                                    [10, 20]])
-                        ),
-                        ({'x':np.array([0,1]),
-                          'y':np.array([3.5,1])},
-                          True,
-                          np.array([[0, 0, 0],
-                                    [50, 10, 20]])
-                        ),
-                        ({'x':np.array([0,1]),
-                          'y':np.array([3.5,1])},
-                          False,
-                          np.array([[0, 0, 0],
-                                    [10, 20, 50]])
-                        ),
-                        ({'x':np.array([2.5,0.5]),
-                          'y':np.array([3.5,1])},
-                          True,
-                          np.array([[150, 30, 60],
-                                    [0, 0, 0]])
-                        ),
-                        ({'x':np.array([2.5,0.5]),
-                          'y':np.array([3.5,1])},
-                          {'x':True,'y':False},
+                                   [10, 20]])),
+                          ({'x': np.array([0, 1]),
+                           'y': np.array([3.5, 1])},
+                           True,
+                           np.array([[0, 0, 0],
+                                     [50, 10, 20]])),
+                          ({'x': np.array([0, 1]),
+                            'y': np.array([3.5, 1])},
+                           False,
+                           np.array([[0, 0, 0],
+                                     [10, 20, 50]])),
+                          ({'x': np.array([2.5, 0.5]),
+                            'y': np.array([3.5, 1])},
+                           True,
+                           np.array([[150, 30, 60],
+                                     [0, 0, 0]])),
+                          ({'x': np.array([2.5, 0.5]),
+                            'y':np.array([3.5, 1])},
+                           {'x': True, 'y': False},
                           np.array([[30, 60, 150],
-                                    [0, 0, 0]])
-                        )
-                        ]
+                                    [0, 0, 0]]))
+                          ]
                          )
 def test_extractBox_dict(box, concat_wrap, result):
-    x = xr.DataArray(np.array([0,1,2,3]),
-                     dims = ['x'],
-                     coords={'x':(['x', ], np.array([0,1,2,3]))})
-    y = xr.DataArray(np.array([10,20,30,40,50]),
-                     dims = ['y'],
-                     coords={'y':(['y', ], np.array(range(5)))})
+    x = xr.DataArray(np.array([0, 1, 2, 3]),
+                     dims=['x'],
+                     coords={'x': (['x', ], np.array([0, 1, 2, 3]))})
+    y = xr.DataArray(np.array([10, 20, 30, 40, 50]),
+                     dims=['y'],
+                     coords={'y': (['y', ], np.array(range(5)))})
     c = x*y
-    box_cut = extractBox_dict(c,box,concat_wrap=concat_wrap)
+    box_cut = extractBox_dict(c, box, concat_wrap=concat_wrap)
     assert_allclose(box_cut.data, result)
 
-    c = c.chunk({'x':1})
-    box_cut_dask = extractBox_dict(c,box,concat_wrap=concat_wrap)
-    assert isinstance(box_cut_dask.data,dsa.Array)
+    c = c.chunk({'x': 1})
+    box_cut_dask = extractBox_dict(c, box, concat_wrap=concat_wrap)
+    assert isinstance(box_cut_dask.data, dsa.Array)
     assert_allclose(box_cut_dask.data, result)
 
 
 @pytest.mark.parametrize("box, concat_wrap, result",
-                        [
-                        ({'x':np.array([0,1]),
-                          'y':np.array([0,1])},
+                         [({'x': np.array([0, 1]),
+                           'y': np.array([0, 1])},
                           True,
                           np.array([[0, 0],
-                                    [10, 20]])
-                        ),
-                        ({'x':np.array([0,1]),
-                          'y':np.array([3.5,1])},
-                          True,
-                          np.array([[0, 0, 0],
-                                    [50, 10, 20]])
-                        )])
+                                   [10, 20]])),
+                          ({'x': np.array([0, 1]),
+                           'y': np.array([3.5, 1])},
+                           True,
+                           np.array([[0, 0, 0],
+                                    [50, 10, 20]]))
+                          ])
 def test_extractBox(box, concat_wrap, result):
-    x = xr.DataArray(np.array([0,1,2,3]),
-                     dims = ['x'],
-                     coords={'x':(['x', ], np.array([0,1,2,3]))})
-    y = xr.DataArray(np.array([10,20,30,40,50]),
-                     dims = ['y'],
-                     coords={'y':(['y', ], np.array(range(5)))})
+    x = xr.DataArray(np.array([0, 1, 2, 3]),
+                     dims=['x'],
+                     coords={'x': (['x', ], np.array([0, 1, 2, 3]))})
+    y = xr.DataArray(np.array([10, 20, 30, 40, 50]),
+                     dims=['y'],
+                     coords={'y': (['y', ], np.array(range(5)))})
     c = x*y
-    box_cut = extractBox_dict(c,box,concat_wrap=concat_wrap)
+    box_cut = extractBox_dict(c, box, concat_wrap=concat_wrap)
     assert_allclose(box_cut.data, result)
 
 
