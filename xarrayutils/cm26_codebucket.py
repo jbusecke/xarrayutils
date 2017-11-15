@@ -23,6 +23,15 @@ from . weighted_operations import weighted_mean, weighted_sum
 #     return out
 
 
+def cm26_flist(ddir, name, years=None, yearformat='%04i0101'):
+    if years:
+        name = name.replace('*', yearformat)
+        out = [os.path.join(ddir, name % yy) for yy in years]
+    else:
+        out = os.path.join(ddir, name)
+    return out
+
+
 def cm26_convert_boundary_flux(da, da_full, top=True):
     dummy = xr.DataArray(dsa.zeros_like(da_full.data),
                          coords=da_full.coords,
