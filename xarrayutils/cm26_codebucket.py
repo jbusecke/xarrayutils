@@ -2,9 +2,47 @@ from datetime import datetime, timedelta
 import pandas as pd
 import os
 import xarray as xr
+import dask.array as dsa
 import matplotlib.pyplot as plt
 from . utils import concat_dim_da
 from . weighted_operations import weighted_mean, weighted_sum
+
+
+# def convert_boundary_flux(da,da_full,top=True):
+#     dummy = xr.DataArray(dsa.zeros_like(da_full.data),
+#                     coords = da_full.coords,
+#                     dims = da_full.dims)
+#     if top:
+#         da.coords['st_ocean'] = da_full['st_ocean'][0]
+#         dummy_cut = dummy.isel(st_ocean=slice(1,None))
+#         out = xr.concat([da,dummy_cut],dim='st_ocean')
+#     else:
+#         da.coords['st_ocean'] = da_full['st_ocean'][-1]
+#         dummy_cut = dummy.isel(st_ocean=slice(0,-1))
+#         out = xr.concat([dummy_cut,da],dim='st_ocean')
+#     return out
+
+
+def cm26_convert_boundary_flux(da, da_full, top=True):
+    dummy = xr.DataArray(dsa.zeros_like(da_full.data),
+                         coords=da_full.coords,
+                         dims=da_full.dims)
+    if top:
+        da.coords['st_ocean'] = da_full['st_ocean'][0]
+        dummy_cut = dummy.isel(st_ocean=slice(1, None))
+        out = xr.concat([da, dummy_cut], dim='st_ocean')
+    else:
+        da.coords['st_ocean'] = da_full['st_ocean'][-1]
+        dummy_cut = dummy.isel(st_ocean=slice(0, -1))
+        out = xr.concat([dummy_cut, da], dim='st_ocean')
+    return out
+
+
+def convert_units(ds, name, new_unit, factor):
+    ds = ds.copy()
+    ds[name] = ds[name]*factor
+    ds[name].attrs['units'] = new_unit
+    return ds
 
 
 def shift_lon(ds, londim, shift=360, crit=0, smaller=True, sort=True):
@@ -116,10 +154,16 @@ def metrics_control_plots(metrics, xdim='xt_ocean', ydim='yt_ocean',
     # y_section[plot_var].isel(TIME=0).plot()
 
 
-def metrics_save(metrics, odir, fname, **kwargs):
+def metrics_save(metrics, odir, fname, mf_save=False, **kwargs):
     for kk in metrics.keys():
-        metrics[kk].to_netcdf(os.path.join(odir, '%s_%s.nc' % (fname, kk)),
-                              **kwargs)
+        if mf_save:
+            years, datasets = zip(*metrics[kk].groupby('time.year'))
+            paths = [os.path.join(odir,
+                '%04i_%s_%s.nc' %(y, fname, kk)) for y in years]
+            xr.save_mfdataset(datasets, paths)
+        else:
+            metrics[kk].to_netcdf(os.path.join(odir, '%s_%s.nc' % (fname, kk)),
+                                  **kwargs)
 
 
 def metrics_load(metrics, odir, fname, **kwargs):
