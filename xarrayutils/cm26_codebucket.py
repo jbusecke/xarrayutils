@@ -26,8 +26,8 @@ def metrics_ds(ds, xdim, ydim, zdim, area_w='area_t', volume_w='volume',
     """applies all needed metrics to a dataset and puts out a dict"""
     metrics = dict()
     if compute_average:
-        metrics['x_section'] = weighted_mean(ds_box, ds[area_w], dim=[ydim],dimcheck=False)
-        metrics['y_section'] = weighted_mean(ds_box, ds[area_w], dim=[xdim],dimcheck=False)
+        metrics['x_section'] = weighted_mean(ds_box, ds[area_w], dim=[ydim], dimcheck=False)
+        metrics['y_section'] = weighted_mean(ds_box, ds[area_w], dim=[xdim], dimcheck=False)
         metrics['profile'] = weighted_mean(ds_box, ds[area_w], dim=[xdim, ydim])
         metrics['timeseries']= weighted_mean(ds_box, ds[volume_w], dim=[xdim, ydim, zdim])
         if drop_control:
@@ -126,4 +126,19 @@ def time_add_refyear(ds,timedim='time', refyear=2000):
 
     # this should be done like above but pandas has no array support (workaround can be done later, not priority now)
     # ds_hr['time_bounds'].data = datetime(refyear,1,1,0,0,0)+(ds_hr.time_bounds.data.compute()*timedelta(1)),chunks=[1, 2])
+    return ds
+
+
+def add_grid_geometry(ds, rho_dzt, gridspec_path,
+                      rename_dict={'gridlon_t':'xt_ocean',
+                                   'gridlat_t':'yt_ocean'}):
+
+    g_ds = xr.open_dataset(gridspec_path).rename(rename_dict)
+    ds = ds.assign_coords(area_t = g_ds['area_t'])
+
+    # Infer vertical spacing (divided by constant rho=1035, since the model uses the boussinesque appr.
+    # [Griffies, Tutorial on budgets])
+    ds = ds.assign_coords(dzt = (rho_dzt/1035.0))
+    ds = ds.assign_coords(volume = ds['dzt']*ds['area_t'])
+    ds = ds.assign_coords(rho_dzt = rho_dzt)
     return ds
