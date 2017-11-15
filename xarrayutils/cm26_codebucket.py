@@ -1,3 +1,6 @@
+from datetime import datetime, timedelta
+import pandas as pd
+
 def shift_lon(ds, londim, shift=360, crit=0, smaller=True, sort=True):
     ds = ds.copy()
     if smaller:
@@ -9,12 +12,14 @@ def shift_lon(ds, londim, shift=360, crit=0, smaller=True, sort=True):
         ds = ds.sortby(londim)
     return ds
 
+
 def mask_tracer(ds, mask_ds, levels, name):
     out = []
     for ll in levels:
         out.append(ds.where(mask_ds<=ll))
     out = xr.concat(out, concat_dim_da(levels, name))
     return out
+
 
 def metrics_ds(ds, xdim, ydim, zdim, area_w='area_t', volume_w='volume',
                compute_average=False, drop_control=False):
@@ -96,11 +101,9 @@ def metrics_save(metrics, odir, fname, **kwargs):
         metrics[kk].to_netcdf(os.path.join(odir,'%s_%s.nc' %(fname,kk)), **kwargs)
 
 
-
 def metrics_load(metrics, odir, fname, **kwargs):
     for kk in metrics.keys():
         metrics[kk] = xr.open_dataset(os.path.join(odir,'%s_%s.nc' %(fname,kk)), **kwargs)
-
 
 
 def ds_add_track_dummy(ds, refvar):
@@ -108,5 +111,19 @@ def ds_add_track_dummy(ds, refvar):
     ones = (ones*0)+1
     return ds.assign(ones=ones)
 
+
 def metrics_wrapper():
     pass
+
+##################### CM2.6 Data Processing Funcs #############################
+# These should go into the CM2.6 repo once they have proven themselves usefull enough
+def time_add_refyear(ds,timedim='time', refyear=2000):
+    ds = ds.copy()
+    #Fix the time axis (I added 1900 years, since otherwise the stupid panda indexing does not work)
+    ds[timedim].data = pd.to_datetime(datetime(refyear+1,1,1,0,0,0)+ds[timedim].data*timedelta(1))
+    ds.attrs['refyear_shift'] = refyear
+    # Weirdly I have to add a year here or the timeline is messed up.
+
+    # this should be done like above but pandas has no array support (workaround can be done later, not priority now)
+    # ds_hr['time_bounds'].data = datetime(refyear,1,1,0,0,0)+(ds_hr.time_bounds.data.compute()*timedelta(1)),chunks=[1, 2])
+    return ds
