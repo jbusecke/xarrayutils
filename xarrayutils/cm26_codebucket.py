@@ -75,6 +75,27 @@ def mask_tracer(ds, mask_ds, levels, name):
     out = xr.concat(out, concat_dim_da(levels, name))
     return out
 
+# Doesnt work with the timing
+# def metrics_wrapper(ds, odir, oname, xdim='xt_ocean',
+#                     ydim='yt_ocean', zdim='st_ocean',
+#                     omz_var='o2',
+#                     omz_thresholds=[30, 60, 100, 1000]):
+#
+#     print('========mask omz===========')
+#     # mask different values of
+#     ds_box = mask_tracer(ds, ds[omz_var], omz_thresholds, 'omz_thresholds')
+#
+#     print('========track weights===========')
+#     # Add a 'dummy' array of ones like the oxygen, to track the total weight (can later be subtracted to get mean)
+#     ds_box = ds_add_track_dummy(ds_box, omz_var)
+#
+#     print('========calculate metrics===========')
+#     % time metrics = metrics_ds(ds_box, xdim, ydim, zdim, area_w='area_t', \
+#                                 volume_w='volume', compute_average=False)
+#
+#     print('========save metrics===========')
+#     %time metrics_save(metrics, odir, '%s_%s_sum.nc' %(oname,bb))
+
 
 def metrics_ds(ds, xdim, ydim, zdim, area_w='area_t', volume_w='volume',
                compute_average=False, drop_control=False):
@@ -207,7 +228,8 @@ def time_add_refyear(ds, timedim='time', refyear=2000):
 def add_grid_geometry(ds, rho_dzt, gridspec_path,
                       rename_dict={'gridlon_t': 'xt_ocean',
                                    'gridlat_t': 'yt_ocean'}):
-
+    ds = ds.copy()
+    rho_dzt = rho_dzt.copy()
     g_ds = xr.open_dataset(gridspec_path).rename(rename_dict)
     ds = ds.assign_coords(area_t=g_ds['area_t'])
 
