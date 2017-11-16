@@ -225,18 +225,15 @@ def time_add_refyear(ds, timedim='time', refyear=2000):
     return ds
 
 
-def add_grid_geometry(ds, rho_dzt, gridspec_path,
-                      rename_dict={'gridlon_t': 'xt_ocean',
-                                   'gridlat_t': 'yt_ocean'}):
-    ds = ds.copy()
+def add_grid_geometry(ds, rho_dzt, area):
+    ds_new = ds.copy()
     rho_dzt = rho_dzt.copy()
-    g_ds = xr.open_dataset(gridspec_path).rename(rename_dict)
-    ds = ds.assign_coords(area_t=g_ds['area_t'])
-
+    area = area.copy()
+    ds_new = ds_new.assign_coords(area_t=area)
     # Infer vertical spacing (divided by constant rho=1035, since the model
     # uses the boussinesque appr.
     # [Griffies, Tutorial on budgets])
-    ds = ds.assign_coords(dzt=(rho_dzt/1035.0))
-    ds = ds.assign_coords(volume=ds['dzt']*ds['area_t'])
-    ds = ds.assign_coords(rho_dzt=rho_dzt)
-    return ds
+    ds_new = ds_new.assign_coords(dzt=(rho_dzt/1035.0))
+    ds_new = ds_new.assign_coords(volume=ds_new['dzt']*ds_new['area_t'])
+    ds_new = ds_new.assign_coords(rho_dzt=rho_dzt)
+    return ds_new
