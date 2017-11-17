@@ -237,3 +237,67 @@ def add_grid_geometry(ds, rho_dzt, area):
     ds_new = ds_new.assign_coords(volume=ds_new['dzt']*ds_new['area_t'])
     ds_new = ds_new.assign_coords(rho_dzt=rho_dzt)
     return ds_new
+
+
+def cm26_readin_annual_means(name, run,
+                             rootdir='/work/Julius.Busecke/CM2.6_staged/'):
+
+    global_file_kwargs = dict(
+        decode_times=False,
+    )
+
+    # choose the run directory
+    if run == 'control':
+        rundir = os.path.join(rootdir, 'CM2.6_A_Control-1860_V03')
+        years = range(100, 201)
+    elif run == 'forced':
+        rundir = os.path.join(rootdir, 'CM2.6_A_V03_1PctTo2X')
+        years = range(121, 201)
+
+    if name == 'minibling_fields':
+        path = os.path.join(rundir, 'annual_averages')
+        name = '*.field.nc'
+        yearformat = '%04i'
+        file_kwargs = dict(drop_variables=['area_t',  'geolat_t',
+                                           'geolon_t', 'average_T1',
+                                           'average_T2', 'average_DT',
+                                           'time_bounds', 'nv', 'chl'],
+                           chunks={'time': 1, 'st_ocean': 1})
+    elif name == 'physics':
+        path = os.path.join(rundir, 'annual_averages')
+        name = 'ocean.*.ann.nc'
+        yearformat = '%04i'
+        file_kwargs = dict(drop_variables=['area_t',  'geolat_t',
+                                           'geolon_t', 'average_T1',
+                                           'average_T2', 'average_DT',
+                                           'time_bounds', 'nv',
+                                           'xu_ocean', 'yu_ocean',
+                                           'sw_ocean', 'xu_ocean',
+                                           'yu_ocean', 'sw_ocean',
+                                           'st_edges_ocean', 'sw_edges_ocean',
+                                           'geolon_c', 'geolat_c', 'u',
+                                           'v', 'eta_u', 'ty_trans',
+                                           'salt_int_rhodz', 'sea_level',
+                                           'sea_levelsq', 'sfc_hflux_coupler',
+                                           'tau_x', 'tau_y', 'temp_int_rhodz',
+                                           'wt', 'frazil_2d',
+                                           'net_sfc_heating',
+                                           'pme_river', 'river'],
+                           chunks={'time': 1, 'st_ocean': 1})
+    elif name == 'osat':
+        path = os.path.join(rundir, 'annual_averages/o2_sat')
+        if run == 'control':
+            name = '*.control_o2_sat.nc'
+        else:
+            raise RuntimeError('Not implemented yet')
+        yearformat = '%04i'
+        file_kwargs = dict(chunks={'st_ocean': 1},
+                           concat_dim='time')
+    else:
+        raise RuntimeError('name not recognized')
+    # for debugging
+    print
+
+    flist = cm26_flist(path, name, years=years, yearformat=yearformat)
+    file_kwargs.update(global_file_kwargs)
+    return xr.open_mfdataset(flist, **(file_kwargs))
