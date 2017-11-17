@@ -37,7 +37,7 @@ def linear_trend(da, dim, name='parameter'):
     coords[name] = ['slope', 'intercept']
 
     dsk = da.data
-    dsk_trend = dsa.apply_along_axis(_lin_trend, 0, dsk)
+    dsk_trend = dsa.apply_along_axis(_lin_trend, axis_num, dsk)
     out = xr.DataArray(dsk_trend, dims=dims, coords=coords)
     out.name = da.name+'_linear_trend'
     return out

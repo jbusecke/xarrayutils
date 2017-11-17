@@ -118,6 +118,27 @@ def test_linear_trend():
             fit = np.polyfit(x_fit, y_fit, 1)
             assert np.allclose(fit, fit_da.sel(x=xi, y=yi).data)
 
+    # Test with other timedim (previously was not caught)
+    data = dsa.from_array(np.random.random([2, 10, 2]), chunks=(1, 10, 1))
+    t = range(10)
+    x = range(2)
+    y = range(2)
+    data_da = xr.DataArray(data, dims=['x', 'time',  'y'],
+                           coords={
+                                   'x': ('x', x),
+                                   'time': ('time', t),
+                                   'y': ('y', y)
+                                    })
+
+    fit_da = linear_trend(data_da, 'time')
+
+    for xi in x:
+        for yi in y:
+            x_fit = t
+            y_fit = data[xi, :, yi]
+            fit = np.polyfit(x_fit, y_fit, 1)
+            assert np.allclose(fit, fit_da.sel(x=xi, y=yi).data)
+
 
 @pytest.mark.parametrize("box, concat_wrap, result",
                          [({'x': np.array([0, 1]),
