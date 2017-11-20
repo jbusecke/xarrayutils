@@ -293,6 +293,16 @@ def cm26_readin_annual_means(name, run,
         yearformat = '%04i'
         file_kwargs = dict(chunks={'st_ocean': 1},
                            concat_dim='time')
+    elif name == 'minibling_src':
+        path = os.path.join(rundir, 'annual_averages/budgets')
+        name = '*.src.nc'
+        yearformat = '%04i'
+        file_kwargs = dict(drop_variables=['area_t',  'geolat_t',
+                                           'geolon_t', 'average_T1',
+                                           'average_T2', 'average_DT',
+                                           'time_bounds', 'nv', 'chl'],
+                           chunks={'time': 1, 'st_ocean': 1})
+
     else:
         raise RuntimeError('name not recognized')
     # for debugging
