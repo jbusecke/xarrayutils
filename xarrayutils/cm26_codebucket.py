@@ -301,7 +301,8 @@ def cm26_readin_annual_means(name, run,
         file_kwargs = dict(drop_variables=['area_t',  'geolat_t',
                                            'geolon_t', 'average_T1',
                                            'average_T2', 'average_DT',
-                                           'time_bounds', 'nv', 'chl'],
+                                           'time_bounds', 'nv', 'chl',
+                                           'o2_btf', 'po4_btf', 'dic_btf'],
                            chunks={'time': 1, 'st_ocean': 1})
 
     else:
@@ -313,5 +314,5 @@ def cm26_readin_annual_means(name, run,
     if print_flist:
         print(flist)
     file_kwargs.update(global_file_kwargs)
-    
+
     return xr.open_mfdataset(flist, **(file_kwargs))
