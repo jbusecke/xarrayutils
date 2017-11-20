@@ -240,7 +240,8 @@ def add_grid_geometry(ds, rho_dzt, area):
 
 
 def cm26_readin_annual_means(name, run,
-                             rootdir='/work/Julius.Busecke/CM2.6_staged/'):
+                             rootdir='/work/Julius.Busecke/CM2.6_staged/',
+                             print_flist=False):
 
     global_file_kwargs = dict(
         decode_times=False,
@@ -309,5 +310,8 @@ def cm26_readin_annual_means(name, run,
     print
 
     flist = cm26_flist(path, name, years=years, yearformat=yearformat)
+    if print_flist:
+        print(flist)
     file_kwargs.update(global_file_kwargs)
+    
     return xr.open_mfdataset(flist, **(file_kwargs))
