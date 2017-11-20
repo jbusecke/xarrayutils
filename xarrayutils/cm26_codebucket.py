@@ -289,7 +289,7 @@ def cm26_readin_annual_means(name, run,
         if run == 'control':
             name = '*.control_o2_sat.nc'
         else:
-            raise RuntimeError('Not implemented yet')
+            name = '*.forced_o2_sat.nc'
         yearformat = '%04i'
         file_kwargs = dict(chunks={'st_ocean': 1},
                            concat_dim='time')
