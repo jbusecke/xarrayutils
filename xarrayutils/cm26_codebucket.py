@@ -321,9 +321,10 @@ def cm26_readin_annual_means(name, run,
     return xr.open_mfdataset(flist, **(file_kwargs))
 
 
-def cm26_reconstruct_annual_grid(ds,
-                                 grid_path='/work/Julius.Busecke/CM2.6_staged/\
-                                 static/CM2.6_grid_spec.nc'):
+def cm26_reconstruct_annual_grid(ds, grid_path=None):
+
+    if grid_path is None:
+        grid_path = '/work/Julius.Busecke/CM2.6_staged/static/CM2.6_grid_spec.nc'
     ds = ds.copy()
     chunks_raw = {'gridlon_t': 3600,
                   'gridlat_t': 2700,
