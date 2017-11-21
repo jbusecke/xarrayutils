@@ -279,6 +279,8 @@ def cm26_readin_annual_means(name, run,
                                            'geolon_c', 'geolat_c', 'u',
                                            'v', 'eta_u', 'ty_trans',
                                            'salt_int_rhodz', 'sea_level',
+
+
                                            'sea_levelsq', 'sfc_hflux_coupler',
                                            'tau_x', 'tau_y', 'temp_int_rhodz',
                                            'wt', 'frazil_2d',
@@ -317,3 +319,80 @@ def cm26_readin_annual_means(name, run,
     file_kwargs.update(global_file_kwargs)
 
     return xr.open_mfdataset(flist, **(file_kwargs))
+
+
+def cm26_reconstruct_annual_grid(ds,
+                                 grid_path='/work/Julius.Busecke/CM2.6_staged/\
+                                 static/CM2.6_grid_spec.nc'):
+    ds = ds.copy()
+    chunks_raw = {'gridlon_t': 3600,
+                  'gridlat_t': 2700,
+                  'gridlon_c': 3600,
+                  'gridlat_c': 2700,
+                  'st_ocean': 1,
+                  'sw_ocean': 1}
+    ds_grid = xr.open_dataset(grid_path,
+                              chunks=chunks_raw).rename({
+                                            'gridlon_t': 'xt_ocean',
+                                            'gridlat_t': 'yt_ocean'
+                                            })
+
+    # Problem. The gridfile has ever so slightly different values for the
+    # dimensions. Xarray excludes these values
+    # when they are multiplied. For now I will wrap all of the grid variables
+    # in new dims and coordinates. But there should be a more elegant
+    # method for this.
+    template = ds['eta_t'][{'time': 1}].drop('time')
+    ht = xr.DataArray(ds_grid['ht'].data,
+                      dims=template.dims,
+                      coords=template.coords)
+    area = xr.DataArray(ds_grid['area_t'].data,
+                        dims=template.dims,
+                        coords=template.coords)
+    eta = ds['eta_t']
+    dz_star = xr.DataArray(ds['st_edges_ocean'].diff('st_edges_ocean').data,
+                           dims=['st_ocean'],
+                           coords={'st_ocean': ds['st_ocean']})
+    dz = dz_star*(1+(eta/ht.data))
+    dz = dz.chunk({'st_ocean': 1}).transpose('time')
+
+    ds = ds.assign_coords(dzt=dz.chunk())
+    ds = ds.assign_coords(area_t=area)
+    ds = ds.assign_coords(volume_t=ds['area_t']*ds['dzt'])
+    return ds
+
+
+def cm26_loadall_run(run,
+                     normalize_budgets=True,
+                     budget_drop=['jp_recycle', 'jp_reminp', 'jp_uptake']):
+    """Master read in function for CM2.6. Merges all variables into one
+    dataset. If specified, 'normalize_budgets divides by dzt.
+    'budget_drop' defaults to all non o2 variables from src file
+    to save time."""
+
+    ds_minibling_field = cm26_readin_annual_means('minibling_fields', run)
+    ds_physics = cm26_readin_annual_means('physics', run)
+    ds_osat = cm26_readin_annual_means('osat', run)
+    ds_minibling_src = cm26_readin_annual_means('minibling_src', run)
+
+    # osat is given in mymol/kg...until that is fixed in the original files
+    # convert here
+    ds_osat = convert_units(ds_osat, 'o2_sat', 'mol/kg', 1e-6)
+
+    # For now drop all the jp terms they make this thing really bloated
+    ds_minibling_src = ds_minibling_src.drop(budget_drop)
+    # Brute force the minibling time into all files
+    # ######## THEY DONT HAVE THE SAME TIMESTAMP MOTHERFUCK....
+    ds_physics.time.data = ds_minibling_field.time.data
+    ds_osat.time.data = ds_minibling_field.time.data
+
+    # TODO: Build test if the time is equal ...for now just watch the timesteps
+    ds = xr.merge([ds_minibling_field, ds_physics, ds_osat, ds_minibling_src])
+    ds = cm26_reconstruct_annual_grid(ds)
+    if normalize_budgets:
+        convert_vars = list(ds_minibling_src.data_vars.keys())
+
+        for vv in convert_vars:
+            print('%s is beiung divided by rho_dzt' % vv)
+            ds[vv] = ds[vv]/1035.0/ds['dzt']
+    return ds
