@@ -1,7 +1,36 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-# box plot (accounting for the discontinuity at 360 for instance)
+
+def plot_line_shaded_std(x, y, std_y, horizontal=True,
+                         ax=None,
+                         line_kwargs=dict(),
+                         fill_kwargs=dict()):
+    """Plot wrapper to draw line for y and shaded patch according to std_y """
+    line_defaults = {}
+
+    # Set plot defaults into the kwargs
+    if not ax:
+        ax = plt.gca()
+
+    # Apply defaults but respect input
+    line_defaults.update(line_kwargs)
+
+    if horizontal:
+        p = ax.plot(x, y, **line_defaults)
+    else:
+        p = ax.plot(y, x, **line_defaults)
+
+    fill_defaults = {'color': p[-1].get_color(),
+                     'alpha': 0.35}
+
+    # Apply defaults but respect input
+    fill_defaults.update(fill_kwargs)
+
+    if horizontal:
+        ax.fill_between(x, y-std_y, y+std_y, **fill_defaults)
+    else:
+        ax.fill_betweenx(x, y-std_y, y+std_y, **fill_defaults)
 
 
 def box_plot(box, **kwargs):
