@@ -343,6 +343,11 @@ def cm26_reconstruct_annual_grid(ds, grid_path=None):
     # when they are multiplied. For now I will wrap all of the grid variables
     # in new dims and coordinates. But there should be a more elegant
     # method for this.
+
+    # If I do this 'trick' with the ones, I make sure that dzt has the same
+    # dimensions as the data_vars
+    ones = ds['temp']*0+1
+
     template = ds['eta_t'][{'time': 1}].drop('time')
     ht = xr.DataArray(ds_grid['ht'].data,
                       dims=template.dims,
@@ -354,8 +359,8 @@ def cm26_reconstruct_annual_grid(ds, grid_path=None):
     dz_star = xr.DataArray(ds['st_edges_ocean'].diff('st_edges_ocean').data,
                            dims=['st_ocean'],
                            coords={'st_ocean': ds['st_ocean']})
-    dz = dz_star*(1+(eta/ht.data))
-    dz = dz.chunk({'st_ocean': 1}).transpose('time')
+    dz = ones*dz_star*(1+(eta/ht.data))
+    dz = dz.chunk({'st_ocean': 1})
 
     ds = ds.assign_coords(dzt=dz.chunk())
     ds = ds.assign_coords(area_t=area)
@@ -365,6 +370,7 @@ def cm26_reconstruct_annual_grid(ds, grid_path=None):
 
 def cm26_loadall_run(run,
                      normalize_budgets=True,
+                     reconstruct_grids=True,
                      budget_drop=['jp_recycle', 'jp_reminp', 'jp_uptake']):
     """Master read in function for CM2.6. Merges all variables into one
     dataset. If specified, 'normalize_budgets divides by dzt.
@@ -389,7 +395,9 @@ def cm26_loadall_run(run,
 
     # TODO: Build test if the time is equal ...for now just watch the timesteps
     ds = xr.merge([ds_minibling_field, ds_physics, ds_osat, ds_minibling_src])
-    ds = cm26_reconstruct_annual_grid(ds)
+
+    if reconstruct_grids:
+        ds = cm26_reconstruct_annual_grid(ds)
     if normalize_budgets:
         convert_vars = list(ds_minibling_src.data_vars.keys())
 
