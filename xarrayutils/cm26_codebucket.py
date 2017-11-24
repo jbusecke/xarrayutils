@@ -364,7 +364,7 @@ def cm26_reconstruct_annual_grid(ds, grid_path=None):
 
     ds = ds.assign_coords(dzt=dz.chunk())
     ds = ds.assign_coords(area_t=area)
-    ds = ds.assign_coords(volume_t=ds['area_t']*ds['dzt'])
+    ds = ds.assign_coords(volume_t=ds['dzt']*ds['area_t'])
     return ds
 
 
