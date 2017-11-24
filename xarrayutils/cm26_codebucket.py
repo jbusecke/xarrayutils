@@ -371,7 +371,7 @@ def cm26_reconstruct_annual_grid(ds, grid_path=None):
 def cm26_loadall_run(run,
                      normalize_budgets=True,
                      reconstruct_grids=True,
-                     budget_drop=['jp_recycle', 'jp_reminp', 'jp_uptake']):
+                     drop_vars=None):
     """Master read in function for CM2.6. Merges all variables into one
     dataset. If specified, 'normalize_budgets divides by dzt.
     'budget_drop' defaults to all non o2 variables from src file
@@ -382,12 +382,6 @@ def cm26_loadall_run(run,
     ds_osat = cm26_readin_annual_means('osat', run)
     ds_minibling_src = cm26_readin_annual_means('minibling_src', run)
 
-    # osat is given in mymol/kg...until that is fixed in the original files
-    # convert here
-    ds_osat = convert_units(ds_osat, 'o2_sat', 'mol/kg', 1e-6)
-
-    # For now drop all the jp terms they make this thing really bloated
-    ds_minibling_src = ds_minibling_src.drop(budget_drop)
     # Brute force the minibling time into all files
     # ######## THEY DONT HAVE THE SAME TIMESTAMP MOTHERFUCK....
     ds_physics.time.data = ds_minibling_field.time.data
@@ -398,12 +392,16 @@ def cm26_loadall_run(run,
 
     if reconstruct_grids:
         ds = cm26_reconstruct_annual_grid(ds)
+
     if normalize_budgets:
         convert_vars = list(ds_minibling_src.data_vars.keys())
-
         for vv in convert_vars:
             # print('%s is beiung divided by rho_dzt' % vv)
             # ds[vv] = ds[vv]/1035.0/ds['dzt']
             # Fast version without checking
             ds[vv].data = ds[vv].data/1035.0/ds['dzt'].data
+
+    if drop_vars:
+        ds = ds.drop(drop_vars)
+
     return ds
