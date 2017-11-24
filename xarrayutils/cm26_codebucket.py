@@ -402,7 +402,7 @@ def cm26_loadall_run(run,
         convert_vars = list(ds_minibling_src.data_vars.keys())
 
         for vv in convert_vars:
-            print('%s is beiung divided by rho_dzt' % vv)
+            # print('%s is beiung divided by rho_dzt' % vv)
             # ds[vv] = ds[vv]/1035.0/ds['dzt']
             # Fast version without checking
             ds[vv].data = ds[vv].data/1035.0/ds['dzt'].data
