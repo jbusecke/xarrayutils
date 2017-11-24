@@ -371,7 +371,8 @@ def cm26_reconstruct_annual_grid(ds, grid_path=None):
 def cm26_loadall_run(run,
                      normalize_budgets=True,
                      reconstruct_grids=True,
-                     drop_vars=None):
+                     drop_vars=None,
+                     integrate_vars=None):
     """Master read in function for CM2.6. Merges all variables into one
     dataset. If specified, 'normalize_budgets divides by dzt.
     'budget_drop' defaults to all non o2 variables from src file
@@ -400,6 +401,11 @@ def cm26_loadall_run(run,
             # ds[vv] = ds[vv]/1035.0/ds['dzt']
             # Fast version without checking
             ds[vv].data = ds[vv].data/1035.0/ds['dzt'].data
+
+    if integrate_vars:
+        dt = 364*24*60*60
+        for vv in integrate_vars:
+            ds[vv+'_integrated'] = (ds[vv]*dt).cumsum('time')
 
     if drop_vars:
         ds = ds.drop(drop_vars)
