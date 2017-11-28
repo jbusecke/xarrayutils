@@ -369,6 +369,7 @@ def cm26_reconstruct_annual_grid(ds, grid_path=None):
 
 
 def cm26_loadall_run(run,
+                     rootdir='/work/Julius.Busecke/CM2.6_staged/'
                      normalize_budgets=True,
                      reconstruct_grids=True,
                      drop_vars=None,
@@ -378,10 +379,18 @@ def cm26_loadall_run(run,
     'budget_drop' defaults to all non o2 variables from src file
     to save time."""
 
-    ds_minibling_field = cm26_readin_annual_means('minibling_fields', run)
-    ds_physics = cm26_readin_annual_means('physics', run)
-    ds_osat = cm26_readin_annual_means('osat', run)
-    ds_minibling_src = cm26_readin_annual_means('minibling_src', run)
+    ds_minibling_field = cm26_readin_annual_means('minibling_fields',
+                                                  run,
+                                                  rootdir=rootdir)
+    ds_physics = cm26_readin_annual_means('physics',
+                                          run,
+                                          rootdir=rootdir)
+    ds_osat = cm26_readin_annual_means('osat',
+                                       run,
+                                       rootdir=rootdir)
+    ds_minibling_src = cm26_readin_annual_means('minibling_src',
+                                                run,
+                                                rootdir=rootdir)
 
     # Brute force the minibling time into all files
     # ######## THEY DONT HAVE THE SAME TIMESTAMP MOTHERFUCK....
