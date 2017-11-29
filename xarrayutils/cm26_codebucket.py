@@ -346,12 +346,17 @@ def cm26_reconstruct_annual_grid(ds, grid_path=None):
 
     # If I do this 'trick' with the ones, I make sure that dzt has the same
     # dimensions as the data_vars
-    ones = ds['temp']*0+1
+
+    # attempted fix to deal with the mismatch between eta, wet and tracer fields
+    # (mask the full dimension one array in space with wet)
+    oceanmask = ds_grid['wet']
+    ones = (ds['temp']*0+1).where(oceanmask)
 
     template = ds['eta_t'][{'time': 1}].drop('time')
     ht = xr.DataArray(ds_grid['ht'].data,
                       dims=template.dims,
                       coords=template.coords)
+
     area = xr.DataArray(ds_grid['area_t'].data,
                         dims=template.dims,
                         coords=template.coords)
