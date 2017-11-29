@@ -374,7 +374,7 @@ def cm26_reconstruct_annual_grid(ds, grid_path=None):
 
 
 def cm26_loadall_run(run,
-                     rootdir='/work/Julius.Busecke/CM2.6_staged/'
+                     rootdir='/work/Julius.Busecke/CM2.6_staged/',
                      normalize_budgets=True,
                      reconstruct_grids=True,
                      drop_vars=None,
