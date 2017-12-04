@@ -426,7 +426,7 @@ def cm26_loadall_run(run,
     if diff_vars:
         for vv in diff_vars:
             ds[vv+'_diff'] = ds[vv].diff('time')
-            ds[vv+'_diff'].data = ds[vv+'_diff'].data*dt
+            ds[vv+'_diff'].data = ds[vv+'_diff'].data/dt
 
     if drop_vars:
         ds = ds.drop(drop_vars)
