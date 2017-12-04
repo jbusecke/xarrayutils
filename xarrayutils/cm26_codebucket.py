@@ -225,27 +225,28 @@ def time_add_refyear(ds, timedim='time', refyear=2000):
     return ds
 
 
-def add_grid_geometry(ds, rho_dzt, area):
-    ds_new = ds.copy()
-    rho_dzt = rho_dzt.copy()
-    area = area.copy()
-    ds_new = ds_new.assign_coords(area_t=area)
-    # Infer vertical spacing (divided by constant rho=1035, since the model
-    # uses the boussinesque appr.
-    # [Griffies, Tutorial on budgets])
-    ds_new = ds_new.assign_coords(dzt=(rho_dzt/1035.0))
-    ds_new = ds_new.assign_coords(volume=ds_new['dzt']*ds_new['area_t'])
-    ds_new = ds_new.assign_coords(rho_dzt=rho_dzt)
-    return ds_new
+# def add_grid_geometry(ds, rho_dzt, area):
+#     ds_new = ds.copy()
+#     rho_dzt = rho_dzt.copy()
+#     area = area.copy()
+#     ds_new = ds_new.assign_coords(area_t=area)
+#     # Infer vertical spacing (divided by constant rho=1035, since the model
+#     # uses the boussinesque appr.
+#     # [Griffies, Tutorial on budgets])
+#     ds_new = ds_new.assign_coords(dzt=(rho_dzt/1035.0))
+#     ds_new = ds_new.assign_coords(volume=ds_new['dzt']*ds_new['area_t'])
+#     ds_new = ds_new.assign_coords(rho_dzt=rho_dzt)
+#     return ds_new
 
 
 def cm26_readin_annual_means(name, run,
                              rootdir='/work/Julius.Busecke/CM2.6_staged/',
-                             print_flist=False):
+                             print_flist=False,
+                             autoclose=False):
 
     global_file_kwargs = dict(
         decode_times=False,
-        autoclose=True
+        autoclose=autoclose
     )
 
     # choose the run directory
@@ -322,7 +323,7 @@ def cm26_readin_annual_means(name, run,
     return xr.open_mfdataset(flist, **(file_kwargs))
 
 
-def cm26_reconstruct_annual_grid(ds, grid_path=None):
+def cm26_reconstruct_annual_grid(ds, grid_path=None, load=None):
 
     if grid_path is None:
         grid_path = '/work/Julius.Busecke/CM2.6_staged/static/CM2.6_grid_spec.nc'
@@ -347,28 +348,43 @@ def cm26_reconstruct_annual_grid(ds, grid_path=None):
 
     # If I do this 'trick' with the ones, I make sure that dzt has the same
     # dimensions as the data_vars
-
-    # attempted fix to deal with the mismatch between eta, wet and tracer fields
-    # (mask the full dimension one array in space with wet)
-    oceanmask = ds_grid['wet']
-    ones = (ds['temp']*0+1).where(oceanmask)
-
-    template = ds['eta_t'][{'time': 1}].drop('time')
-    ht = xr.DataArray(ds_grid['ht'].data,
-                      dims=template.dims,
-                      coords=template.coords)
-
+    template = ds['o2'][{'time': 1, 'st_ocean':1}].drop('time')
     area = xr.DataArray(ds_grid['area_t'].data,
                         dims=template.dims,
                         coords=template.coords)
-    eta = ds['eta_t']
-    dz_star = xr.DataArray(ds['st_edges_ocean'].diff('st_edges_ocean').data,
-                           dims=['st_ocean'],
-                           coords={'st_ocean': ds['st_ocean']})
-    dz = ones*dz_star*(1+(eta/ht.data))
-    dz = dz.chunk({'st_ocean': 1})
 
-    ds = ds.assign_coords(dzt=dz.chunk())
+    # activates loading of presaved dzt value
+    load_kwargs = dict(decode_times=False, concat_dim='time',
+                       chunks={'st_ocean': 1})
+    if load == 'control':
+        odir = '/work/Julius.Busecke/CM2.6_staged/CM2.6_A_Control-1860_V03/annual_averages/grid_fields'
+        ds_dzt = xr.open_mfdataset(os.path.join(odir, '*dzt_control.nc'),
+                                   **load_kwargs)
+        dz = ds_dzt['dzt']
+
+    elif load == 'forced':
+        odir = '/work/Julius.Busecke/CM2.6_staged/CM2.6_A_V03_1PctTo2X/annual_averages/grid_fields'
+        ds_dzt = xr.open_mfdataset(os.path.join(odir, '*dzt_forced.nc'),
+                                   **load_kwargs)
+        dz = ds_dzt['dzt']
+
+    elif load is None:
+
+        # attempted fix to deal with the mismatch between eta, wet and tracer
+        # fields (mask the full dimension one array in space with wet)
+        oceanmask = ds_grid['wet']
+        ones = (ds['temp']*0+1).where(oceanmask)
+        ht = xr.DataArray(ds_grid['ht'].data,
+                          dims=template.dims,
+                          coords=template.coords)
+        eta = ds['eta_t']
+        dz_star = xr.DataArray(ds['st_edges_ocean'].diff('st_edges_ocean').data,
+                               dims=['st_ocean'],
+                               coords={'st_ocean': ds['st_ocean']})
+        dz = ones*dz_star*(1+(eta/ht.data))
+        dz = dz.chunk({'st_ocean': 1})
+
+    ds = ds.assign_coords(dzt=dz)
     ds = ds.assign_coords(area_t=area)
     ds = ds.assign_coords(volume_t=ds['dzt']*ds['area_t'])
     return ds
@@ -380,7 +396,8 @@ def cm26_loadall_run(run,
                      reconstruct_grids=True,
                      drop_vars=None,
                      integrate_vars=None,
-                     diff_vars=None):
+                     diff_vars=None,
+                     autoclose=True):
     """Master read in function for CM2.6. Merges all variables into one
     dataset. If specified, 'normalize_budgets divides by dzt.
     'budget_drop' defaults to all non o2 variables from src file
@@ -388,29 +405,36 @@ def cm26_loadall_run(run,
     if 'detrend' in run:
         read_kwargs = dict(decode_times=False, concat_dim='time',
                            chunks={'st_ocean': 1},
-                           autoclose=True,
+                           autoclose=autoclose,
                            drop_variables=['area_t', 'dzt',  'volume_t'])
         if run == 'control_detrended':
             rundir = os.path.join(rootdir, 'CM2.6_A_Control-1860_V03/annual_averages/detrended')
         elif run == 'forced':
             rundir = os.path.join(rootdir, 'CM2.6_A_V03_1PctTo2X/annual_averages/detrended')
         fid = os.path.join(rundir, '*_%s.nc' % run)
-        print(fid)
         ds = xr.open_mfdataset(fid, **read_kwargs)
+
+        # So far the reconstruction does not work for the detrended, we have
+        # to load the full grid from file
+        # reconstruct_grids = False
 
     else:
         ds_minibling_field = cm26_readin_annual_means('minibling_fields',
                                                       run,
-                                                      rootdir=rootdir)
+                                                      rootdir=rootdir,
+                                                      autoclose=autoclose)
         ds_physics = cm26_readin_annual_means('physics',
                                               run,
-                                              rootdir=rootdir)
+                                              rootdir=rootdir,
+                                              autoclose=autoclose)
         ds_osat = cm26_readin_annual_means('osat',
                                            run,
-                                           rootdir=rootdir)
+                                           rootdir=rootdir,
+                                           autoclose=autoclose)
         ds_minibling_src = cm26_readin_annual_means('minibling_src',
                                                     run,
-                                                    rootdir=rootdir)
+                                                    rootdir=rootdir,
+                                                    autoclose=autoclose)
 
         # Brute force the minibling time into all files
         # ######## THEY DONT HAVE THE SAME TIMESTAMP MOTHERFUCK....
