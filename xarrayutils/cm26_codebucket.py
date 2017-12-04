@@ -245,6 +245,7 @@ def cm26_readin_annual_means(name, run,
 
     global_file_kwargs = dict(
         decode_times=False,
+        autoclose=True
     )
 
     # choose the run directory
@@ -387,6 +388,7 @@ def cm26_loadall_run(run,
     if 'detrend' in run:
         read_kwargs = dict(decode_times=False, concat_dim='time',
                            chunks={'st_ocean': 1},
+                           autoclose=True,
                            drop_variables=['area_t', 'dzt',  'volume_t'])
         if run == 'control_detrended':
             rundir = os.path.join(rootdir, 'CM2.6_A_Control-1860_V03/annual_averages/detrended')
