@@ -391,10 +391,11 @@ def cm26_loadall_run(run,
         if run == 'control_detrended':
             rundir = os.path.join(rootdir, 'CM2.6_A_Control-1860_V03/annual_averages/detrended')
         elif run == 'forced':
-            rundir = os.path.join(rootdir,'CM2.6_A_V03_1PctTo2X/annual_averages/detrended')
+            rundir = os.path.join(rootdir, 'CM2.6_A_V03_1PctTo2X/annual_averages/detrended')
         fid = os.path.join(rundir, '*_%s.nc' % run)
         print(fid)
-        ds = xr.open_mfdataset(fid,**read_kwargs)
+        ds = xr.open_mfdataset(fid, **read_kwargs)
+
     else:
         ds_minibling_field = cm26_readin_annual_means('minibling_fields',
                                                       run,
@@ -476,3 +477,14 @@ def tracer_coords(obj, bin_var='o2', weight='volume_t',
     # Now now remove the weight and rename the dummy array
     out = out.rename({ones: weight+'_integrated'}).drop(weight)
     return out
+
+
+def save_years_wrapper(ds, odir, name, start_year, timesteps_per_yr=1,
+                       timedim='time', **kwargs):
+    if not os.path.isdir(odir):
+        os.mkdir(odir)
+
+    years = list(range(start_year, start_year+len(ds[timedim])))
+    datasets = [ds[{timedim: a}] for a in range(len(ds[timedim]))]
+    paths = [os.path.join(odir, '%04i.'+name) % y for y in years]
+    xr.save_mfdataset(datasets, paths, **kwargs)
