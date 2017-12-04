@@ -389,12 +389,9 @@ def cm26_loadall_run(run,
                            chunks={'st_ocean': 1},
                            drop_variables=['area_t', 'dzt',  'volume_t'])
         if run == 'control_detrended':
-            rundir = os.path.join(rootdir, 'CM2.6_A_Control-1860_V03/\
-                                            annual_averages/detrended')
+            rundir = os.path.join(rootdir, 'CM2.6_A_Control-1860_V03/annual_averages/detrended')
         elif run == 'forced':
-            rundir = os.path.join(rootdir,
-                                  'CM2.6_A_V03_1PctTo2X/\
-                                  annual_averages/detrended')
+            rundir = os.path.join(rootdir,'CM2.6_A_V03_1PctTo2X/annual_averages/detrended')
         fid = os.path.join(rundir, '*_%s.nc' % run)
         print(fid)
         ds = xr.open_mfdataset(fid,**read_kwargs)
