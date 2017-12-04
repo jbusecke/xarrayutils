@@ -395,9 +395,9 @@ def cm26_loadall_run(run,
             rundir = os.path.join(rootdir,
                                   'CM2.6_A_V03_1PctTo2X/\
                                   annual_averages/detrended')
-
-        ds = xr.open_mfdataset(os.path.join(rundir, '*_%s.nc' % run),
-                               **read_kwargs)
+        fid = os.path.join(rundir, '*_%s.nc' % run)
+        print(fid)
+        ds = xr.open_mfdataset(fid,**read_kwargs)
     else:
         ds_minibling_field = cm26_readin_annual_means('minibling_fields',
                                                       run,
