@@ -384,27 +384,41 @@ def cm26_loadall_run(run,
     dataset. If specified, 'normalize_budgets divides by dzt.
     'budget_drop' defaults to all non o2 variables from src file
     to save time."""
+    if 'detrend' in run:
+        read_kwargs = dict(decode_times=False, concat_dim='time',
+                           chunks={'st_ocean': 1},
+                           drop_variables=['area_t', 'dzt',  'volume_t'])
+        if run == 'control_detrended':
+            rundir = os.path.join(rootdir, 'CM2.6_A_Control-1860_V03/\
+                                            annual_averages/detrended')
+        elif run == 'forced':
+            rundir = os.path.join(rootdir,
+                                  'CM2.6_A_V03_1PctTo2X/\
+                                  annual_averages/detrended')
 
-    ds_minibling_field = cm26_readin_annual_means('minibling_fields',
-                                                  run,
-                                                  rootdir=rootdir)
-    ds_physics = cm26_readin_annual_means('physics',
-                                          run,
-                                          rootdir=rootdir)
-    ds_osat = cm26_readin_annual_means('osat',
-                                       run,
-                                       rootdir=rootdir)
-    ds_minibling_src = cm26_readin_annual_means('minibling_src',
-                                                run,
-                                                rootdir=rootdir)
+        ds = xr.open_mfdataset(os.path.join(rundir, '*_%s.nc' % run),
+                               **read_kwargs)
+    else:
+        ds_minibling_field = cm26_readin_annual_means('minibling_fields',
+                                                      run,
+                                                      rootdir=rootdir)
+        ds_physics = cm26_readin_annual_means('physics',
+                                              run,
+                                              rootdir=rootdir)
+        ds_osat = cm26_readin_annual_means('osat',
+                                           run,
+                                           rootdir=rootdir)
+        ds_minibling_src = cm26_readin_annual_means('minibling_src',
+                                                    run,
+                                                    rootdir=rootdir)
 
-    # Brute force the minibling time into all files
-    # ######## THEY DONT HAVE THE SAME TIMESTAMP MOTHERFUCK....
-    ds_physics.time.data = ds_minibling_field.time.data
-    ds_osat.time.data = ds_minibling_field.time.data
+        # Brute force the minibling time into all files
+        # ######## THEY DONT HAVE THE SAME TIMESTAMP MOTHERFUCK....
+        ds_physics.time.data = ds_minibling_field.time.data
+        ds_osat.time.data = ds_minibling_field.time.data
 
-    # TODO: Build test if the time is equal ...for now just watch the timesteps
-    ds = xr.merge([ds_minibling_field, ds_physics, ds_osat, ds_minibling_src])
+        # TODO: Build test if the time is equal ...for now just watch the timesteps
+        ds = xr.merge([ds_minibling_field, ds_physics, ds_osat, ds_minibling_src])
 
     if reconstruct_grids:
         ds = cm26_reconstruct_annual_grid(ds)
