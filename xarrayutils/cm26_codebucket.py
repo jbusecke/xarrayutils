@@ -378,7 +378,8 @@ def cm26_loadall_run(run,
                      normalize_budgets=True,
                      reconstruct_grids=True,
                      drop_vars=None,
-                     integrate_vars=None):
+                     integrate_vars=None,
+                     diff_vars=None):
     """Master read in function for CM2.6. Merges all variables into one
     dataset. If specified, 'normalize_budgets divides by dzt.
     'budget_drop' defaults to all non o2 variables from src file
@@ -416,12 +417,51 @@ def cm26_loadall_run(run,
             # Fast version without checking
             ds[vv].data = ds[vv].data/1035.0/ds['dzt'].data
 
+    # Calculate timestep (TODO: Make this more accurate by using the time data)
+    dt = dt = 364*24*60*60
     if integrate_vars:
-        dt = 364*24*60*60
         for vv in integrate_vars:
             ds[vv+'_integrated'] = (ds[vv]*dt).cumsum('time')
+
+    if diff_vars:
+        for vv in integrate_vars:
+            ds[vv+'_diff'] = ds[vv].diff('time')
+            ds[vv+'_diff'].data = ds[vv+'_diff'].data*dt
 
     if drop_vars:
         ds = ds.drop(drop_vars)
 
     return ds
+
+
+def _tracer_coords(obj, bin_var='o2', w_var='volume_t', bins=10):
+    # Label extracted bins with upper limit
+    if isinstance(bins, int):
+        labels = None
+    else:
+        labels = bins[1:]
+    # save unweighted values as bin reference
+    ref = obj[bin_var].copy()
+    # Weight values
+    for vv in obj.data_vars.keys():
+        obj[vv] = obj[vv]*obj[w_var]
+    # The 'w_var' is now useless (it should be the square of the weight)
+    # Bin and sum
+    binned = obj.groupby_bins(ref, bins, labels=labels,
+                              include_lowest=True).sum()
+    return binned
+
+
+def tracer_coords(obj, bin_var='o2', weight='volume_t',
+                  timedim='time', bins=10):
+    obj = obj.copy()
+    print('create ones')
+    ones = obj[bin_var]*0+1
+    print('assign ones')
+    obj = obj.assign(ones=ones)
+    # This is not completely elegant...I dont want these inputs to be keyword
+    out = obj.groupby(timedim).apply(_tracer_coords, bin_var=bin_var,
+                                     w_var=weight, bins=bins)
+    # Now now remove the weight and rename the dummy array
+    out = out.rename({ones: weight+'_integrated'}).drop(weight)
+    return out
