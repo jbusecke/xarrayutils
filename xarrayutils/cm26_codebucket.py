@@ -424,7 +424,7 @@ def cm26_loadall_run(run,
             ds[vv+'_integrated'] = (ds[vv]*dt).cumsum('time')
 
     if diff_vars:
-        for vv in integrate_vars:
+        for vv in diff_vars:
             ds[vv+'_diff'] = ds[vv].diff('time')
             ds[vv+'_diff'].data = ds[vv+'_diff'].data*dt
 
