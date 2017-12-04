@@ -394,6 +394,7 @@ def cm26_loadall_run(run,
                      rootdir='/work/Julius.Busecke/CM2.6_staged/',
                      normalize_budgets=True,
                      reconstruct_grids=True,
+                     grid_load=True,
                      drop_vars=None,
                      integrate_vars=None,
                      diff_vars=None,
@@ -402,21 +403,17 @@ def cm26_loadall_run(run,
     dataset. If specified, 'normalize_budgets divides by dzt.
     'budget_drop' defaults to all non o2 variables from src file
     to save time."""
-    if 'detrend' in run:
+    if 'detrended' in run:
         read_kwargs = dict(decode_times=False, concat_dim='time',
                            chunks={'st_ocean': 1},
                            autoclose=autoclose,
                            drop_variables=['area_t', 'dzt',  'volume_t'])
         if run == 'control_detrended':
             rundir = os.path.join(rootdir, 'CM2.6_A_Control-1860_V03/annual_averages/detrended')
-        elif run == 'forced':
+        elif run == 'forced_detrended':
             rundir = os.path.join(rootdir, 'CM2.6_A_V03_1PctTo2X/annual_averages/detrended')
         fid = os.path.join(rundir, '*_%s.nc' % run)
         ds = xr.open_mfdataset(fid, **read_kwargs)
-
-        # So far the reconstruction does not work for the detrended, we have
-        # to load the full grid from file
-        # reconstruct_grids = False
 
     else:
         ds_minibling_field = cm26_readin_annual_means('minibling_fields',
@@ -445,7 +442,16 @@ def cm26_loadall_run(run,
         ds = xr.merge([ds_minibling_field, ds_physics, ds_osat, ds_minibling_src])
 
     if reconstruct_grids:
-        ds = cm26_reconstruct_annual_grid(ds)
+        if grid_load:
+            if 'control' in run:
+                ds = cm26_reconstruct_annual_grid(ds, load='control')
+            elif 'forced' in run:
+                ds = cm26_reconstruct_annual_grid(ds, load='forced')
+            else:
+                raise RuntimeError('Could not load time variable grid files.\
+            Check runname')
+        else:
+            ds = cm26_reconstruct_annual_grid(ds)
 
     if normalize_budgets:
         convert_vars = list(ds_minibling_src.data_vars.keys())
