@@ -501,16 +501,14 @@ def _tracer_coords(obj, bin_var='o2', w_var='volume_t', bins=10):
 def tracer_coords(obj, bin_var='o2', weight='volume_t',
                   timedim='time', bins=10, rename_ones=True):
     obj = obj.copy()
-    print('create ones')
     ones = obj[bin_var]*0+1
-    print('assign ones')
     obj = obj.assign(ones=ones)
     # This is not completely elegant...I dont want these inputs to be keyword
     out = obj.groupby(timedim).apply(_tracer_coords, bin_var=bin_var,
                                      w_var=weight, bins=bins)
     if rename_ones:
         # Now now remove the weight and rename the dummy array
-        out = out.rename({ones: weight+'_integrated'}).drop(weight)
+        out = out.rename({'ones': weight+'_integrated'}).drop(weight)
     return out
 
 
