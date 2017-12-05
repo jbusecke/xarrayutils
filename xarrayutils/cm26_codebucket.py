@@ -508,7 +508,7 @@ def tracer_coords(obj, bin_var='o2', weight='volume_t',
                                      w_var=weight, bins=bins)
     if rename_ones:
         # Now now remove the weight and rename the dummy array
-        out = out.rename({'ones': weight+'_integrated'}).drop(weight)
+        out = out.rename({'ones': weight+'_integrated'})
     return out
 
 
