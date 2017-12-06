@@ -397,6 +397,7 @@ def cm26_loadall_run(run,
                      grid_load=True,
                      drop_vars=None,
                      integrate_vars=None,
+                     compute_aou=True,
                      diff_vars=None,
                      autoclose=True):
     """Master read in function for CM2.6. Merges all variables into one
@@ -473,6 +474,9 @@ def cm26_loadall_run(run,
         for vv in diff_vars:
             ds[vv+'_diff'] = ds[vv].diff('time')
             ds[vv+'_diff'].data = ds[vv+'_diff'].data/dt
+
+    if compute_aou:
+        ds['aou'] = ds['o2_sat']-ds['o2']
 
     if drop_vars:
         ds = ds.drop(drop_vars)
