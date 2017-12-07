@@ -476,7 +476,8 @@ def cm26_loadall_run(run,
             ds[vv+'_diff'].data = ds[vv+'_diff'].data/dt
 
     if compute_aou:
-        ds['aou'] = ds['o2_sat']-ds['o2']
+        ds['aou'] = ds['o2']
+        ds['aou'].data = ds['o2_sat'].data-ds['o2'].data
 
     if drop_vars:
         ds = ds.drop(drop_vars)
