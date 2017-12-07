@@ -404,6 +404,7 @@ def cm26_loadall_run(run,
     dataset. If specified, 'normalize_budgets divides by dzt.
     'budget_drop' defaults to all non o2 variables from src file
     to save time."""
+
     if 'detrended' in run:
         read_kwargs = dict(decode_times=False, concat_dim='time',
                            chunks={'st_ocean': 1},
@@ -441,8 +442,27 @@ def cm26_loadall_run(run,
         ds_physics.time.data = ds_minibling_field.time.data
         ds_osat.time.data = ds_minibling_field.time.data
 
-        # TODO: Build test if the time is equal ...for now just watch the timesteps
-        ds = xr.merge([ds_minibling_field, ds_physics, ds_osat, ds_minibling_src])
+        # TODO: Build test if the time is equal .
+        # for now just watch the timesteps
+        ds = xr.merge([ds_minibling_field, ds_physics,
+                      ds_osat, ds_minibling_src])
+
+    if drop_vars:
+        ds = ds.drop(drop_vars)
+
+    # Calculate timestep (TODO: Make this more accurate by using the time data)
+    dt = dt = 364*24*60*60
+    if integrate_vars:
+        for vv in integrate_vars:
+            ds[vv+'_integrated'] = (ds[vv]*dt).cumsum('time')
+
+    if diff_vars:
+        for vv in diff_vars:
+            ds[vv+'_diff'] = ds[vv].diff('time')/dt
+            # ds[vv+'_diff'].data = ds[vv+'_diff'].data/dt
+
+    if compute_aou:
+        ds['aou'] = ds['o2_sat']-ds['o2']
 
     if reconstruct_grids:
         if grid_load:
@@ -456,6 +476,7 @@ def cm26_loadall_run(run,
         else:
             ds = cm26_reconstruct_annual_grid(ds)
 
+    # TODO: Possibly I should give a list as possible input
     if normalize_budgets:
         convert_vars = list(ds_minibling_src.data_vars.keys())
         for vv in convert_vars:
@@ -463,24 +484,6 @@ def cm26_loadall_run(run,
             # ds[vv] = ds[vv]/1035.0/ds['dzt']
             # Fast version without checking
             ds[vv].data = ds[vv].data/1035.0/ds['dzt'].data
-
-    # Calculate timestep (TODO: Make this more accurate by using the time data)
-    dt = dt = 364*24*60*60
-    if integrate_vars:
-        for vv in integrate_vars:
-            ds[vv+'_integrated'] = (ds[vv]*dt).cumsum('time')
-
-    if diff_vars:
-        for vv in diff_vars:
-            ds[vv+'_diff'] = ds[vv].diff('time')
-            ds[vv+'_diff'].data = ds[vv+'_diff'].data/dt
-
-    if compute_aou:
-        ds['aou'] = ds['o2']
-        ds['aou'].data = ds['o2_sat'].data-ds['o2'].data
-
-    if drop_vars:
-        ds = ds.drop(drop_vars)
 
     return ds
 
