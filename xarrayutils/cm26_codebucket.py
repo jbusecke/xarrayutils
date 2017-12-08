@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 import os
 import xarray as xr
+import numpy as np
 from dask.array import zeros_like
 from . utils import concat_dim_da
 from . weighted_operations import weighted_mean, weighted_sum
@@ -345,7 +346,8 @@ def cm26_loadall_run(run,
                      integrate_vars=None,
                      compute_aou=True,
                      diff_vars=None,
-                     autoclose=True):
+                     autoclose=True,
+                     region=None):
     """Master read in function for CM2.6. Merges all variables into one
     dataset. If specified, 'normalize_budgets divides by dzt.
     'budget_drop' defaults to all non o2 variables from src file
@@ -430,6 +432,10 @@ def cm26_loadall_run(run,
             # ds[vv] = ds[vv]/1035.0/ds['dzt']
             # Fast version without checking
             ds[vv].data = ds[vv].data/1035.0/ds['dzt'].data
+
+    if region:
+        ds = cm26_cut_region(ds, region)
+        ds = remove_nan_domain(ds, dim=['xt_ocean', 'yt_ocean'])
 
     return ds
 
@@ -533,8 +539,8 @@ def remove_nan_domain(obj, dim, all_dim='st_ocean', margin=0):
             dim = [dim]
 
         for dd in dim:
-            all_coords = [a for a in list(nanmask.coords) if a != dd]
-            data_idx = np.where(~nanmask.all(all_coords))[0]
+            all_dims = [a for a in list(nanmask.dims) if a != dd]
+            data_idx = np.where(~nanmask.all(all_dims))[0]
             test = {dd: slice(data_idx[0]-margin, data_idx[-1]+margin)}
             obj = obj[test]
         return obj
