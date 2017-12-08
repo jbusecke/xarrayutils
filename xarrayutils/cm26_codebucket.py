@@ -475,3 +475,66 @@ def save_years_wrapper(ds, odir, name, start_year, timesteps_per_yr=1,
     datasets = [ds[{timedim: a}] for a in range(len(ds[timedim]))]
     paths = [os.path.join(odir, '%04i.'+name) % y for y in years]
     xr.save_mfdataset(datasets, paths, **kwargs)
+
+
+def cm26_cut_region(obj, region, cut_domain=True,
+                    regionfile=None, rename_dict=None):
+    """Masks dataset/dataarray according to cm2.6 regionmask and cuts to region
+    Region is defined by number as follows
+    0 = Land
+    1 = Southern Ocean
+    2 = Atlantic
+    3 = Pacific
+    4 = Arctic
+    5 = Indian
+    6 = Med
+    7 = Black Sea
+    8 = Labrador Sea
+    9 = Baltic Sea
+    10 = Red Sea
+    """
+    obj = obj.copy()
+
+    if regionfile is None:
+        regionfile = '/work/Julius.Busecke/CM2.6_staged/static/regionmask_cm26_020813.nc'
+
+    # TODO: I should write an overarching function that renames all the
+    # 'common' names for cm26 into a singel convention
+
+    if rename_dict is None:
+        rename_dict = dict(XT_OCEAN='xt_ocean', YT_OCEAN='yt_ocean',
+                           XU_OCEAN='xu_ocean', YU_OCEAN='yu_ocean')
+
+    regionmask = xr.open_dataset(regionfile).rename(rename_dict)
+    # TODO: Extend this to u mask for matching variables
+    # At the same time, I should find a way to adjust the tolerance
+    # for coordinate comparison, so I dont have to swap them
+    regionmask.coords['xt_ocean'].data = obj.coords['xt_ocean'].data
+    regionmask.coords['yt_ocean'].data = obj.coords['yt_ocean'].data
+    ##
+
+    # Mask data (still full domain)
+    obj = obj.where(regionmask['TMASK'].data == region)
+    return obj
+
+
+def remove_nan_domain(obj, dim, all_dim='st_ocean', margin=0):
+        if isinstance(obj, xr.DataArray):
+            test_slice = obj.isel(time=0)
+        elif isinstance(obj, xr.Dataset):
+            test_slice = obj[list(obj.data_vars)[0]].isel(time=0).drop('time')
+        else:
+            raise RuntimeError('obj input has to be xarray.Dataset \
+                               or DataArray')
+
+        nanmask = xr.ufuncs.isnan(test_slice).all(all_dim)
+
+        if isinstance(dim, str):
+            dim = [dim]
+
+        for dd in dim:
+            all_coords = [a for a in list(nanmask.coords) if a != dd]
+            data_idx = np.where(~nanmask.all(all_coords))[0]
+            test = {dd: slice(data_idx[0]-margin, data_idx[-1]+margin)}
+            obj = obj[test]
+        return obj
