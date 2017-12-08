@@ -2,25 +2,9 @@ from datetime import datetime, timedelta
 import pandas as pd
 import os
 import xarray as xr
-import dask.array as dsa
-import matplotlib.pyplot as plt
+from dask.array import zeros_like
 from . utils import concat_dim_da
 from . weighted_operations import weighted_mean, weighted_sum
-
-
-# def convert_boundary_flux(da,da_full,top=True):
-#     dummy = xr.DataArray(dsa.zeros_like(da_full.data),
-#                     coords = da_full.coords,
-#                     dims = da_full.dims)
-#     if top:
-#         da.coords['st_ocean'] = da_full['st_ocean'][0]
-#         dummy_cut = dummy.isel(st_ocean=slice(1,None))
-#         out = xr.concat([da,dummy_cut],dim='st_ocean')
-#     else:
-#         da.coords['st_ocean'] = da_full['st_ocean'][-1]
-#         dummy_cut = dummy.isel(st_ocean=slice(0,-1))
-#         out = xr.concat([dummy_cut,da],dim='st_ocean')
-#     return out
 
 
 def cm26_flist(ddir, name, years=None, yearformat='%04i0101'):
@@ -33,7 +17,7 @@ def cm26_flist(ddir, name, years=None, yearformat='%04i0101'):
 
 
 def cm26_convert_boundary_flux(da, da_full, top=True):
-    dummy = xr.DataArray(dsa.zeros_like(da_full.data),
+    dummy = xr.DataArray(zeros_like(da_full.data),
                          coords=da_full.coords,
                          dims=da_full.dims)
     if top:
@@ -74,27 +58,6 @@ def mask_tracer(ds, mask_ds, levels, name):
         out.append(ds.where(mask_ds <= ll))
     out = xr.concat(out, concat_dim_da(levels, name))
     return out
-
-# Doesnt work with the timing
-# def metrics_wrapper(ds, odir, oname, xdim='xt_ocean',
-#                     ydim='yt_ocean', zdim='st_ocean',
-#                     omz_var='o2',
-#                     omz_thresholds=[30, 60, 100, 1000]):
-#
-#     print('========mask omz===========')
-#     # mask different values of
-#     ds_box = mask_tracer(ds, ds[omz_var], omz_thresholds, 'omz_thresholds')
-#
-#     print('========track weights===========')
-#     # Add a 'dummy' array of ones like the oxygen, to track the total weight (can later be subtracted to get mean)
-#     ds_box = ds_add_track_dummy(ds_box, omz_var)
-#
-#     print('========calculate metrics===========')
-#     % time metrics = metrics_ds(ds_box, xdim, ydim, zdim, area_w='area_t', \
-#                                 volume_w='volume', compute_average=False)
-#
-#     print('========save metrics===========')
-#     %time metrics_save(metrics, odir, '%s_%s_sum.nc' %(oname,bb))
 
 
 def metrics_ds(ds, xdim, ydim, zdim, area_w='area_t', volume_w='volume',
@@ -209,10 +172,6 @@ def ds_add_track_dummy(ds, refvar):
     return ds.assign(ones=ones)
 
 
-def metrics_wrapper():
-    pass
-
-
 def time_add_refyear(ds, timedim='time', refyear=2000):
     ds = ds.copy()
     # Fix the time axis (I added 1900 years, since otherwise the stupid panda
@@ -225,24 +184,11 @@ def time_add_refyear(ds, timedim='time', refyear=2000):
     return ds
 
 
-# def add_grid_geometry(ds, rho_dzt, area):
-#     ds_new = ds.copy()
-#     rho_dzt = rho_dzt.copy()
-#     area = area.copy()
-#     ds_new = ds_new.assign_coords(area_t=area)
-#     # Infer vertical spacing (divided by constant rho=1035, since the model
-#     # uses the boussinesque appr.
-#     # [Griffies, Tutorial on budgets])
-#     ds_new = ds_new.assign_coords(dzt=(rho_dzt/1035.0))
-#     ds_new = ds_new.assign_coords(volume=ds_new['dzt']*ds_new['area_t'])
-#     ds_new = ds_new.assign_coords(rho_dzt=rho_dzt)
-#     return ds_new
-
-
 def cm26_readin_annual_means(name, run,
                              rootdir='/work/Julius.Busecke/CM2.6_staged/',
                              print_flist=False,
-                             autoclose=False):
+                             autoclose=False,
+                             years=None):
 
     global_file_kwargs = dict(
         decode_times=False,
@@ -252,9 +198,10 @@ def cm26_readin_annual_means(name, run,
     # choose the run directory
     if run == 'control':
         rundir = os.path.join(rootdir, 'CM2.6_A_Control-1860_V03')
-        years = range(100, 201)
     elif run == 'forced':
         rundir = os.path.join(rootdir, 'CM2.6_A_V03_1PctTo2X')
+
+    if not years:
         years = range(121, 201)
 
     if name == 'minibling_fields':
@@ -388,7 +335,6 @@ def cm26_reconstruct_annual_grid(ds, grid_path=None, load=None):
     ds = ds.assign_coords(area_t=area)
     ds = ds.assign_coords(volume_t=ds['dzt']*ds['area_t'])
     return ds
-
 
 def cm26_loadall_run(run,
                      rootdir='/work/Julius.Busecke/CM2.6_staged/',
