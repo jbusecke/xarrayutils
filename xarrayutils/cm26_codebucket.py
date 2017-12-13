@@ -400,6 +400,7 @@ def cm26_loadall_run(run,
 
         # Deactivate options that only apply to the non detrended data
         normalize_budgets=False
+        region = None
 
     else:
         ds_minibling_field = cm26_readin_annual_means('minibling_fields',
