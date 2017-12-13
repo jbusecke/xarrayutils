@@ -396,6 +396,7 @@ def cm26_loadall_run(run,
         print(region)
         print('test regionstr')
         print(regionstr)
+        print(os.path.join(rundir, '*_%s_%s.nc' % (run, regionstr)))
         if region is None:
             fid = os.path.join(rundir, '*_%s.nc' % (run))
         else:
