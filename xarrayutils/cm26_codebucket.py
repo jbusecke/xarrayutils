@@ -297,9 +297,10 @@ def cm26_reconstruct_annual_grid(ds, grid_path=None, load=None):
     # If I do this 'trick' with the ones, I make sure that dzt has the same
     # dimensions as the data_vars
     template = ds['o2'][{'time': 1, 'st_ocean':1}].drop(['time', 'st_ocean'])
-    area = xr.DataArray(ds_grid['area_t'].data,
-                        dims=template.dims,
-                        coords=template.coords)
+    # area = xr.DataArray(ds_grid['area_t'].data,
+    #                     dims=template.dims,
+    #                     coords=template.coords)
+    area = ds_grid['area_t']
 
     # activates loading of presaved dzt value
     load_kwargs = dict(decode_times=False, concat_dim='time',
