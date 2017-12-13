@@ -394,10 +394,12 @@ def cm26_loadall_run(run,
 
         print('test region')
         print(region)
-        if region is not None:
-            fid = os.path.join(rundir, '*_%s_%s.nc' % (run, regionstr))
-        else:
+        print('test regionstr')
+        print(regionstr)
+        if region is None:
             fid = os.path.join(rundir, '*_%s.nc' % (run))
+        else:
+            fid = os.path.join(rundir, '*_%s_%s.nc' % (run, regionstr))
         ds = xr.open_mfdataset(fid, **read_kwargs)
 
         # Deactivate options that only apply to the non detrended data
