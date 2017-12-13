@@ -337,6 +337,27 @@ def cm26_reconstruct_annual_grid(ds, grid_path=None, load=None):
     ds = ds.assign_coords(volume_t=ds['dzt']*ds['area_t'])
     return ds
 
+
+def regiondict():
+    return {'Pacfic': 3}
+
+
+def region2masknum(regionstr):
+    reg_dict = regiondict()
+    regions = list(reg_dict.keys())
+    if regionstr not in regions:
+        raise RuntimeError('region not recognized must be one of '+regions)
+    return reg_dict[regionstr]
+
+
+def masknum2region(masknum):
+    reg_dict = regiondict()
+    regionnums = [value for key, value in reg_dict.iteritems()]
+    if masknum not in regionnums:
+        raise RuntimeError('number not recognized must be one of '+regionnums)
+    return [k for k, v in reg_dict.iteritems() if v == masknum][0]
+
+
 def cm26_loadall_run(run,
                      rootdir='/work/Julius.Busecke/CM2.6_staged/',
                      normalize_budgets=True,
@@ -353,6 +374,11 @@ def cm26_loadall_run(run,
     'budget_drop' defaults to all non o2 variables from src file
     to save time."""
 
+    if region is not None:
+        if isinstance(region, str):
+            region = region2masknum(region)
+            regionstr = masknum2region(region)
+
     if 'detrended' in run:
         read_kwargs = dict(decode_times=False, concat_dim='time',
                            chunks={'st_ocean': 1},
@@ -363,11 +389,11 @@ def cm26_loadall_run(run,
         elif run == 'forced_detrended':
             rundir = os.path.join(rootdir, 'CM2.6_A_V03_1PctTo2X/annual_averages/detrended')
         if region:
-            fid = os.path.join(rundir, '*_%s_%s.nc' % (run, region))
+            fid = os.path.join(rundir, '*_%s_%s.nc' % (run, regionstr))
         else:
             fid = os.path.join(rundir, '*_%s.nc' % (run))
         ds = xr.open_mfdataset(fid, **read_kwargs)
-        
+
         # Deactivate options that only apply to the non detrended data
         normalize_budgets=False
 
