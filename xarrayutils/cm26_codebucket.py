@@ -346,7 +346,8 @@ def region2masknum(regionstr):
     reg_dict = regiondict()
     regions = list(reg_dict.keys())
     if regionstr not in regions:
-        raise RuntimeError('region not recognized must be one of '+regions)
+        raise RuntimeError('region not recognized must be one of [' +
+                           ' '.join(regions)+']')
     return reg_dict[regionstr]
 
 
@@ -354,7 +355,8 @@ def masknum2region(masknum):
     reg_dict = regiondict()
     regionnums = [value for key, value in reg_dict.items()]
     if masknum not in regionnums:
-        raise RuntimeError('number not recognized must be one of '+regionnums)
+        raise RuntimeError('number not recognized. Not in [' +
+                           ' '.join(regionnums)+']')
     return [k for k, v in reg_dict.items() if v == masknum][0]
 
 
