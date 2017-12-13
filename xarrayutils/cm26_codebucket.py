@@ -390,7 +390,7 @@ def cm26_loadall_run(run,
             rundir = os.path.join(rootdir, 'CM2.6_A_Control-1860_V03/annual_averages/detrended')
         elif run == 'forced_detrended':
             rundir = os.path.join(rootdir, 'CM2.6_A_V03_1PctTo2X/annual_averages/detrended')
-        if region:
+        if region is not None:
             fid = os.path.join(rundir, '*_%s_%s.nc' % (run, regionstr))
         else:
             fid = os.path.join(rundir, '*_%s.nc' % (run))
