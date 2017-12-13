@@ -339,7 +339,7 @@ def cm26_reconstruct_annual_grid(ds, grid_path=None, load=None):
 
 
 def regiondict():
-    return {'Pacfic': 3}
+    return {'Pacific': 3}
 
 
 def region2masknum(regionstr):
