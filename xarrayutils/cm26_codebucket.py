@@ -379,7 +379,6 @@ def cm26_loadall_run(run,
 
     if region is not None:
         if isinstance(region, str):
-            print('conversion')
             region = region2masknum(region)
             regionstr = masknum2region(region)
 
@@ -393,11 +392,6 @@ def cm26_loadall_run(run,
         elif run == 'forced_detrended':
             rundir = os.path.join(rootdir, 'CM2.6_A_V03_1PctTo2X/annual_averages/detrended')
 
-        print('test region')
-        print(region)
-        print('test regionstr')
-        print(regionstr)
-        print(os.path.join(rundir, '*_%s_%s.nc' % (run, regionstr)))
         if region is None:
             fid = os.path.join(rundir, '*_%s.nc' % (run))
         else:
