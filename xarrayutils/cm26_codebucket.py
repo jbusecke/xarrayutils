@@ -446,7 +446,7 @@ def cm26_loadall_run(run,
             # ds[vv+'_diff'].data = ds[vv+'_diff'].data/dt
 
     if compute_aou:
-        ds['aou'] = ds['o2_sat'].data-ds['o2'].data
+        ds['aou'] = ds['o2_sat']-ds['o2']
 
     if reconstruct_grids:
         if grid_load:
