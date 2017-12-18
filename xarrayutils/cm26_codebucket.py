@@ -213,8 +213,7 @@ def cm26_readin_annual_means(name, run,
                                            'geolon_t', 'average_T1',
                                            'average_T2', 'average_DT',
                                            'time_bounds', 'nv', 'chl'],
-                           chunks={'time': 1, 'st_ocean': 1,
-                                   'xt_ocean': 400, 'yt_ocean': 300})
+                           chunks={'time': 1, 'st_ocean':1})
     elif name == 'physics':
         path = os.path.join(rundir, 'annual_averages/ocean')
         name = 'ocean.*.ann.nc'
@@ -237,8 +236,7 @@ def cm26_readin_annual_means(name, run,
                                            'wt', 'frazil_2d',
                                            'net_sfc_heating',
                                            'pme_river', 'river'],
-                           chunks={'time': 1, 'st_ocean': 1,
-                                   'xt_ocean': 400, 'yt_ocean': 300})
+                           chunks={'time': 1, 'st_ocean': 1})
     elif name == 'osat':
         path = os.path.join(rundir, 'annual_averages/o2_sat')
         if run == 'control':
@@ -246,8 +244,7 @@ def cm26_readin_annual_means(name, run,
         else:
             name = '*.forced_o2_sat.nc'
         yearformat = '%04i'
-        file_kwargs = dict(chunks={'st_ocean': 1,
-                                   'xt_ocean': 400, 'yt_ocean': 300},
+        file_kwargs = dict(chunks={'st_ocean': 1},
                            concat_dim='time')
     elif name == 'minibling_src':
         path = os.path.join(rundir, 'annual_averages/budgets')
@@ -259,8 +256,7 @@ def cm26_readin_annual_means(name, run,
                                            'time_bounds', 'nv', 'chl',
                                            'o2_btf', 'po4_btf', 'dic_btf',
                                            'dic_stf', 'o2_stf'],
-                           chunks={'time': 1, 'st_ocean': 1,
-                                   'xt_ocean': 400, 'yt_ocean': 300})
+                           chunks={'time': 1, 'st_ocean': 1})
 
     else:
         raise RuntimeError('name not recognized')
@@ -280,10 +276,10 @@ def cm26_reconstruct_annual_grid(ds, grid_path=None, load=None):
     if grid_path is None:
         grid_path = '/work/Julius.Busecke/CM2.6_staged/static/CM2.6_grid_spec.nc'
     ds = ds.copy()
-    chunks_raw = {'gridlon_t': 400,
-                  'gridlat_t': 300,
-                  'gridlon_c': 400,
-                  'gridlat_c': 300,
+    chunks_raw = {'gridlon_t': 3600,
+                  'gridlat_t': 2700,
+                  'gridlon_c': 3600,
+                  'gridlat_c': 2700,
                   'st_ocean': 1,
                   'sw_ocean': 1}
     ds_grid = xr.open_dataset(grid_path,
@@ -308,8 +304,7 @@ def cm26_reconstruct_annual_grid(ds, grid_path=None, load=None):
 
     # activates loading of presaved dzt value
     load_kwargs = dict(decode_times=False, concat_dim='time',
-                       chunks={'st_ocean': 1,
-                               'xt_ocean': 400, 'yt_ocean': 300})
+                       chunks={'st_ocean': 1})
     if load == 'control':
         odir = '/work/Julius.Busecke/CM2.6_staged/CM2.6_A_Control-1860_V03/annual_averages/grid_fields'
         ds_dzt = xr.open_mfdataset(os.path.join(odir, '*dzt_control.nc'),
@@ -370,7 +365,7 @@ def cm26_loadall_run(run,
                      rootdir='/work/Julius.Busecke/CM2.6_staged/',
                      normalize_budgets=True,
                      reconstruct_grids=True,
-                     grid_load=True,
+                     grid_load=False,
                      drop_vars=None,
                      integrate_vars=None,
                      compute_aou=True,
@@ -389,8 +384,7 @@ def cm26_loadall_run(run,
 
     if 'detrended' in run:
         read_kwargs = dict(decode_times=False, concat_dim='time',
-                           chunks={'st_ocean': 1,
-                                   'xt_ocean': 400, 'yt_ocean': 300},
+                           chunks={'st_ocean': 1},
                            autoclose=autoclose,
                            drop_variables=['area_t', 'dzt',  'volume_t'])
         if run == 'control_detrended':
@@ -407,6 +401,7 @@ def cm26_loadall_run(run,
         # Deactivate options that only apply to the non detrended data
         normalize_budgets=False
         region = None
+        grid_load = True
 
     else:
         ds_minibling_field = cm26_readin_annual_means('minibling_fields',
@@ -451,7 +446,7 @@ def cm26_loadall_run(run,
             # ds[vv+'_diff'].data = ds[vv+'_diff'].data/dt
 
     if compute_aou:
-        ds['aou'] = ds['o2_sat']-ds['o2']
+        ds['aou'] = ds['o2_sat'].data-ds['o2'].data
 
     if reconstruct_grids:
         if grid_load:
