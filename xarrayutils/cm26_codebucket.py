@@ -1,19 +1,365 @@
 from datetime import datetime, timedelta
 import pandas as pd
-import os
+from os.path import join as pjoin
 import xarray as xr
 import numpy as np
+import gsw
 from dask.array import zeros_like
 from . utils import concat_dim_da
 from . weighted_operations import weighted_mean, weighted_sum
 
 
+def load_obs(fid, read_kwargs=dict(), swap_dims=None, rename=None,
+             drop=None, squeeze=None, dtype_convert=None, unit_conversion=None,
+             shift_lon_dim='xt_ocean', shift_lon_kwargs=None):
+
+    """
+    Reads and 'massages' observational dataset to facilitate comparison
+    with model dataa
+
+    INPUT
+    =====
+    fid: {str, list} : path or list of paths to data.
+    read_kwargs: {None, dict} Arguments passed to xarray.open_dataset
+    swap_dims: {None, dict} Arguments passed to xarray.Dataset.swap_dims
+    rename: {None, dict} Dictionary passed to xarray.Dataset.rename
+    drop: {None, list} List passed to xarray.Dataset.drop
+    dtype_convert: {None, e.g. np.float64} dtype that all variables (also
+                coords, dims) are converted too. If not there can be weird
+                issues with the lon shift (Mimoc np.float32 data could not be
+                edited for instance)
+    unit_conversion: {None, dict} Dict of
+                     {varname: (conversion_factor, new_units)} to be applied
+                     as follows: ds['varname] = ds['varname']*conversion_factor
+    """
+    if isinstance(fid, str):
+        ds = xr.open_dataset(fid, **read_kwargs)
+    elif isinstance(fid, list):
+        ds = xr.open_mfdataset(fid, **read_kwargs)
+    else:
+        raise RuntimeError('fid has to be a single path or a list of paths')
+
+    if swap_dims is not None:
+        ds = ds.swap_dims(swap_dims)
+    if rename is not None:
+        ds = ds.rename(rename)
+    if drop is not None:
+        ds = ds.drop(drop,)
+    if squeeze is not None:
+        ds = ds.squeeze(squeeze, drop=True)
+
+    if dtype_convert is not None:
+        for cc in list(ds.data_vars):
+            ds[cc].data = ds[cc].data.astype(dtype_convert)
+        for cc in list(ds.coords):
+            if not isinstance(ds[cc].data[0], str):
+                ds[cc].data = ds[cc].data.astype(dtype_convert)
+
+    if unit_conversion is not None:
+        for kk in list(unit_conversion.keys()):
+            ds[kk].data = ds[kk].data*unit_conversion[kk][0]
+            ds[kk].attrs['units'] = unit_conversion[kk][1]
+
+    if shift_lon_kwargs is not None:
+            ds = shift_lon(ds, shift_lon_dim, **shift_lon_kwargs)
+    return ds
+
+
+def load_obs_dict(fid_dict=None, drop_dict=None, mimoc_fix=True):
+    """ Load multiple datasets into a dictionary.
+    Time average and combine to single dataset if 'combo' is activated.
+
+    INPUT
+    =====
+    fid_dict: {None, str, list, dict} Defaults to a 'standard selection of
+              datsets. Dict has to have the structure like
+              {name:(fid, load_obs_kwargs)}, where fid is the file location
+              and load_obs_kwargs is a dict with input keywords for load_obs.
+              If list/str is passed, only those datasetd from the standard
+              selection are loaded.
+    drop_dict: {None, dict} Dict which gives drop variables for each dataset.
+              In case only certain vars are desired.
+    """
+    # Determine input
+    if isinstance(fid_dict, dict):
+        load_list = 'all'
+    elif isinstance(fid_dict, list):
+        load_list = fid_dict
+    elif isinstance(fid_dict, 'str'):
+        load_list = [fid_dict]
+    else:
+        raise RuntimeError("'fid_dict' has to be a dict, \
+                           list of strings or str")
+
+    def glodap_preprocess(ds):
+        ref = list(ds.data_vars)[0]
+        ds = ds.assign_coords(Depth=ds['Depth'], SnR=ds['SnR'], CL=ds['CL'])
+        f_dim = concat_dim_da(['data', 'error', 'relerr', 'input_mean',
+                               'input_std', 'input_n'], 'field')
+        ds_new = xr.concat([ds[ref], ds[ref+'_error'], ds[ref+'_relerr'],
+                            ds['Input_mean'], ds['Input_std'], ds['Input_N']],
+                           dim=f_dim). \
+            assign_attrs(units=ds[ref].attrs['units']). \
+            to_dataset()
+        return ds_new
+
+    def woa_preprocessing(ds):
+        variables = ['A', 'i', 'n', 'o', 'O', 'p', 'I', 's', 't']
+        fields = ['an', 'mn', 'dd', 'sd', 'se', 'oa', 'ma', 'gp']
+        field_names = ['obj_analyzed_data', 'mean', 'n_obs', 'std',
+                       'err', 'oa', 'ma', 'gp']
+        idx = slice(0, 4)
+        f_dim = concat_dim_da(field_names[idx], 'field')
+        datasets = []
+        for vv in variables:
+            datasets.append(xr.concat([ds[vv+'_'+a] for a in fields[idx]],
+                                      dim=f_dim))
+            datasets[-1].attrs = ds[vv+'_an'].attrs
+        ds_new = xr.merge(datasets)
+        return ds_new
+
+    def glodap_flist():
+        ddir = '/work/Julius.Busecke/shared_data/ \
+            GLODAPv2.2016b_MappedClimatologies'
+        fid = [pjoin(ddir, a) for a in ['GLODAPv2.2016b.Cant.nc',
+                                        'GLODAPv2.2016b.NO3.nc',
+                                        'GLODAPv2.2016b.OmegaA.nc',
+                                        'GLODAPv2.2016b.OmegaC.nc',
+                                        'GLODAPv2.2016b.oxygen.nc',
+                                        'GLODAPv2.2016b.pHts25p0.nc',
+                                        'GLODAPv2.2016b.pHtsinsitutp.nc',
+                                        'GLODAPv2.2016b.PI_TCO2.nc',
+                                        'GLODAPv2.2016b.PO4.nc',
+                                        'GLODAPv2.2016b.salinity.nc',
+                                        'GLODAPv2.2016b.silicate.nc',
+                                        'GLODAPv2.2016b.TAlk.nc',
+                                        'GLODAPv2.2016b.TCO2.nc',
+                                        'GLODAPv2.2016b.temperature.nc']]
+        return fid
+
+    def woa_convert_conc(c, rho, molvol):
+        """This conversion requires water density, which is not always known.
+        For dissolved oxigen, 1 ml/l is approximately 43.554 umol/kg assuming
+        a constant seawater density of 1025 kg/m^3 and a molar volume
+        of O2 (22.4 l)."""
+
+        out = c/rho/molvol
+        out.attrs['units'] = 'mol/kg'
+        return out
+
+    def calc_teos10(ds):
+        # TODO add units and long names
+        # Create necessary variables with teos-10, perhaps I should
+        # parallelize that...(makes it more comp)
+        ds['pr'] = xr.apply_ufunc(gsw.p_from_z, -ds['st_ocean'],
+                                  ds['yt_ocean'])
+        ds['sa'] = xr.apply_ufunc(gsw.SA_from_SP, ds['salt'], ds['pr'],
+                                  ds['xt_ocean'], ds['yt_ocean'],
+                                  dask='allowed')
+        if 'temp' in list(ds.data_vars):
+            ds['ct'] = xr.apply_ufunc(gsw.CT_from_pt, ds['sa'], ds['temp'],
+                                      dask='allowed')
+        else:
+            ds['ct'] = xr.apply_ufunc(gsw.CT_from_t, ds['sa'], ds['te'],
+                                      ds['pr'], dask='allowed')
+            ds['temp'] = xr.apply_ufunc(gsw.pt_from_CT, ds['sa'], ds['ct'],
+                                        dask='allowed')
+        ds['pot_rho_0'] = xr.apply_ufunc(gsw.sigma0, ds['sa'], ds['ct'],
+                                         dask='allowed')+1000
+        return ds
+
+    if fid_dict is None:
+        ds_dict = dict()
+        fid_dict = {
+            'CM26_init': ('/work/Julius.Busecke/CM2.6_staged/init/\
+                          WOA01-05_CM2.6_annual.nc',
+                          dict(
+                              read_kwargs={'chunks': {'depth': 1}},
+                              rename={'depth': 'st_ocean',
+                                      'longitude': 'xt_ocean',
+                                      'latitude': 'yt_ocean'},
+                              squeeze=['time'],
+                          )),
+            'AVISO': ('/work/Julius.Busecke/shared_data/aviso/\
+                      zos_AVISO_L4_199210-201012.nc',
+                      dict(
+                        read_kwargs=dict(chunks={'time': 1}),
+                        rename={'zos': 'eta_t', 'lon': 'xt_ocean',
+                                'lat': 'yt_ocean'}
+                          )),
+            'WOA13': (['/work/Julius.Busecke/shared_data/woa/woa13.nc'],
+                      dict(
+                    read_kwargs=dict(decode_times=False, chunks={'depth': 1},
+                                     preprocess=woa_preprocessing),
+                    dtype_convert=np.float64,
+                    rename={
+                        'lon': 'xt_ocean',
+                        'lat': 'yt_ocean',
+                        'depth': 'st_ocean',
+                        'time': 'month',
+                        'A_an': 'aou',
+                        'i_an': 'silicate',
+                        'n_an': 'no3',
+                        'I_an': 'dens',
+                        'p_an': 'po4',
+                        'O_an': 'o2_sat_perc',
+                        'o_an': 'o2',
+                        't_an': 'te',
+                        's_an': 'salt'
+                    },
+                    )),
+            'GLODAPv2': (glodap_flist(),
+                         dict(
+                            read_kwargs=dict(preprocess=glodap_preprocess,
+                                             chunks={'depth_surface': 1}),
+                            swap_dims=dict(depth_surface='Depth'),
+                            rename=dict(Depth='st_ocean', lat='yt_ocean',
+                                        lon='xt_ocean', PO4='po4', NO3='no3',
+                                        oxygen='o2', salinity='salt',
+                                        temperature='temp'),
+                            unit_conversion={
+                                'po4':  (1e-6, 'mols/kg'),
+                                'no3': (1e-6, 'mols/kg'),
+                                'o2': (1e-6, 'mols/kg'),
+                                'Cant': (1e-6, 'mols/kg'),
+                                'silicate': (1e-6, 'mols/kg'),
+                            },
+                        )),
+            'MLD_deBoyer': ('/work/Julius.Busecke/shared_data/\
+                        MLD_deBoyerMontegut/MLD_deBoyerMontegut_combined.nc',
+                            dict(
+                              read_kwargs=dict(chunks={'time': 1},
+                                               decode_times=False),
+                              dtype_convert=np.float64,
+                              rename=dict(lon='xt_ocean', lat='yt_ocean',
+                                          time='month'),
+                              shift_lon_kwargs=dict(shift=360, crit=0,
+                                                    smaller=True)
+                              )),
+            'MLD_Holte': ('/work/Julius.Busecke/shared_data/\
+                Argo_mixedlayers_monthlyclim_03192017.nc',
+                          dict(
+                             read_kwargs=dict(chunks={'iMONTH': 1}),
+                             swap_dims={'iLON': 'lon', 'iLAT': 'lat',
+                                        'iMONTH': 'month'},
+                             rename=dict(lat='yt_ocean', lon='xt_ocean'),
+                             shift_lon_kwargs=dict(shift=360, crit=0,
+                                                   smaller=True)
+                              )),
+            'MIMOC': ('/work/Julius.Busecke/shared_data/mimoc/\
+                MIMOC_Z_GRID_v2.2_PT_S.nc',
+                      dict(
+                          read_kwargs=dict(chunks={'month_of_year': 1}),
+                          dtype_convert=np.float64,
+                          rename=dict(lat='yt_ocean', long='xt_ocean',
+                                      month_of_year='month', PRES='st_ocean',
+                                      SALINITY='salt',
+                                      POTENTIAL_TEMPERATURE='temp'),
+                          shift_lon_kwargs=dict(shift=360, crit=0,
+                                                smaller=True)
+                      )),
+            'Bianchi': ('/work/Julius.Busecke/shared_data/O2_bianchi.nc',
+                        dict(
+                           read_kwargs=dict(chunks={'TIME': 1, 'DEPTH': 1}),
+                           drop=['DEPTH_bnds', 'TIME_bnds'],
+                           rename=dict(LATITUDE='yt_ocean',
+                                       LONGITUDE='xt_ocean',
+                                       TIME='month', DEPTH='st_ocean',
+                                       O2_LINEAR='o2'),
+                           unit_conversion={'o2': (1e-6, 'mol/kg')},
+                           shift_lon_kwargs=dict(shift=360, crit=0,
+                                                 smaller=True)
+                           ))
+                    }
+
+        if load_list == 'all':
+            load_list = list(ds_dict.keys())
+        for kk in load_list:
+            ds_dict[kk] = load_obs(fid_dict[kk][0], **fid_dict[kk][1])
+
+        # special fixes for default input
+        if 'MIMOC' in list(ds_dict.keys()):
+            ds_dict['MIMOC']['st_ocean'] = ds_dict['MIMOC']['PRESSURE'].\
+                isel(month=0, drop=True)
+            ds_dict['MIMOC'] = ds_dict['MIMOC'].drop('PRESSURE')
+            ds_dict['MIMOC'] = calc_teos10(ds_dict['MIMOC'])
+
+        if 'WOA13' in list(ds_dict.keys()):
+            ds_dict['WOA13']['dens'] = ds_dict['WOA13']['dens']+1000
+            ds_dict['WOA13']['o2'] = woa_convert_conc(ds_dict['WOA13']['o2'],
+                                                      ds_dict['WOA13']['dens'],
+                                                      22.4)  # molweight oxygen
+            ds_dict['WOA13']['aou'] = woa_convert_conc(ds_dict['WOA13']['aou'],
+                                                      ds_dict['WOA13']['dens'],
+                                                      22.4)
+            ds_dict['WOA13']['o2_sat'] = ds_dict['WOA13']['o2'] + \
+                (ds_dict['WOA13']['aou'])
+            for nut in ['po4', 'no3']:
+                ds_dict['WOA13'][nut] = ds_dict['WOA13'][nut] / \
+                    ds_dict['WOA13']['dens']*1e-3
+
+            ds_dict['WOA13'] = calc_teos10(ds_dict['WOA13'])
+
+        # This could be integrated into the read_kwargs above by adding a field
+        if drop_dict is not None:
+            for kk in list(drop_dict.keys()):
+                ds_dict[kk] = ds_dict[kk].drop(drop_dict[kk])
+
+        return ds_dict
+
+
+def cm26_load_obs(ref_ds, combo=True, masking=True):
+    # TODO: I should replace the ref_ds with the grid file once ready
+    ds_dict = load_obs_dict()
+
+    # Select fields for data that is given with errors...
+    if combo:
+        for ff in list(ds_dict.keys()):
+            if ff == 'GLODAPv2':
+                ds_dict[ff] = ds_dict[ff].sel(field='data', drop=True)
+            if ff == 'WOA13':
+                ds_dict[ff] = ds_dict[ff].sel(field='obj_analyzed_data',
+                                              drop=True)
+
+    # Convert lon to CM2.6 convention and reindex
+    for kk in list(ds_dict.keys()):
+        ds_dict[kk] = shift_lon(ds_dict[kk], 'xt_ocean', shift=-360,
+                                crit=360-270, smaller=False)
+        ds_dict[kk] = ds_dict[kk].reindex_like(ref_ds, method='nearest')
+
+    if masking:
+        mask = ref_ds[list(ref_ds.data_vars)[0]]
+        non_mask_dims = [a for a in list(mask.dims) if a not in ['xt_ocean',
+                                                                 'yt_ocean']]
+        for nn in non_mask_dims:
+            mask = mask[{nn: 0}]
+        for kk in list(ds_dict.keys()):
+            ds_dict[kk] = ds_dict[kk].where(~xr.ufuncs.isnan(mask))
+
+    if combo:
+        c = []
+        for ff in list(ds_dict.keys()):
+            if 'month' in list(ds_dict[ff].dims):
+                cc = ds_dict[ff].mean('month', keep_attrs=True)
+            elif 'time' in list(ds_dict[ff].dims):
+                cc = ds_dict[ff].mean('time', keep_attrs=True)
+            else:
+                cc = ds_dict[ff]
+
+            for cv in list(cc.data_vars):
+                cc = cc.rename({cv: '%s_%s' % (ff, cv)})
+            c.append(cc)
+
+        ds_dict = xr.merge(c)
+    return ds_dict
+
+
 def cm26_flist(ddir, name, years=None, yearformat='%04i0101'):
     if years:
         name = name.replace('*', yearformat)
-        out = [os.path.join(ddir, name % yy) for yy in years]
+        out = [pjoin(ddir, name % yy) for yy in years]
     else:
-        out = os.path.join(ddir, name)
+        out = pjoin(ddir, name)
     return out
 
 
@@ -152,17 +498,17 @@ def metrics_save(metrics, odir, fname, mf_save=False, **kwargs):
     for kk in metrics.keys():
         if mf_save:
             years, datasets = zip(*metrics[kk].groupby('time.year'))
-            paths = [os.path.join(odir,
+            paths = [pjoin(odir,
                 '%04i_%s_%s.nc' %(y, fname, kk)) for y in years]
             xr.save_mfdataset(datasets, paths)
         else:
-            metrics[kk].to_netcdf(os.path.join(odir, '%s_%s.nc' % (fname, kk)),
+            metrics[kk].to_netcdf(pjoin(odir, '%s_%s.nc' % (fname, kk)),
                                   **kwargs)
 
 
 def metrics_load(metrics, odir, fname, **kwargs):
     for kk in metrics.keys():
-        metrics[kk] = xr.open_dataset(os.path.join(odir,
+        metrics[kk] = xr.open_dataset(pjoin(odir,
                                                    '%s_%s.nc' % (fname, kk)),
                                       **kwargs)
 
@@ -198,15 +544,15 @@ def cm26_readin_annual_means(name, run,
 
     # choose the run directory
     if run == 'control':
-        rundir = os.path.join(rootdir, 'CM2.6_A_Control-1860_V03')
+        rundir = pjoin(rootdir, 'CM2.6_A_Control-1860_V03')
     elif run == 'forced':
-        rundir = os.path.join(rootdir, 'CM2.6_A_V03_1PctTo2X')
+        rundir = pjoin(rootdir, 'CM2.6_A_V03_1PctTo2X')
 
     if not years:
         years = range(121, 201)
 
     if name == 'minibling_fields':
-        path = os.path.join(rundir, 'annual_averages/minibling_fields')
+        path = pjoin(rundir, 'annual_averages/minibling_fields')
         name = '*.field.nc'
         yearformat = '%04i'
         file_kwargs = dict(drop_variables=['area_t',  'geolat_t',
@@ -215,7 +561,7 @@ def cm26_readin_annual_means(name, run,
                                            'time_bounds', 'nv', 'chl'],
                            chunks={'time': 1, 'st_ocean':1})
     elif name == 'physics':
-        path = os.path.join(rundir, 'annual_averages/ocean')
+        path = pjoin(rundir, 'annual_averages/ocean')
         name = 'ocean.*.ann.nc'
         yearformat = '%04i'
         file_kwargs = dict(drop_variables=['area_t',  'geolat_t',
@@ -238,7 +584,7 @@ def cm26_readin_annual_means(name, run,
                                            'pme_river', 'river'],
                            chunks={'time': 1, 'st_ocean': 1})
     elif name == 'osat':
-        path = os.path.join(rundir, 'annual_averages/o2_sat')
+        path = pjoin(rundir, 'annual_averages/o2_sat')
         if run == 'control':
             name = '*.control_o2_sat.nc'
         else:
@@ -247,7 +593,7 @@ def cm26_readin_annual_means(name, run,
         file_kwargs = dict(chunks={'st_ocean': 1},
                            concat_dim='time')
     elif name == 'minibling_src':
-        path = os.path.join(rundir, 'annual_averages/budgets')
+        path = pjoin(rundir, 'annual_averages/budgets')
         name = '*.src.nc'
         yearformat = '%04i'
         file_kwargs = dict(drop_variables=['area_t',  'geolat_t',
@@ -307,13 +653,13 @@ def cm26_reconstruct_annual_grid(ds, grid_path=None, load=None):
                        chunks={'st_ocean': 1})
     if load == 'control':
         odir = '/work/Julius.Busecke/CM2.6_staged/CM2.6_A_Control-1860_V03/annual_averages/grid_fields'
-        ds_dzt = xr.open_mfdataset(os.path.join(odir, '*dzt_control.nc'),
+        ds_dzt = xr.open_mfdataset(pjoin(odir, '*dzt_control.nc'),
                                    **load_kwargs)
         dz = ds_dzt['dzt']
 
     elif load == 'forced':
         odir = '/work/Julius.Busecke/CM2.6_staged/CM2.6_A_V03_1PctTo2X/annual_averages/grid_fields'
-        ds_dzt = xr.open_mfdataset(os.path.join(odir, '*dzt_forced.nc'),
+        ds_dzt = xr.open_mfdataset(pjoin(odir, '*dzt_forced.nc'),
                                    **load_kwargs)
         dz = ds_dzt['dzt']
 
@@ -388,14 +734,14 @@ def cm26_loadall_run(run,
                            autoclose=autoclose,
                            drop_variables=['area_t', 'dzt',  'volume_t'])
         if run == 'control_detrended':
-            rundir = os.path.join(rootdir, 'CM2.6_A_Control-1860_V03/annual_averages/detrended')
+            rundir = pjoin(rootdir, 'CM2.6_A_Control-1860_V03/annual_averages/detrended')
         elif run == 'forced_detrended':
-            rundir = os.path.join(rootdir, 'CM2.6_A_V03_1PctTo2X/annual_averages/detrended')
+            rundir = pjoin(rootdir, 'CM2.6_A_V03_1PctTo2X/annual_averages/detrended')
 
         if region is None:
-            fid = os.path.join(rundir, '*_%s.nc' % (run))
+            fid = pjoin(rundir, '*_%s.nc' % (run))
         else:
-            fid = os.path.join(rundir, '*_%s_%s.nc' % (run, regionstr))
+            fid = pjoin(rundir, '*_%s_%s.nc' % (run, regionstr))
         ds = xr.open_mfdataset(fid, **read_kwargs)
 
         # Deactivate options that only apply to the non detrended data
@@ -517,7 +863,7 @@ def save_years_wrapper(ds, odir, name, start_year, timesteps_per_yr=1,
 
     years = list(range(start_year, start_year+len(ds[timedim])))
     datasets = [ds[{timedim: a}] for a in range(len(ds[timedim]))]
-    paths = [os.path.join(odir, '%04i.'+name) % y for y in years]
+    paths = [pjoin(odir, '%04i.'+name) % y for y in years]
     xr.save_mfdataset(datasets, paths, **kwargs)
 
 
