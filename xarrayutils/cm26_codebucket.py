@@ -286,6 +286,8 @@ def load_obs_dict(fid_dict=None, drop_dict=None, mimoc_fix=True, debug=False):
             print(fid_dict)
 
         for kk in load_list:
+            if debug:
+                print(kk)
             ds_dict[kk] = load_obs(fid_dict[kk][0], **fid_dict[kk][1])
 
         # special fixes for default input
