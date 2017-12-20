@@ -277,7 +277,8 @@ def load_obs_dict(fid_dict=None, drop_dict=None, mimoc_fix=True):
                     }
 
         if load_list == 'all':
-            load_list = list(ds_dict.keys())
+            load_list = list(fid_dict.keys())
+ 
         for kk in load_list:
             ds_dict[kk] = load_obs(fid_dict[kk][0], **fid_dict[kk][1])
 
