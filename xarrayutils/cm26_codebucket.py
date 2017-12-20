@@ -174,7 +174,7 @@ def load_obs_dict(fid_dict=None, drop_dict=None, mimoc_fix=True, debug=False):
 
     ds_dict = dict()
 
-    if fid_dict is None:
+    if not isinstance(fid_dict, dict):
         fid_dict = {
             'CM26_init': ('/work/Julius.Busecke/CM2.6_staged/init/WOA01-05_CM2.6_annual.nc',
                           dict(
