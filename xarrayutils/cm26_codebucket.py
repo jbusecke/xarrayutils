@@ -177,8 +177,7 @@ def load_obs_dict(fid_dict=None, drop_dict=None, mimoc_fix=True, debug=False):
 
     if fid_dict is None:
         fid_dict = {
-            'CM26_init': ('/work/Julius.Busecke/CM2.6_staged/init/\
-                          WOA01-05_CM2.6_annual.nc',
+            'CM26_init': ('/work/Julius.Busecke/CM2.6_staged/init/WOA01-05_CM2.6_annual.nc',
                           dict(
                               read_kwargs={'chunks': {'depth': 1}},
                               rename={'depth': 'st_ocean',
@@ -186,8 +185,7 @@ def load_obs_dict(fid_dict=None, drop_dict=None, mimoc_fix=True, debug=False):
                                       'latitude': 'yt_ocean'},
                               squeeze=['time'],
                           )),
-            'AVISO': ('/work/Julius.Busecke/shared_data/aviso/\
-                      zos_AVISO_L4_199210-201012.nc',
+            'AVISO': ('/work/Julius.Busecke/shared_data/aviso/zos_AVISO_L4_199210-201012.nc',
                       dict(
                         read_kwargs=dict(chunks={'time': 1}),
                         rename={'zos': 'eta_t', 'lon': 'xt_ocean',
@@ -231,8 +229,7 @@ def load_obs_dict(fid_dict=None, drop_dict=None, mimoc_fix=True, debug=False):
                                 'silicate': (1e-6, 'mols/kg'),
                             },
                         )),
-            'MLD_deBoyer': ('/work/Julius.Busecke/shared_data/\
-                        MLD_deBoyerMontegut/MLD_deBoyerMontegut_combined.nc',
+            'MLD_deBoyer': ('/work/Julius.Busecke/shared_data/MLD_deBoyerMontegut/MLD_deBoyerMontegut_combined.nc',
                             dict(
                               read_kwargs=dict(chunks={'time': 1},
                                                decode_times=False),
@@ -242,8 +239,7 @@ def load_obs_dict(fid_dict=None, drop_dict=None, mimoc_fix=True, debug=False):
                               shift_lon_kwargs=dict(shift=360, crit=0,
                                                     smaller=True)
                               )),
-            'MLD_Holte': ('/work/Julius.Busecke/shared_data/\
-                Argo_mixedlayers_monthlyclim_03192017.nc',
+            'MLD_Holte': ('/work/Julius.Busecke/shared_data/Argo_mixedlayers_monthlyclim_03192017.nc',
                           dict(
                              read_kwargs=dict(chunks={'iMONTH': 1}),
                              swap_dims={'iLON': 'lon', 'iLAT': 'lat',
@@ -252,8 +248,7 @@ def load_obs_dict(fid_dict=None, drop_dict=None, mimoc_fix=True, debug=False):
                              shift_lon_kwargs=dict(shift=360, crit=0,
                                                    smaller=True)
                               )),
-            'MIMOC': ('/work/Julius.Busecke/shared_data/mimoc/\
-                MIMOC_Z_GRID_v2.2_PT_S.nc',
+            'MIMOC': ('/work/Julius.Busecke/shared_data/mimoc/MIMOC_Z_GRID_v2.2_PT_S.nc',
                       dict(
                           read_kwargs=dict(chunks={'month_of_year': 1}),
                           dtype_convert=np.float64,
@@ -304,7 +299,7 @@ def load_obs_dict(fid_dict=None, drop_dict=None, mimoc_fix=True, debug=False):
                                                       22.4)  # molweight oxygen
             ds_dict['WOA13']['aou'] = woa_convert_conc(ds_dict['WOA13']['aou'],
                                                        ds_dict['WOA13']['dens'],
-                                                      22.4)
+                                                       22.4)
             ds_dict['WOA13']['o2_sat'] = ds_dict['WOA13']['o2'] + \
                 (ds_dict['WOA13']['aou'])
             for nut in ['po4', 'no3']:
