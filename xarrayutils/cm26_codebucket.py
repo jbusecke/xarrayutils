@@ -65,7 +65,7 @@ def load_obs(fid, read_kwargs=dict(), swap_dims=None, rename=None,
     return ds
 
 
-def load_obs_dict(fid_dict=None, drop_dict=None, mimoc_fix=True):
+def load_obs_dict(fid_dict=None, drop_dict=None, mimoc_fix=True, debug=False):
     """ Load multiple datasets into a dictionary.
     Time average and combine to single dataset if 'combo' is activated.
 
@@ -278,7 +278,11 @@ def load_obs_dict(fid_dict=None, drop_dict=None, mimoc_fix=True):
 
         if load_list == 'all':
             load_list = list(fid_dict.keys())
- 
+
+        if debug:
+            print(load_list)
+            print(fid_dict)
+
         for kk in load_list:
             ds_dict[kk] = load_obs(fid_dict[kk][0], **fid_dict[kk][1])
 
@@ -295,7 +299,7 @@ def load_obs_dict(fid_dict=None, drop_dict=None, mimoc_fix=True):
                                                       ds_dict['WOA13']['dens'],
                                                       22.4)  # molweight oxygen
             ds_dict['WOA13']['aou'] = woa_convert_conc(ds_dict['WOA13']['aou'],
-                                                      ds_dict['WOA13']['dens'],
+                                                       ds_dict['WOA13']['dens'],
                                                       22.4)
             ds_dict['WOA13']['o2_sat'] = ds_dict['WOA13']['o2'] + \
                 (ds_dict['WOA13']['aou'])
