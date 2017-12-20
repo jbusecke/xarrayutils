@@ -432,6 +432,7 @@ def cm26_loadall_run(run,
                       ds_osat, ds_minibling_src])
 
     if drop_vars:
+        drop_vars = [a for a in drop_vars if a in list(ds.data_vars)]
         ds = ds.drop(drop_vars)
 
     # Calculate timestep (TODO: Make this more accurate by using the time data)
