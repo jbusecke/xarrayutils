@@ -93,6 +93,8 @@ def load_obs_dict(fid_dict=None, drop_dict=None, mimoc_fix=True, debug=False):
         else:
             raise RuntimeError("'fid_dict' has to be a dict, \
                                list of strings or str")
+    if debug:
+        print(load_list)
 
     def glodap_preprocess(ds):
         ref = list(ds.data_vars)[0]
