@@ -81,15 +81,18 @@ def load_obs_dict(fid_dict=None, drop_dict=None, mimoc_fix=True):
               In case only certain vars are desired.
     """
     # Determine input
-    if isinstance(fid_dict, dict):
+    if fid_dict is None:
         load_list = 'all'
-    elif isinstance(fid_dict, list):
-        load_list = fid_dict
-    elif isinstance(fid_dict, str):
-        load_list = [fid_dict]
     else:
-        raise RuntimeError("'fid_dict' has to be a dict, \
-                           list of strings or str")
+        if isinstance(fid_dict, dict):
+            load_list = 'all'
+        elif isinstance(fid_dict, list):
+            load_list = fid_dict
+        elif isinstance(fid_dict, str):
+            load_list = [fid_dict]
+        else:
+            raise RuntimeError("'fid_dict' has to be a dict, \
+                               list of strings or str")
 
     def glodap_preprocess(ds):
         ref = list(ds.data_vars)[0]
@@ -168,8 +171,9 @@ def load_obs_dict(fid_dict=None, drop_dict=None, mimoc_fix=True):
                                          dask='allowed')+1000
         return ds
 
+    ds_dict = dict()
+
     if fid_dict is None:
-        ds_dict = dict()
         fid_dict = {
             'CM26_init': ('/work/Julius.Busecke/CM2.6_staged/init/\
                           WOA01-05_CM2.6_annual.nc',
