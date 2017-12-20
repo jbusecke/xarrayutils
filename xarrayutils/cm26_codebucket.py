@@ -124,8 +124,7 @@ def load_obs_dict(fid_dict=None, drop_dict=None, mimoc_fix=True, debug=False):
         return ds_new
 
     def glodap_flist():
-        ddir = '/work/Julius.Busecke/shared_data/ \
-            GLODAPv2.2016b_MappedClimatologies'
+        ddir = '/work/Julius.Busecke/shared_data/GLODAPv2.2016b_MappedClimatologies'
         fid = [pjoin(ddir, a) for a in ['GLODAPv2.2016b.Cant.nc',
                                         'GLODAPv2.2016b.NO3.nc',
                                         'GLODAPv2.2016b.OmegaA.nc',
