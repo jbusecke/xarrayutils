@@ -85,7 +85,7 @@ def load_obs_dict(fid_dict=None, drop_dict=None, mimoc_fix=True):
         load_list = 'all'
     elif isinstance(fid_dict, list):
         load_list = fid_dict
-    elif isinstance(fid_dict, 'str'):
+    elif isinstance(fid_dict, str):
         load_list = [fid_dict]
     else:
         raise RuntimeError("'fid_dict' has to be a dict, \
