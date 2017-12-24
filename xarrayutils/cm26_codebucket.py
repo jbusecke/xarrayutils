@@ -568,7 +568,8 @@ def cm26_readin_annual_means(name, run,
                                            'time_bounds', 'nv',
                                            'st_edges_ocean', 'st_ocean',
                                            'time', 'xt_ocean', 'yt_ocean'],
-                           chunks={'time': 1, 'st_ocean': 1})
+                           chunks={'time': 1, 'st_ocean': 1},
+                           concat_dim='time')
     elif name == 'physics':
         path = pjoin(rundir, 'annual_averages/ocean')
         name = 'ocean.*.ann.nc'
