@@ -546,7 +546,8 @@ def cm26_readin_annual_means(name, run,
 
     global_file_kwargs = dict(
         decode_times=False,
-        autoclose=autoclose
+        autoclose=autoclose,
+        concat_dim='time',
     )
 
     # choose the run directory
@@ -584,7 +585,7 @@ def cm26_readin_annual_means(name, run,
                                            'temp_int_rhodz',
                                            'frazil_2d', 'net_sfc_heating',
                                            'pme_river', 'river'],
-                           chunks={'time': 1, 'st_ocean': 1, 'sw_ocean': 1})
+                           chunks={'time': 1, 'st_ocean': 1, 'sw_ocean': 1},)
     elif name == 'osat':
         path = pjoin(rundir, 'annual_averages/o2_sat')
         if run == 'control':
@@ -592,8 +593,7 @@ def cm26_readin_annual_means(name, run,
         else:
             name = '*.forced_o2_sat.nc'
         yearformat = '%04i'
-        file_kwargs = dict(chunks={'st_ocean': 1},
-                           concat_dim='time')
+        file_kwargs = dict(chunks={'st_ocean': 1},)
     elif name == 'minibling_src':
         path = pjoin(rundir, 'annual_averages/budgets')
         name = '*.src.nc'
