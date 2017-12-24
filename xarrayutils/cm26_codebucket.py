@@ -566,7 +566,7 @@ def cm26_readin_annual_means(name, run,
                                            'geolon_t', 'average_T1',
                                            'average_T2', 'average_DT',
                                            'time_bounds', 'nv',
-                                           'st_edges_ocean'],
+                                           'st_edges_ocean', 'chl'],
                            chunks={'time': 1, 'st_ocean': 1},)
     elif name == 'physics':
         path = pjoin(rundir, 'annual_averages/ocean')
@@ -600,7 +600,9 @@ def cm26_readin_annual_means(name, run,
         file_kwargs = dict(drop_variables=['area_t',  'geolat_t',
                                            'geolon_t', 'average_T1',
                                            'average_T2', 'average_DT',
-                                           'time_bounds', 'nv', 'chl', ],
+                                           'time_bounds', 'nv', 'dic_stf',
+                                           'dic_btf', 'o2_stf', 'o2_btf',
+                                           'po4_btf'],
                            chunks={'time': 1, 'st_ocean': 1})
 
     else:
