@@ -566,7 +566,7 @@ def cm26_readin_annual_means(name, run,
                                            'geolon_t', 'average_T1',
                                            'average_T2', 'average_DT',
                                            'time_bounds', 'nv', 'chl'],
-                           chunks={'time': 1, 'st_ocean':1})
+                           chunks={'time': 1, 'st_ocean': 1})
     elif name == 'physics':
         path = pjoin(rundir, 'annual_averages/ocean')
         name = 'ocean.*.ann.nc'
@@ -575,21 +575,15 @@ def cm26_readin_annual_means(name, run,
                                            'geolon_t', 'average_T1',
                                            'average_T2', 'average_DT',
                                            'time_bounds', 'nv',
-                                           'xu_ocean', 'yu_ocean',
-                                           'sw_ocean', 'xu_ocean',
-                                           'yu_ocean', 'sw_ocean',
                                            'st_edges_ocean', 'sw_edges_ocean',
-                                           'geolon_c', 'geolat_c', 'u',
-                                           'v', 'eta_u', 'ty_trans',
-                                           'salt_int_rhodz', 'sea_level',
-
-
-                                           'sea_levelsq', 'sfc_hflux_coupler',
-                                           'tau_x', 'tau_y', 'temp_int_rhodz',
-                                           'wt', 'frazil_2d',
-                                           'net_sfc_heating',
+                                           'geolon_c', 'geolat_c',
+                                           'ty_trans', 'salt_int_rhodz',
+                                           'sea_level', 'sea_levelsq',
+                                           'sfc_hflux_coupler',
+                                           'temp_int_rhodz',
+                                           'frazil_2d', 'net_sfc_heating',
                                            'pme_river', 'river'],
-                           chunks={'time': 1, 'st_ocean': 1})
+                           chunks={'time': 1, 'st_ocean': 1, 'sw_ocean': 1})
     elif name == 'osat':
         path = pjoin(rundir, 'annual_averages/o2_sat')
         if run == 'control':
