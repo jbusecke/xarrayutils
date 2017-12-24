@@ -546,8 +546,7 @@ def cm26_readin_annual_means(name, run,
 
     global_file_kwargs = dict(
         decode_times=False,
-        autoclose=autoclose,
-        concat_dim='time',
+        autoclose=autoclose
     )
 
     # choose the run directory
@@ -567,7 +566,8 @@ def cm26_readin_annual_means(name, run,
                                            'geolon_t', 'average_T1',
                                            'average_T2', 'average_DT',
                                            'time_bounds', 'nv',
-                                           'st_edges_ocean'],
+                                           'st_edges_ocean', 'st_ocean',
+                                           'time', 'xt_ocean', 'yt_ocean'],
                            chunks={'time': 1, 'st_ocean': 1})
     elif name == 'physics':
         path = pjoin(rundir, 'annual_averages/ocean')
@@ -592,7 +592,8 @@ def cm26_readin_annual_means(name, run,
         else:
             name = '*.forced_o2_sat.nc'
         yearformat = '%04i'
-        file_kwargs = dict(chunks={'st_ocean': 1},)
+        file_kwargs = dict(chunks={'st_ocean': 1},
+                           concat_dim='time')
     elif name == 'minibling_src':
         path = pjoin(rundir, 'annual_averages/budgets')
         name = '*.src.nc'
@@ -600,7 +601,7 @@ def cm26_readin_annual_means(name, run,
         file_kwargs = dict(drop_variables=['area_t',  'geolat_t',
                                            'geolon_t', 'average_T1',
                                            'average_T2', 'average_DT',
-                                           'time_bounds', 'nv', ],
+                                           'time_bounds', 'nv', 'chl', ],
                            chunks={'time': 1, 'st_ocean': 1})
 
     else:
