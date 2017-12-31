@@ -65,7 +65,8 @@ def load_obs(fid, read_kwargs=dict(), swap_dims=None, rename=None,
     return ds
 
 
-def load_obs_dict(fid_dict=None, drop_dict=None, mimoc_fix=True, debug=False):
+def load_obs_dict(fid_dict=None, drop_dict=None, mimoc_fix=True, debug=False,
+                  calc_teos=True):
     """ Load multiple datasets into a dictionary.
     Time average and combine to single dataset if 'combo' is activated.
 
@@ -79,6 +80,8 @@ def load_obs_dict(fid_dict=None, drop_dict=None, mimoc_fix=True, debug=False):
               selection are loaded.
     drop_dict: {None, dict} Dict which gives drop variables for each dataset.
               In case only certain vars are desired.
+    calc_teos: {bool} activates calculation of additional teos-10 variables.
+              default on.
     """
     # Determine input
     if fid_dict is None:
@@ -154,22 +157,30 @@ def load_obs_dict(fid_dict=None, drop_dict=None, mimoc_fix=True, debug=False):
     def calc_teos10(ds):
         # TODO add units and long names
         # Create necessary variables with teos-10, perhaps I should
-        # parallelize that...(makes it more comp)
+
         ds['pr'] = xr.apply_ufunc(gsw.p_from_z, -ds['st_ocean'],
-                                  ds['yt_ocean'])
+                                  ds['yt_ocean'],
+                                  output_dtypes=[np.float64],
+                                  dask='parallelized')
         ds['sa'] = xr.apply_ufunc(gsw.SA_from_SP, ds['salt'], ds['pr'],
                                   ds['xt_ocean'], ds['yt_ocean'],
-                                  dask='allowed')
+                                  output_dtypes=[np.float64],
+                                  dask='parallelized')
         if 'temp' in list(ds.data_vars):
             ds['ct'] = xr.apply_ufunc(gsw.CT_from_pt, ds['sa'], ds['temp'],
-                                      dask='allowed')
+                                      output_dtypes=[np.float64],
+                                      dask='parallelized')
         else:
             ds['ct'] = xr.apply_ufunc(gsw.CT_from_t, ds['sa'], ds['te'],
-                                      ds['pr'], dask='allowed')
+                                      ds['pr'],
+                                      output_dtypes=[np.float64],
+                                      dask='parallelized')
             ds['temp'] = xr.apply_ufunc(gsw.pt_from_CT, ds['sa'], ds['ct'],
-                                        dask='allowed')
+                                        output_dtypes=[np.float64],
+                                        dask='parallelized')
         ds['pot_rho_0'] = xr.apply_ufunc(gsw.sigma0, ds['sa'], ds['ct'],
-                                         dask='allowed')+1000
+                                         output_dtypes=[np.float64],
+                                         dask='parallelized')+1000
         return ds
 
     ds_dict = dict()
@@ -289,7 +300,8 @@ def load_obs_dict(fid_dict=None, drop_dict=None, mimoc_fix=True, debug=False):
             ds_dict['MIMOC']['st_ocean'] = ds_dict['MIMOC']['PRESSURE'].\
                 isel(month=0, drop=True)
             ds_dict['MIMOC'] = ds_dict['MIMOC'].drop('PRESSURE')
-            ds_dict['MIMOC'] = calc_teos10(ds_dict['MIMOC'])
+            if calc_teos:
+                ds_dict['MIMOC'] = calc_teos10(ds_dict['MIMOC'])
 
         if 'WOA13' in list(ds_dict.keys()):
             ds_dict['WOA13']['dens'] = ds_dict['WOA13']['dens']+1000
@@ -304,8 +316,8 @@ def load_obs_dict(fid_dict=None, drop_dict=None, mimoc_fix=True, debug=False):
             for nut in ['po4', 'no3']:
                 ds_dict['WOA13'][nut] = ds_dict['WOA13'][nut] / \
                     ds_dict['WOA13']['dens']*1e-3
-
-            ds_dict['WOA13'] = calc_teos10(ds_dict['WOA13'])
+            if calc_teos:
+                ds_dict['WOA13'] = calc_teos10(ds_dict['WOA13'])
 
         # This could be integrated into the read_kwargs above by adding a field
         if drop_dict is not None:
@@ -619,21 +631,13 @@ def cm26_readin_annual_means(name, run,
 
 
 def cm26_reconstruct_annual_grid(ds, grid_path=None, load=None):
-
     if grid_path is None:
-        grid_path = '/work/Julius.Busecke/CM2.6_staged/static/CM2.6_grid_spec.nc'
+        grid_path = '/work/Julius.Busecke/CM2.6_staged/static/grid_complete.nc'
     ds = ds.copy()
-    chunks_raw = {'gridlon_t': 3600,
-                  'gridlat_t': 2700,
-                  'gridlon_c': 3600,
-                  'gridlat_c': 2700,
-                  'st_ocean': 1,
-                  'sw_ocean': 1}
-    ds_grid = xr.open_dataset(grid_path,
-                              chunks=chunks_raw).rename({
-                                            'gridlon_t': 'xt_ocean',
-                                            'gridlat_t': 'yt_ocean'
-                                            })
+    chunks_raw = {'st_ocean': 1, 'sw_ocean': 50,
+                  'xt_ocean': 3600, 'xu_ocean': 3600,
+                  'yt_ocean': 2700, 'yu_ocean': 2700}
+    ds_grid = xr.open_dataset(grid_path, chunks=chunks_raw)
 
     # Problem. The gridfile has ever so slightly different values for the
     # dimensions. Xarray excludes these values
