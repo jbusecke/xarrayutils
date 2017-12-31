@@ -914,7 +914,7 @@ def cm26_cut_region(obj, region, remove_nan_domain=True,
         if set(['xt_ocean', 'yt_ocean']).issubset(set(obj[vv].dims)):
             obj[vv] = obj[vv].where(tmask)
         elif set(['xu_ocean', 'yu_ocean']).issubset(set(obj[vv].dims)):
-            obj[vv] = obj[vv].where(tmask)
+            obj[vv] = obj[vv].where(umask)
         else:
             print('Regionmask not applied to ""s"%' % vv)
             print(obj[vv])
