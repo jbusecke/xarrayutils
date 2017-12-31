@@ -872,8 +872,7 @@ def save_years_wrapper(ds, odir, name, start_year, timesteps_per_yr=1,
     xr.save_mfdataset(datasets, paths, **kwargs)
 
 
-def cm26_cut_region(obj, region, cut_domain=True,
-                    regionfile=None, rename_dict=None):
+def cm26_cut_region(obj, region, regionfile=None, rename_dict=None):
     """Masks dataset/dataarray according to cm2.6 regionmask and cuts to region
     Region is defined by number as follows
     0 = Land
@@ -907,10 +906,14 @@ def cm26_cut_region(obj, region, cut_domain=True,
     ##
 
     # Mask data (still full domain)
-    if set(['xt_ocean', 'yt_ocean']).issubset(set(obj.dims)):
-        obj = obj.where(regionmask['TMASK'] == region)
-    if set(['xu_ocean', 'yu_ocean']).issubset(set(obj.dims)):
-        obj = obj.where(regionmask['UMASK'] == region)
+    for vv in list(obj.data_vars):
+        if set(['xt_ocean', 'yt_ocean']).issubset(set(obj[vv].dims)):
+            obj[vv] = obj[vv].where(regionmask['TMASK'] == region)
+        elif set(['xu_ocean', 'yu_ocean']).issubset(set(obj[vv].dims)):
+            obj[vv] = obj[vv].where(regionmask['UMASK'] == region)
+        else:
+            print('Regionmask not applied to ""s"%' % vv)
+            print(obj[vv])
     return obj
 
 
