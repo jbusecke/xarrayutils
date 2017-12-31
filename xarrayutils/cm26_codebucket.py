@@ -893,9 +893,6 @@ def cm26_cut_region(obj, region, cut_domain=True,
     if regionfile is None:
         regionfile = '/work/Julius.Busecke/CM2.6_staged/static/regionmask_cm26_020813.nc'
 
-    # TODO: I should write an overarching function that renames all the
-    # 'common' names for cm26 into a singel convention
-
     if rename_dict is None:
         rename_dict = dict(XT_OCEAN='xt_ocean', YT_OCEAN='yt_ocean',
                            XU_OCEAN='xu_ocean', YU_OCEAN='yu_ocean')
@@ -904,12 +901,16 @@ def cm26_cut_region(obj, region, cut_domain=True,
     # TODO: Extend this to u mask for matching variables
     # At the same time, I should find a way to adjust the tolerance
     # for coordinate comparison, so I dont have to swap them
-    regionmask.coords['xt_ocean'].data = obj.coords['xt_ocean'].data
-    regionmask.coords['yt_ocean'].data = obj.coords['yt_ocean'].data
+    regionmask.coords.update(obj.coords)
+    # regionmask.coords['xt_ocean'].data = obj.coords['xt_ocean'].data
+    # regionmask.coords['yt_ocean'].data = obj.coords['yt_ocean'].data
     ##
 
     # Mask data (still full domain)
-    obj = obj.where(regionmask['TMASK'].data == region)
+    if set(['xt_ocean', 'yt_ocean']).issubset(set(obj.dims)):
+        obj = obj.where(regionmask['TMASK'] == region)
+    if set(['xu_ocean', 'yu_ocean']).issubset(set(obj.dims)):
+        obj = obj.where(regionmask['UMASK'] == region)
     return obj
 
 
