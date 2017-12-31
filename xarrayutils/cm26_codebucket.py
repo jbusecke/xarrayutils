@@ -928,6 +928,8 @@ def cm26_cut_region(obj, region, remove_nan_domain=True,
             if x in obj.dims:
                 data_idx = np.where(~mask.all('xt_ocean'))[0]
                 test = {x: slice(data_idx[0]-margin, data_idx[-1]+margin)}
+                print('test',test)
+                print('obj',obj)
                 obj = obj[test]
         for y in ['yt_ocean', 'yu_ocean']:
             if y in obj.dims:
