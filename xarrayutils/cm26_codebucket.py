@@ -928,9 +928,6 @@ def cm26_cut_region(obj, region, remove_nan_domain=True,
             if x in obj.dims:
                 data_idx = np.where(mask.any('yt_ocean'))[0]
                 test = {x: slice(data_idx[0]-margin, data_idx[-1]+margin)}
-                print('data_idx',data_idx)
-                print('test',test)
-                print('obj',obj)
                 obj = obj[test]
         for y in ['yt_ocean', 'yu_ocean']:
             if y in obj.dims:
@@ -939,25 +936,3 @@ def cm26_cut_region(obj, region, remove_nan_domain=True,
                 obj = obj[test]
 
     return obj
-
-
-# def remove_nan_domain(obj, dim, margin=0):
-#         if isinstance(obj, xr.DataArray):
-#             test_slice = obj.isel(time=0)
-#         else:
-#             raise RuntimeError('obj input has to be DataArray')
-#
-#         if isinstance(dim, str):
-#             dim = [dim]
-#
-#         test_slice = obj.isel(time=0)
-#         nanmask = xr.ufuncs.isnan(test_slice)
-#
-#         for dd in dim:
-#             if dim in obj.dims:
-#                 all_dims = [a for a in list(nanmask.dims) if a != dd]
-#                 print('all_dims', all_dims)
-#                 data_idx = np.where(~nanmask.all(all_dims))[0]
-#                 print('data_idx', data_idx)
-#
-#         return obj
