@@ -873,7 +873,8 @@ def save_years_wrapper(ds, odir, name, start_year, timesteps_per_yr=1,
     xr.save_mfdataset(datasets, paths, **kwargs)
 
 
-def cm26_cut_region(obj, region, regionfile=None, rename_dict=None):
+def cm26_cut_region(obj, region, remove_nan_domain=True,
+                    regionfile=None, rename_dict=None):
     """Masks dataset/dataarray according to cm2.6 regionmask and cuts to region
     Region is defined by number as follows
     0 = Land
@@ -905,37 +906,55 @@ def cm26_cut_region(obj, region, regionfile=None, rename_dict=None):
     # regionmask.coords['xt_ocean'].data = obj.coords['xt_ocean'].data
     # regionmask.coords['yt_ocean'].data = obj.coords['yt_ocean'].data
     ##
+    umask = regionmask['UMASK'] == region
+    tmask = regionmask['TMASK'] == region
 
     # Mask data (still full domain)
     for vv in list(obj.data_vars):
         if set(['xt_ocean', 'yt_ocean']).issubset(set(obj[vv].dims)):
-            obj[vv] = obj[vv].where(regionmask['TMASK'] == region)
+            obj[vv] = obj[vv].where(tmask)
         elif set(['xu_ocean', 'yu_ocean']).issubset(set(obj[vv].dims)):
-            obj[vv] = obj[vv].where(regionmask['UMASK'] == region)
+            obj[vv] = obj[vv].where(tmask)
         else:
             print('Regionmask not applied to ""s"%' % vv)
             print(obj[vv])
+
+    #Cheap implementation of a nan cut: Check where the regionmask (only t)
+    # is nan along a dimension and cut that sucker
+    if remove_nan_domain:
+        mask = tmask
+        margin = 3
+        for x in ['xt_ocean', 'xu_ocean']:
+            if x in obj.dims:
+                data_idx = np.where(~mask.all('xt_ocean'))[0]
+                test = {x: slice(data_idx[0]-margin, data_idx[-1]+margin)}
+                obj = obj[test]
+        for y in ['yt_ocean', 'yu_ocean']:
+            if y in obj.dims:
+                data_idx = np.where(~mask.all('yt_ocean'))[0]
+                test = {y: slice(data_idx[0]-margin, data_idx[-1]+margin)}
+                obj = obj[test]
+
     return obj
 
 
-def remove_nan_domain(obj, dim, margin=0):
-        if isinstance(obj, xr.DataArray):
-            test_slice = obj.isel(time=0)
-        else:
-            raise RuntimeError('obj input has to be DataArray')
-
-        if isinstance(dim, str):
-            dim = [dim]
-
-        test_slice = obj.isel(time=0)
-        nanmask = xr.ufuncs.isnan(test_slice)
-
-        for dd in dim:
-            if dim in obj.dims:
-                all_dims = [a for a in list(nanmask.dims) if a != dd]
-                print('all_dims', all_dims)
-                data_idx = np.where(~nanmask.all(all_dims))[0]
-                print('data_idx', data_idx)
-                test = {dd: slice(data_idx[0]-margin, data_idx[-1]+margin)}
-                obj = obj[test]
-        return obj
+# def remove_nan_domain(obj, dim, margin=0):
+#         if isinstance(obj, xr.DataArray):
+#             test_slice = obj.isel(time=0)
+#         else:
+#             raise RuntimeError('obj input has to be DataArray')
+#
+#         if isinstance(dim, str):
+#             dim = [dim]
+#
+#         test_slice = obj.isel(time=0)
+#         nanmask = xr.ufuncs.isnan(test_slice)
+#
+#         for dd in dim:
+#             if dim in obj.dims:
+#                 all_dims = [a for a in list(nanmask.dims) if a != dd]
+#                 print('all_dims', all_dims)
+#                 data_idx = np.where(~nanmask.all(all_dims))[0]
+#                 print('data_idx', data_idx)
+#
+#         return obj
