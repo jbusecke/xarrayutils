@@ -824,8 +824,8 @@ def cm26_loadall_run(run,
 
     if region:
         ds = cm26_cut_region(ds, region)
-        ds = remove_nan_domain(ds, dim=['xt_ocean', 'yt_ocean'])
-        if set(['xt_ocean', 'yt_ocean']).issubset(set(ds.dims))
+        # ds = remove_nan_domain(ds, dim=['xt_ocean', 'yt_ocean',])
+        # if set(['xt_ocean', 'yt_ocean']).issubset(set(ds.dims))
 
     return ds
 
