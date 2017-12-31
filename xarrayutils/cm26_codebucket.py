@@ -825,6 +825,7 @@ def cm26_loadall_run(run,
     if region:
         ds = cm26_cut_region(ds, region)
         ds = remove_nan_domain(ds, dim=['xt_ocean', 'yt_ocean'])
+        if set(['xt_ocean', 'yt_ocean']).issubset(set(ds.dims))
 
     return ds
 
@@ -917,23 +918,20 @@ def cm26_cut_region(obj, region, regionfile=None, rename_dict=None):
     return obj
 
 
-def remove_nan_domain(obj, dim, all_dim='st_ocean', margin=0):
+def remove_nan_domain(obj, dim, margin=0):
         if isinstance(obj, xr.DataArray):
             test_slice = obj.isel(time=0)
-        elif isinstance(obj, xr.Dataset):
-            test_slice = obj[list(obj.data_vars)[0]].isel(time=0).drop('time')
-        else:
-            raise RuntimeError('obj input has to be xarray.Dataset \
-                               or DataArray')
+            raise RuntimeError('obj input has to be DataArray')
 
-        nanmask = xr.ufuncs.isnan(test_slice).all(all_dim)
+        nanmask = xr.ufuncs.isnan(test_slice)
 
         if isinstance(dim, str):
             dim = [dim]
 
         for dd in dim:
-            all_dims = [a for a in list(nanmask.dims) if a != dd]
-            data_idx = np.where(~nanmask.all(all_dims))[0]
-            test = {dd: slice(data_idx[0]-margin, data_idx[-1]+margin)}
-            obj = obj[test]
+            if dim in obj.dims:
+                all_dims = [a for a in list(nanmask.dims) if a != dd]
+                data_idx = np.where(~nanmask.all(all_dims))[0]
+                test = {dd: slice(data_idx[0]-margin, data_idx[-1]+margin)}
+                obj = obj[test]
         return obj
