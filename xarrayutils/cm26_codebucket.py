@@ -919,7 +919,9 @@ def cm26_cut_region(obj, region, regionfile=None, rename_dict=None):
 
 
 def remove_nan_domain(obj, dim, margin=0):
-        if not isinstance(obj, xr.DataArray):
+        if isinstance(obj, xr.DataArray):
+            test_slice = obj.isel(time=0)
+        else:
             raise RuntimeError('obj input has to be DataArray')
 
         if isinstance(dim, str):
