@@ -919,19 +919,21 @@ def cm26_cut_region(obj, region, regionfile=None, rename_dict=None):
 
 
 def remove_nan_domain(obj, dim, margin=0):
-        if isinstance(obj, xr.DataArray):
-            test_slice = obj.isel(time=0)
+        if not isinstance(obj, xr.DataArray):
             raise RuntimeError('obj input has to be DataArray')
-
-        nanmask = xr.ufuncs.isnan(test_slice)
 
         if isinstance(dim, str):
             dim = [dim]
 
+        test_slice = obj.isel(time=0)
+        nanmask = xr.ufuncs.isnan(test_slice)
+
         for dd in dim:
             if dim in obj.dims:
                 all_dims = [a for a in list(nanmask.dims) if a != dd]
+                print('all_dims', all_dims)
                 data_idx = np.where(~nanmask.all(all_dims))[0]
+                print('data_idx', data_idx)
                 test = {dd: slice(data_idx[0]-margin, data_idx[-1]+margin)}
                 obj = obj[test]
         return obj
