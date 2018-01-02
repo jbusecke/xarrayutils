@@ -555,12 +555,15 @@ def cm26_readin_annual_means(name, run,
                              rootdir='/work/Julius.Busecke/CM2.6_staged/',
                              print_flist=False,
                              autoclose=False,
-                             years=None):
+                             years=None,
+                             read_kwargs=dict()):
 
     global_file_kwargs = dict(
         decode_times=False,
         autoclose=autoclose
     )
+
+    global_file_kwargs.update(read_kwargs)
 
     # choose the run directory
     if run == 'control':
@@ -723,7 +726,8 @@ def cm26_loadall_run(run,
                      compute_aou=True,
                      diff_vars=None,
                      autoclose=True,
-                     region=None):
+                     region=None,
+                     read_kwargs=dict()):
     """Master read in function for CM2.6. Merges all variables into one
     dataset. If specified, 'normalize_budgets divides by dzt.
     'budget_drop' defaults to all non o2 variables from src file
@@ -735,11 +739,11 @@ def cm26_loadall_run(run,
             regionstr = masknum2region(region)
 
     if 'detrended' in run:
-        read_kwargs = dict(decode_times=False, concat_dim='time',
-                        #    chunks={'st_ocean': 1},
-                           autoclose=autoclose,
-                           drop_variables=['area_t', 'dzt',  'volume_t'],
-                           engine='scipy')
+        read_kwargs_default = dict(decode_times=False, concat_dim='time',
+                            #    chunks={'st_ocean': 1},
+                               autoclose=autoclose,
+                               drop_variables=['area_t', 'dzt',  'volume_t'])
+        read_kwargs_default.update(read_kwargs)
         if run == 'control_detrended':
             rundir = pjoin(rootdir, 'CM2.6_A_Control-1860_V03/annual_averages/detrended')
         elif run == 'forced_detrended':
@@ -749,7 +753,7 @@ def cm26_loadall_run(run,
             fid = pjoin(rundir, '*_%s.nc' % (run))
         else:
             fid = pjoin(rundir, '*_%s_%s.nc' % (run, regionstr))
-        ds = xr.open_mfdataset(fid, **read_kwargs)
+        ds = xr.open_mfdataset(fid, **read_kwargs_default)
 
         # Deactivate options that only apply to the non detrended data
         normalize_budgets=False
