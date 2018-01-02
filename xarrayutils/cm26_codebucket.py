@@ -764,20 +764,23 @@ def cm26_loadall_run(run,
         ds_minibling_field = cm26_readin_annual_means('minibling_fields',
                                                       run,
                                                       rootdir=rootdir,
-                                                      autoclose=autoclose)
+                                                      autoclose=autoclose,
+                                                      read_kwargs=read_kwargs)
         ds_physics = cm26_readin_annual_means('physics',
                                               run,
                                               rootdir=rootdir,
-                                              autoclose=autoclose)
+                                              autoclose=autoclose,
+                                              read_kwargs=read_kwargs)
         ds_osat = cm26_readin_annual_means('osat',
                                            run,
                                            rootdir=rootdir,
-                                           autoclose=autoclose)
+                                           autoclose=autoclose,
+                                           read_kwargs=read_kwargs)
         ds_minibling_src = cm26_readin_annual_means('minibling_src',
                                                     run,
                                                     rootdir=rootdir,
-                                                    autoclose=autoclose)
-
+                                                    autoclose=autoclose,
+                                                    read_kwargs=read_kwargs)
         # Brute force the minibling time into all files
         # ######## THEY DONT HAVE THE SAME TIMESTAMP MOTHERFUCK....
         ds_physics.time.data = ds_minibling_field.time.data
