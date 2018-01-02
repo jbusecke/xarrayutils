@@ -738,7 +738,8 @@ def cm26_loadall_run(run,
         read_kwargs = dict(decode_times=False, concat_dim='time',
                         #    chunks={'st_ocean': 1},
                            autoclose=autoclose,
-                           drop_variables=['area_t', 'dzt',  'volume_t'])
+                           drop_variables=['area_t', 'dzt',  'volume_t'],
+                           engine='scipy')
         if run == 'control_detrended':
             rundir = pjoin(rootdir, 'CM2.6_A_Control-1860_V03/annual_averages/detrended')
         elif run == 'forced_detrended':
