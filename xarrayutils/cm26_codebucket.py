@@ -736,7 +736,7 @@ def cm26_loadall_run(run,
 
     if 'detrended' in run:
         read_kwargs = dict(decode_times=False, concat_dim='time',
-                           chunks={'st_ocean': 1},
+                        #    chunks={'st_ocean': 1},
                            autoclose=autoclose,
                            drop_variables=['area_t', 'dzt',  'volume_t'])
         if run == 'control_detrended':
