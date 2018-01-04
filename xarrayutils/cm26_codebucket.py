@@ -673,9 +673,8 @@ def cm26_reconstruct_annual_grid(ds, load=None):
         dz = ones*dz_star*(1+(eta/ht.data))
         dz = dz.chunk({'st_ocean': 1})
 
-    ds = ds.assign_coords(dzt=dz)
-    ds = ds.assign_coords(area_t=area)
-    ds = ds.assign_coords(volume_t=ds['dzt']*ds['area_t'])
+    ds['dzt'] = dz
+    ds['volume_t'] = ds['dzt']*ds['area_t']
     return ds
 
 
