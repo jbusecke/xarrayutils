@@ -634,28 +634,13 @@ def cm26_readin_annual_means(name, run,
     return xr.open_mfdataset(flist, **(file_kwargs))
 
 
-def cm26_reconstruct_annual_grid(ds, grid_path=None, load=None):
-    if grid_path is None:
-        grid_path = '/work/Julius.Busecke/CM2.6_staged/static/grid_complete.nc'
+def cm26_reconstruct_annual_grid(ds, load=None):
     ds = ds.copy()
-    chunks_raw = {'st_ocean': 1, 'sw_ocean': 50,
-                  'xt_ocean': 3600, 'xu_ocean': 3600,
-                  'yt_ocean': 2700, 'yu_ocean': 2700}
-    ds_grid = xr.open_dataset(grid_path, chunks=chunks_raw)
-
-    # Problem. The gridfile has ever so slightly different values for the
-    # dimensions. Xarray excludes these values
-    # when they are multiplied. For now I will wrap all of the grid variables
-    # in new dims and coordinates. But there should be a more elegant
-    # method for this.
-
     # If I do this 'trick' with the ones, I make sure that dzt has the same
     # dimensions as the data_vars
-    template = ds['o2'][{'time': 1, 'st_ocean':1}].drop(['time', 'st_ocean'])
-    # area = xr.DataArray(ds_grid['area_t'].data,
-    #                     dims=template.dims,
-    #                     coords=template.coords)
-    area = ds_grid['area_t']
+    template = ds['o2'][{'time': 1,
+                         'st_ocean': 1}].drop(['time', 'st_ocean'])
+    area = ds['area_t']
 
     # activates loading of presaved dzt value
     load_kwargs = dict(decode_times=False, concat_dim='time',
@@ -676,9 +661,9 @@ def cm26_reconstruct_annual_grid(ds, grid_path=None, load=None):
 
         # attempted fix to deal with the mismatch between eta, wet and tracer
         # fields (mask the full dimension one array in space with wet)
-        oceanmask = ds_grid['wet']
+        oceanmask = ds['wet']
         ones = (ds['temp']*0+1).where(oceanmask)
-        ht = xr.DataArray(ds_grid['ht'].data,
+        ht = xr.DataArray(ds['ht'].data,
                           dims=template.dims,
                           coords=template.coords)
         eta = ds['eta_t']
@@ -721,11 +706,7 @@ def cm26_loadall_run(run,
                      normalize_budgets=True,
                      reconstruct_grids=True,
                      grid_load=False,
-                     drop_vars=None,
-                     integrate_vars=None,
                      compute_aou=True,
-                     diff_vars=None,
-                     autoclose=True,
                      region=None,
                      read_kwargs=dict()):
     """Master read in function for CM2.6. Merges all variables into one
@@ -740,9 +721,10 @@ def cm26_loadall_run(run,
 
     if 'detrended' in run:
         read_kwargs_default = dict(decode_times=False, concat_dim='time',
-                            #    chunks={'st_ocean': 1},
-                               autoclose=autoclose,
-                               drop_variables=['area_t', 'dzt',  'volume_t'])
+                               autoclose=True,
+                               drop_variables=['area_t', 'dzt',  'volume_t',
+                                               'geolon_t', 'geolat_t', 'ht',
+                                               'kmt', 'dyt', 'wet', 'dxt'])
         read_kwargs_default.update(read_kwargs)
         if run == 'control_detrended':
             rundir = pjoin(rootdir, 'CM2.6_A_Control-1860_V03/annual_averages/detrended')
@@ -761,26 +743,28 @@ def cm26_loadall_run(run,
         grid_load = True
 
     else:
+        read_kwargs_default = dict(decode_times=False, concat_dim='time',
+                               autoclose=True,
+                               drop_variables=['area_t', 'dzt',  'volume_t',
+                                               'geolon_t', 'geolat_t', 'ht',
+                                               'kmt', 'dyt', 'wet', 'dxt'])
+        read_kwargs_default.update(read_kwargs)
         ds_minibling_field = cm26_readin_annual_means('minibling_fields',
                                                       run,
                                                       rootdir=rootdir,
-                                                      autoclose=autoclose,
-                                                      read_kwargs=read_kwargs)
+                                                      read_kwargs=read_kwargs_default)
         ds_physics = cm26_readin_annual_means('physics',
                                               run,
                                               rootdir=rootdir,
-                                              autoclose=autoclose,
-                                              read_kwargs=read_kwargs)
+                                              read_kwargs=read_kwargs_default)
         ds_osat = cm26_readin_annual_means('osat',
                                            run,
                                            rootdir=rootdir,
-                                           autoclose=autoclose,
-                                           read_kwargs=read_kwargs)
+                                           read_kwargs=read_kwargs_default)
         ds_minibling_src = cm26_readin_annual_means('minibling_src',
                                                     run,
                                                     rootdir=rootdir,
-                                                    autoclose=autoclose,
-                                                    read_kwargs=read_kwargs)
+                                                    read_kwargs=read_kwargs_default)
         # Brute force the minibling time into all files
         # ######## THEY DONT HAVE THE SAME TIMESTAMP MOTHERFUCK....
         ds_physics.time.data = ds_minibling_field.time.data
@@ -791,20 +775,13 @@ def cm26_loadall_run(run,
         ds = xr.merge([ds_minibling_field, ds_physics,
                       ds_osat, ds_minibling_src])
 
-    if drop_vars:
-        drop_vars = [a for a in drop_vars if a in list(ds.data_vars)]
-        ds = ds.drop(drop_vars)
-
-    # Calculate timestep (TODO: Make this more accurate by using the time data)
-    dt = dt = 364*24*60*60
-    if integrate_vars:
-        for vv in integrate_vars:
-            ds[vv+'_integrated'] = (ds[vv]*dt).cumsum('time')
-
-    if diff_vars:
-        for vv in diff_vars:
-            ds[vv+'_diff'] = ds[vv].diff('time')/dt
-            # ds[vv+'_diff'].data = ds[vv+'_diff'].data/dt
+    # now update all coords from one files
+    grid_path = '/work/Julius.Busecke/CM2.6_staged/static/grid_complete.nc'
+    chunks_raw = {'st_ocean': 1, 'sw_ocean': 1,
+                  'xt_ocean': 3600, 'xu_ocean': 3600,
+                  'yt_ocean': 2700, 'yu_ocean': 2700}
+    ds_grid = xr.open_dataset(grid_path, chunks=chunks_raw)
+    ds.update(ds_grid)
 
     if compute_aou:
         ds['aou'] = ds['o2_sat']-ds['o2']
@@ -826,15 +803,13 @@ def cm26_loadall_run(run,
         convert_vars = list(ds_minibling_src.data_vars.keys())
         convert_vars = [a for a in convert_vars if a in list(ds.data_vars)]
         for vv in convert_vars:
-            # print('%s is beiung divided by rho_dzt' % vv)
+            print('%s is beiung divided by rho_dzt' % vv)
             # ds[vv] = ds[vv]/1035.0/ds['dzt']
             # Fast version without checking
             ds[vv].data = ds[vv].data/1035.0/ds['dzt'].data
 
     if region:
         ds = cm26_cut_region(ds, region)
-        # ds = remove_nan_domain(ds, dim=['xt_ocean', 'yt_ocean',])
-        # if set(['xt_ocean', 'yt_ocean']).issubset(set(ds.dims))
 
     return ds
 
