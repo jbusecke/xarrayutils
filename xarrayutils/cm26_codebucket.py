@@ -724,7 +724,8 @@ def cm26_loadall_run(run,
                                autoclose=True,
                                drop_variables=['area_t', 'dzt',  'volume_t',
                                                'geolon_t', 'geolat_t', 'ht',
-                                               'kmt', 'dyt', 'wet', 'dxt'])
+                                               'kmt', 'dyt', 'wet', 'dxt'],
+                               chunks={'st_ocean':1, 'sw_ocean':1})
         read_kwargs_default.update(read_kwargs)
         if run == 'control_detrended':
             rundir = pjoin(rootdir, 'CM2.6_A_Control-1860_V03/annual_averages/detrended')
