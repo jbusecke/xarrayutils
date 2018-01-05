@@ -707,7 +707,8 @@ def cm26_loadall_run(run,
                      grid_load=False,
                      compute_aou=True,
                      region=None,
-                     read_kwargs=dict()):
+                     read_kwargs=dict(),
+                     debug=False):
     """Master read in function for CM2.6. Merges all variables into one
     dataset. If specified, 'normalize_budgets divides by dzt.
     'budget_drop' defaults to all non o2 variables from src file
@@ -767,6 +768,14 @@ def cm26_loadall_run(run,
                                                     run,
                                                     rootdir=rootdir,
                                                     read_kwargs=read_kwargs_default)
+        if debug:
+            print('raw read done')
+            print('ds_minibling_field',list(ds_minibling_field.coords))
+            print('ds_physics',list(ds_physics.coords))
+            print('ds_osat',list(ds_osat.coords))
+            print('ds_minibling_src',list(ds_minibling_src.coords))
+
+            
         # Brute force the minibling time into all files
         # ######## THEY DONT HAVE THE SAME TIMESTAMP MOTHERFUCK....
         ds_physics.time.data = ds_minibling_field.time.data
