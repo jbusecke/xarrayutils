@@ -633,8 +633,7 @@ def cm26_readin_annual_means(name, run,
     file_kwargs.update(global_file_kwargs)
     ds = xr.open_mfdataset(flist, **(file_kwargs))
     if clean_coords:
-        drop_coords = [a for a in list(ds.coords) if a not in ['time']]
-        ds = ds.drop(drop_coords)
+        ds = drop_all_coords(ds, 'time')
     return ds
 
 
@@ -704,6 +703,14 @@ def masknum2region(masknum):
     return [k for k, v in reg_dict.items() if v == masknum][0]
 
 
+def drop_all_coords(ds, exclude_coords=[]):
+    if isinstance(exclude_coords, str):
+        exclude_coords = [exclude_coords]
+
+    drop_coords = [a for a in list(ds.coords) if a not in exclude_coords]
+    return ds.drop(drop_coords)
+
+
 def cm26_loadall_run(run,
                      rootdir='/work/Julius.Busecke/CM2.6_staged/',
                      normalize_budgets=True,
@@ -740,6 +747,8 @@ def cm26_loadall_run(run,
         else:
             fid = pjoin(rundir, '*_%s_%s.nc' % (run, regionstr))
         ds = xr.open_mfdataset(fid, **read_kwargs_default)
+        # drop all coords except for time (they will be re-added below)
+        ds = drop_all_coords(ds, 'time')
 
         # rechunk
         ds = ds.chunk({'st_ocean':1, 'sw_ocean':1, 'time':1})
