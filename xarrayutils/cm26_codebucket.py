@@ -748,7 +748,10 @@ def cm26_loadall_run(run,
             fid = pjoin(rundir, '*_%s_%s.nc' % (run, regionstr))
         ds = xr.open_mfdataset(fid, **read_kwargs_default)
         # drop all coords except for time (they will be re-added below)
-        ds = drop_all_coords(ds, 'time')
+        # TODO: Redo all the detrending and save the detrended vars as
+        # full domain...then I can drop everything except time here like
+        # with the others, Probably speeds things up a abit.
+        ds = drop_all_coords(ds, list(ds.dims))
 
         # rechunk
         ds = ds.chunk({'st_ocean':1, 'sw_ocean':1, 'time':1})
