@@ -638,7 +638,7 @@ def cm26_reconstruct_annual_grid(ds, load=None):
     ds = ds.copy()
     # If I do this 'trick' with the ones, I make sure that dzt has the same
     # dimensions as the data_vars
-    template = ds['o2'][{'time': 1,
+    template = ds['temp'][{'time': 1,
                          'st_ocean': 1}].drop(['time', 'st_ocean'])
     area = ds['area_t']
 
