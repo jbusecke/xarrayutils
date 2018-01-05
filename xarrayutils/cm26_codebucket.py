@@ -556,6 +556,7 @@ def cm26_readin_annual_means(name, run,
                              print_flist=False,
                              autoclose=False,
                              years=None,
+                             clean_coords=False,
                              read_kwargs=dict()):
 
     global_file_kwargs = dict(
@@ -630,8 +631,11 @@ def cm26_readin_annual_means(name, run,
     if print_flist:
         print(flist)
     file_kwargs.update(global_file_kwargs)
-
-    return xr.open_mfdataset(flist, **(file_kwargs))
+    ds = xr.open_mfdataset(flist, **(file_kwargs))
+    if clean_coords:
+        drop_coords = [a for a in list(ds.coords) if a not in ['time']]
+        ds = ds.drop(drop_coords)
+    return ds
 
 
 def cm26_reconstruct_annual_grid(ds, load=None):
@@ -750,7 +754,9 @@ def cm26_loadall_run(run,
                                autoclose=True,
                                drop_variables=['area_t', 'dzt',  'volume_t',
                                                'geolon_t', 'geolat_t', 'ht',
-                                               'kmt', 'dyt', 'wet', 'dxt'])
+                                               'kmt', 'dyt', 'wet', 'dxt',
+                                               'st_edges_ocean',
+                                               'sw_edges_ocean'])
         read_kwargs_default.update(read_kwargs)
         ds_minibling_field = cm26_readin_annual_means('minibling_fields',
                                                       run,
@@ -775,7 +781,7 @@ def cm26_loadall_run(run,
             print('ds_osat',list(ds_osat.coords))
             print('ds_minibling_src',list(ds_minibling_src.coords))
 
-            
+
         # Brute force the minibling time into all files
         # ######## THEY DONT HAVE THE SAME TIMESTAMP MOTHERFUCK....
         ds_physics.time.data = ds_minibling_field.time.data
