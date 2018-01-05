@@ -751,28 +751,27 @@ def cm26_loadall_run(run,
 
     else:
         read_kwargs_default = dict(decode_times=False, concat_dim='time',
-                               autoclose=True,
-                               drop_variables=['area_t', 'dzt',  'volume_t',
-                                               'geolon_t', 'geolat_t', 'ht',
-                                               'kmt', 'dyt', 'wet', 'dxt',
-                                               'st_edges_ocean',
-                                               'sw_edges_ocean'])
+                                   autoclose=True)
         read_kwargs_default.update(read_kwargs)
         ds_minibling_field = cm26_readin_annual_means('minibling_fields',
                                                       run,
                                                       rootdir=rootdir,
+                                                      clean_coords=True,
                                                       read_kwargs=read_kwargs_default)
         ds_physics = cm26_readin_annual_means('physics',
                                               run,
                                               rootdir=rootdir,
+                                              clean_coords=True,
                                               read_kwargs=read_kwargs_default)
         ds_osat = cm26_readin_annual_means('osat',
                                            run,
                                            rootdir=rootdir,
+                                           clean_coords=True,
                                            read_kwargs=read_kwargs_default)
         ds_minibling_src = cm26_readin_annual_means('minibling_src',
                                                     run,
                                                     rootdir=rootdir,
+                                                    clean_coords=True,
                                                     read_kwargs=read_kwargs_default)
         if debug:
             print('raw read done')
