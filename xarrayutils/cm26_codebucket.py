@@ -787,10 +787,10 @@ def cm26_loadall_run(run,
                                                     read_kwargs=read_kwargs_default)
         if debug:
             print('raw read done')
-            print('ds_minibling_field',list(ds_minibling_field.coords))
-            print('ds_physics',list(ds_physics.coords))
-            print('ds_osat',list(ds_osat.coords))
-            print('ds_minibling_src',list(ds_minibling_src.coords))
+            print('ds_minibling_field', ds_minibling_field.coords)
+            print('ds_physics', ds_physics.coords)
+            print('ds_osat', ds_osat.coords)
+            print('ds_minibling_src', ds_minibling_src.coords)
 
 
         # Brute force the minibling time into all files
@@ -802,6 +802,10 @@ def cm26_loadall_run(run,
         # for now just watch the timesteps
         ds = xr.merge([ds_minibling_field, ds_physics,
                       ds_osat, ds_minibling_src])
+
+        if debug:
+            print('HEA')
+            print(ds)
 
     # now update all coords from one files
     grid_path = '/work/Julius.Busecke/CM2.6_staged/static/grid_complete.nc'
