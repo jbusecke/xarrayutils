@@ -579,7 +579,7 @@ def cm26_readin_annual_means(name, run,
         path = pjoin(rundir, 'annual_averages/minibling_fields')
         name = '*.field.nc'
         yearformat = '%04i'
-        rename = []
+        rename = {}
         file_kwargs = dict(drop_variables=['area_t',  'geolat_t',
                                            'geolon_t', 'average_T1',
                                            'average_T2', 'average_DT',
@@ -590,7 +590,7 @@ def cm26_readin_annual_means(name, run,
         path = pjoin(rundir, 'annual_averages/ocean')
         name = 'ocean.*.ann.nc'
         yearformat = '%04i'
-        rename = []
+        rename = {}
         file_kwargs = dict(drop_variables=['area_t',  'geolat_t',
                                            'geolon_t', 'average_T1',
                                            'average_T2', 'average_DT',
@@ -610,14 +610,14 @@ def cm26_readin_annual_means(name, run,
         else:
             name = '*.forced_o2_sat.nc'
         yearformat = '%04i'
-        rename = []
+        rename = {}
         file_kwargs = dict(chunks={'st_ocean': 1},
                            concat_dim='time')
     elif name == 'minibling_src':
         path = pjoin(rundir, 'annual_averages/budgets')
         name = '*.src.nc'
         yearformat = '%04i'
-        rename = []
+        rename = {}
         file_kwargs = dict(drop_variables=['area_t',  'geolat_t',
                                            'geolon_t', 'average_T1',
                                            'average_T2', 'average_DT',
