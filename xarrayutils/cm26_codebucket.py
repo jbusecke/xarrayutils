@@ -585,7 +585,7 @@ def cm26_readin_annual_means(name, run,
                                            'average_T2', 'average_DT',
                                            'time_bounds', 'nv',
                                            'st_edges_ocean', 'chl'],
-                           chunks={'time': 1, 'st_ocean': 1},)
+                           chunks={'time': 1},)
     elif name == 'physics':
         path = pjoin(rundir, 'annual_averages/ocean')
         name = 'ocean.*.ann.nc'
@@ -602,7 +602,7 @@ def cm26_readin_annual_means(name, run,
                                            'temp_int_rhodz',
                                            'frazil_2d', 'net_sfc_heating',
                                            'pme_river', 'river'],
-                           chunks={'time': 1, 'st_ocean': 1, 'sw_ocean': 1},)
+                           chunks={'time': 1},)
     elif name == 'osat':
         path = pjoin(rundir, 'annual_averages/o2_sat')
         if run == 'control':
