@@ -579,6 +579,7 @@ def cm26_readin_annual_means(name, run,
         path = pjoin(rundir, 'annual_averages/minibling_fields')
         name = '*.field.nc'
         yearformat = '%04i'
+        rename = []
         file_kwargs = dict(drop_variables=['area_t',  'geolat_t',
                                            'geolon_t', 'average_T1',
                                            'average_T2', 'average_DT',
@@ -589,6 +590,7 @@ def cm26_readin_annual_means(name, run,
         path = pjoin(rundir, 'annual_averages/ocean')
         name = 'ocean.*.ann.nc'
         yearformat = '%04i'
+        rename = []
         file_kwargs = dict(drop_variables=['area_t',  'geolat_t',
                                            'geolon_t', 'average_T1',
                                            'average_T2', 'average_DT',
@@ -608,19 +610,49 @@ def cm26_readin_annual_means(name, run,
         else:
             name = '*.forced_o2_sat.nc'
         yearformat = '%04i'
+        rename = []
         file_kwargs = dict(chunks={'st_ocean': 1},
                            concat_dim='time')
     elif name == 'minibling_src':
         path = pjoin(rundir, 'annual_averages/budgets')
         name = '*.src.nc'
         yearformat = '%04i'
+        rename = []
         file_kwargs = dict(drop_variables=['area_t',  'geolat_t',
                                            'geolon_t', 'average_T1',
                                            'average_T2', 'average_DT',
                                            'time_bounds', 'nv',
                                            'po4_btf', 'o2_btf', 'dic_btf'],
                            chunks={'time': 1, 'st_ocean': 1})
-
+    elif name == 'minibling_100m':
+        path = pjoin(rundir, 'annual_averages/minibling_100m')
+        name = '*.field.nc'
+        yearformat = '%04i'
+        rename = {'o2': 'o2_100m', 'po4': 'po4_100m', 'dic': 'dic_100m',
+                  'jp_recycle': 'jp_recycle_100m', 'jp_uptake':
+                  'jp_uptake_100m',
+                  'jp_reminp': 'jp_reminp_100m',  'jo2': 'jo2_100m',
+                  'fpop': 'fpop_100m', 'biomass_p': 'biomass_p_100m'}
+        file_kwargs = dict(drop_variables=['chl', 'irr_mem', 'fed',
+                                           'average_T1', 'average_T2',
+                                           'average_DT', 'time_bounds'],
+                           chunks={'time': 1, 'st_ocean': 1})
+    elif name == 'minibling_surf':
+        path = pjoin(rundir, 'annual_averages/minibling_surf')
+        name = '*.field.nc'
+        yearformat = '%04i'
+        rename = {'chl': 'chl_surf', 'htotal': 'htotal_surf',
+                  'biomass_p': 'biomass_p_surf'}
+        file_kwargs = dict(drop_variables=['st_ocean_sub01', 'xu_ocean',
+                                           'yu_ocean', 'kw', 'irr_mix',
+                                           'surface_temp', 'surface_salt',
+                                           'usurf', 'vsurf', 'sea_level',
+                                           'sea_level_sq', 'irr_mem', 'fed',
+                                           'alk', 'u', 'v', 'temp', 'salt',
+                                           'average_T1', 'average_T2',
+                                           'average_DT', 'time_bounds', 'o2',
+                                           'po4', 'dic'],
+                           chunks={'time': 1, 'st_ocean': 1})
     else:
         raise RuntimeError('name not recognized')
     # for debugging
@@ -630,7 +662,7 @@ def cm26_readin_annual_means(name, run,
     if print_flist:
         print(flist)
     file_kwargs.update(global_file_kwargs)
-    ds = xr.open_mfdataset(flist, **(file_kwargs))
+    ds = xr.open_mfdataset(flist, **(file_kwargs)).rename(rename)
     if clean_coords:
         ds = drop_all_coords(ds, 'time')
     return ds
