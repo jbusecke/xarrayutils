@@ -2,10 +2,11 @@ import pytest
 import xarray as xr
 import numpy as np
 import dask.array as dsa
+from scipy import stats
 # import os
 
 from xarrayutils.utils import aggregate, aggregate_w_nanmean, extractBox_dict,\
-    linear_trend, _lin_trend
+    linear_trend, _lin_trend, _lin_trend_legacy
 
 from numpy.testing import assert_allclose
 
@@ -89,10 +90,20 @@ def test_extractBox(box, concat_wrap, result):
     assert_allclose(box_cut.data, result)
 
 
+def test_lin_trend_full_legacy():
+    # This is meant to be a test if the old ufunc for the trend produces
+    # identical output
+    y = np.random.random(20)
+    x = np.arange(len(y))
+    fit = _lin_trend(y)[0:2]
+    fit_legacy = _lin_trend_legacy(y)
+    assert np.allclose(fit, fit_legacy)
+
+
 def test_lin_trend():
     y = np.random.random(20)
     x = np.arange(len(y))
-    fit = np.polyfit(x, y, 1)
+    fit = np.array(stats.linregress(x, y))
     assert np.allclose(fit, _lin_trend(y))
 
 
@@ -115,7 +126,7 @@ def test_linear_trend():
         for yi in y:
             x_fit = t
             y_fit = data[:, xi, yi]
-            fit = np.polyfit(x_fit, y_fit, 1)
+            fit = np.array(stats.linregress(x_fit, y_fit))
             assert np.allclose(fit, fit_da.sel(x=xi, y=yi).data)
 
     # Test with other timedim (previously was not caught)
@@ -136,7 +147,7 @@ def test_linear_trend():
         for yi in y:
             x_fit = t
             y_fit = data[xi, :, yi]
-            fit = np.polyfit(x_fit, y_fit, 1)
+            fit = np.array(stats.linregress(x_fit, y_fit))
             assert np.allclose(fit, fit_da.sel(x=xi, y=yi).data)
 
 
