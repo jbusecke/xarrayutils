@@ -816,12 +816,24 @@ def cm26_loadall_run(run,
                                                     rootdir=rootdir,
                                                     clean_coords=True,
                                                     read_kwargs=read_kwargs_default)
+        ds_minibling_100m = cm26_readin_annual_means('minibling_100m',
+                                                     run,
+                                                     rootdir=rootdir,
+                                                     clean_coords=True,
+                                                     read_kwargs=read_kwargs_default)
+        ds_minibling_surf = cm26_readin_annual_means('minibling_surf',
+                                                     run,
+                                                     rootdir=rootdir,
+                                                     clean_coords=True,
+                                                     read_kwargs=read_kwargs_default)
         if debug:
             print('raw read done')
             print('ds_minibling_field', ds_minibling_field.coords)
             print('ds_physics', ds_physics.coords)
             print('ds_osat', ds_osat.coords)
             print('ds_minibling_src', ds_minibling_src.coords)
+            print('ds_minibling_100m', ds_minibling_100m.coords)
+            print('ds_minibling_surf', ds_minibling_100m.surf)
 
 
         # Brute force the minibling time into all files
@@ -832,7 +844,8 @@ def cm26_loadall_run(run,
         # TODO: Build test if the time is equal .
         # for now just watch the timesteps
         ds = xr.merge([ds_minibling_field, ds_physics,
-                      ds_osat, ds_minibling_src])
+                      ds_osat, ds_minibling_src, ds_minibling_100m,
+                      ds_minibling_surf])
 
         if debug:
             print('HEA')
