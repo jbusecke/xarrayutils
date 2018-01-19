@@ -833,6 +833,8 @@ def cm26_loadall_run(run,
     if normalize_budgets:
         convert_vars = list(ds_minibling_src.data_vars.keys())
         convert_vars = [a for a in convert_vars if a in list(ds.data_vars)]
+        convert_vars = [a for a in convert_vars if '_stf' not in a]
+        # dont convert surface fluxes
         for vv in convert_vars:
             print('%s is beiung divided by rho_dzt' % vv)
             # ds[vv] = ds[vv]/1035.0/ds['dzt']
