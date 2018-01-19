@@ -2,6 +2,7 @@ from __future__ import print_function
 import numpy as np
 import xarray as xr
 from scipy.signal import filtfilt, gaussian
+from scipy import stats
 from dask.array import coarsen
 from dask.array.core import Array
 # from scipy import optimize
@@ -20,6 +21,33 @@ def _lin_trend(y):
     """ufunc to be used by linear_trend"""
     x = np.arange(len(y))
     return np.polyfit(x, y, 1)
+
+
+def _lin_trend_full(y):
+    """ufunc to be used by linear_trend"""
+    x = np.arange(len(y))
+    return stats.linregress(x, y)
+
+
+def linear_trend_full(da, dim, name='parameter'):
+    """computes linear trend over 'dim' from the da.
+       Slope and intercept of the least square fit are added to a new
+       DataArray which has the dimension 'name' instead of 'dim', outputs
+       are slope, intercept, r_value, p_value, std_err
+       (see scipy.stats.linregress for details)
+    """
+    da = da.copy()
+    axis_num = da.get_axis_num(dim)
+
+    dims = list(da.dims)
+    dims[axis_num] = name
+    coords = da.rename({dim: name}).coords
+    coords[name] = ['slope', 'intercept', 'r_value', 'p_value', 'std_err']
+
+    dsk = da.data
+    dsk_trend = dsa.apply_along_axis(_lin_trend_full, axis_num, dsk)
+    out = xr.DataArray(dsk_trend, dims=dims, coords=coords)
+    return out
 
 
 def linear_trend(da, dim, name='parameter'):

@@ -617,7 +617,8 @@ def cm26_readin_annual_means(name, run,
         file_kwargs = dict(drop_variables=['area_t',  'geolat_t',
                                            'geolon_t', 'average_T1',
                                            'average_T2', 'average_DT',
-                                           'time_bounds', 'nv'],
+                                           'time_bounds', 'nv',
+                                           'po4_btf', 'o2_btf', 'dic_btf'],
                            chunks={'time': 1, 'st_ocean': 1})
 
     else:
