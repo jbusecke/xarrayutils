@@ -2,6 +2,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
+def depth_logscale(ax, yscale=400, ticks=None):
+    if ticks is None:
+        ticks = [0, 100, 250, 500, 1000, 2500, 5000]
+    ax.set_yscale('symlog', linthreshy=yscale)
+    ticklabels = [str(a) for a in ticks]
+    ax.set_yticks(ticks)
+    ax.set_yticklabels(ticklabels)
+    ax.invert_yaxis()
+
+
 def plot_line_shaded_std(x, y, std_y, horizontal=True,
                          ax=None,
                          line_kwargs=dict(),
