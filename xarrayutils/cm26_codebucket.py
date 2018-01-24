@@ -10,6 +10,32 @@ from . utils import concat_dim_da
 from . weighted_operations import weighted_mean, weighted_sum
 
 
+def parse_xgcm_attributes(ds, xc='xt_ocean', xg='xu_ocean',
+                          yc='yt_ocean', yg='yu_ocean',
+                          zc='st_ocean', zg='sw_ocean'):
+    """ Adds axis attributes needed for xgcm to recognize the grid"""
+    ds[xc] = ds[xc].assign_attrs(axis='X')
+    ds[xg] = ds[xg].assign_attrs(axis='X')
+    ds[xg] = ds[xg].assign_attrs(c_grid_axis_shift=0.5)
+
+    ds[yc] = ds[yc].assign_attrs(axis='Y')
+    ds[yg] = ds[yg].assign_attrs(axis='Y')
+    ds[yg] = ds[yg].assign_attrs(c_grid_axis_shift=0.5)
+
+    ds[zc] = ds[zc].assign_attrs(axis='Z')
+    ds[zg] = ds[zg].assign_attrs(axis='Z')
+    ds[zg] = ds[zg].assign_attrs(c_grid_axis_shift=0.5)
+    return ds
+
+
+def recreate_distances(ds, grid):
+    '''The mom5 data uses a b grid, and is thus missing the distances at the
+    cell faces. Here we interpolate them'''
+    ds.coords['dxc'] = grid.interp(ds.coords['dxu'], 'Y')
+    ds.coords['dyc'] = grid.interp(ds.coords['dyu'], 'X')
+    return ds
+
+
 def load_obs(fid, read_kwargs=dict(), swap_dims=None, rename=None,
              drop=None, squeeze=None, dtype_convert=None, unit_conversion=None,
              shift_lon_dim='xt_ocean', shift_lon_kwargs=None):
