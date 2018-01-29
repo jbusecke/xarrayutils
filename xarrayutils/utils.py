@@ -5,41 +5,53 @@ from scipy.signal import filtfilt, gaussian
 from scipy import stats
 from dask.array import coarsen
 from dask.array.core import Array
-# from scipy import optimize
-import dask.array as dsa
 import warnings
+# from scipy import optimize
+# import dask.array as dsa
+
 
 """
 Collection of several useful routines for xarray
 """
-"""
-Lower Level implementation in numpy and dask
-"""
 
 
-def _lin_trend(y):
-    """ufunc to be used by linear_trend"""
-    x = np.arange(len(y))
-    return np.array(stats.linregress(x, y))
+def _linregress_ufunc(a, b):
+    '''ufunc to wrap scipy.stats.linregress for xr_linregress'''
+    slope, intercept, r_value, p_value, std_err = stats.linregress(a, b)
+    return np.array([slope, intercept, r_value, p_value, std_err])
+
+
+def xr_linregress(a, b, dim='time', convert_to_dataset=True):
+    stats = xr.apply_ufunc(_linregress_ufunc, a, b,
+                           input_core_dims=[[dim], [dim]],
+                           output_core_dims=[['parameter']],
+                           vectorize=True,
+                           dask='parallelized',
+                           output_dtypes=[a.dtype],
+                           output_sizes={'parameter': 5}
+                           )
+    stats['parameter'] = xr.DataArray(['slope', 'intercept',
+                                       'r_value', 'p_value',
+                                       'std_err'], dims=['parameter'])
+    if convert_to_dataset:
+        # chug them all into a dataset
+        ds_stats = xr.Dataset()
+        for ff in stats.parameter.data:
+            ds_stats[ff] = stats.sel(parameter=ff)
+        out = ds_stats
+    else:
+        out = stats
+    return out
 
 
 def linear_trend(obj, dim):
-    """computes linear trend over 'dim' from the da.
-       Slope and intercept of the least square fit are added to a new
-       DataArray which has the dimension 'name' instead of 'dim', outputs
-       are slope, intercept, r_value, p_value, std_err
-       (see scipy.stats.linregress for details)
+    """Convenience wrapper for 'xr_linregress'. Calculates the trend per
+    given timestep. E.g. if the data is passed as yearly values, the
+    trend is in units/yr.
     """
-    trend = xr.apply_ufunc(_lin_trend, obj,
-                           vectorize=True,
-                           input_core_dims=[[dim]],
-                           output_core_dims=[['parameter']],
-                           output_dtypes=[np.float],
-                           output_sizes={'parameter': 5},
-                           dask='parallelized')
-    trend = trend.assign_coords(parameter=['slope', 'intercept',
-                                           'r_value', 'p_value',
-                                           'std_err'])
+    x = xr.DataArray(np.arange(len(obj[dim])).astype(np.float), dims=dim,
+                     coords={dim: obj[dim]})
+    trend = xr_linregress(x, obj, dim=dim, convert_to_dataset=False)
     return trend
 
 
@@ -47,53 +59,6 @@ def _lin_trend_legacy(y):
     """ufunc to be used by linear_trend"""
     x = np.arange(len(y))
     return np.polyfit(x, y, 1)
-
-
-# def _lin_trend_full(y):
-#     """ufunc to be used by linear_trend"""
-#     x = np.arange(len(y))
-#     return stats.linregress(x, y)
-#
-#
-# def linear_trend_full(da, dim, name='parameter'):
-#     """computes linear trend over 'dim' from the da.
-#        Slope and intercept of the least square fit are added to a new
-#        DataArray which has the dimension 'name' instead of 'dim', outputs
-#        are slope, intercept, r_value, p_value, std_err
-#        (see scipy.stats.linregress for details)
-#     """
-#     da = da.copy()
-#     axis_num = da.get_axis_num(dim)
-#
-#     dims = list(da.dims)
-#     dims[axis_num] = name
-#     coords = da.rename({dim: name}).coords
-#     coords[name] = ['slope', 'intercept', 'r_value', 'p_value', 'std_err']
-#
-#     dsk = da.data
-#     dsk_trend = dsa.apply_along_axis(_lin_trend_full, axis_num, dsk)
-#     out = xr.DataArray(dsk_trend, dims=dims, coords=coords)
-#     return out
-
-
-# def linear_trend(da, dim, name='parameter'):
-#     """computes linear trend over 'dim' from the da.
-#        Slope and intercept of the least square fit are added to a new
-#        DataArray which has the dimension 'name' instead of 'dim', containing
-#        slope and intercept for each gridpoint
-#     """
-#     da = da.copy()
-#     axis_num = da.get_axis_num(dim)
-#
-#     dims = list(da.dims)
-#     dims[axis_num] = name
-#     coords = da.rename({dim: name}).coords
-#     coords[name] = ['slope', 'intercept']
-#
-#     dsk = da.data
-#     dsk_trend = dsa.apply_along_axis(_lin_trend, axis_num, dsk)
-#     out = xr.DataArray(dsk_trend, dims=dims, coords=coords)
-#     return out
 
 
 def aggregate_w_nanmean(da, weights, blocks, **kwargs):

@@ -6,7 +6,7 @@ from scipy import stats
 # import os
 
 from xarrayutils.utils import aggregate, aggregate_w_nanmean, extractBox_dict,\
-    linear_trend, _lin_trend, _lin_trend_legacy
+    linear_trend, _lin_trend_legacy, _linregress_ufunc, xr_linregress
 
 from numpy.testing import assert_allclose
 
@@ -95,20 +95,21 @@ def test_lin_trend_full_legacy():
     # identical output
     y = np.random.random(20)
     x = np.arange(len(y))
-    fit = _lin_trend(y)[0:2]
+    fit = _linregress_ufunc(x, y)[0:2]
     fit_legacy = _lin_trend_legacy(y)
     assert np.allclose(fit, fit_legacy)
 
 
-def test_lin_trend():
+def test_linregress_ufunc():
     y = np.random.random(20)
     x = np.arange(len(y))
     fit = np.array(stats.linregress(x, y))
-    assert np.allclose(fit, _lin_trend(y))
+    assert np.allclose(fit, _linregress_ufunc(x, y))
+
 
 
 def test_linear_trend():
-    # data = dsa.random.random((4, 5, 3), chunks=(4, 1, 1))
+    #TODO implement a test for nans
     data = dsa.from_array(np.random.random([10, 2, 2]), chunks=(10, 1, 1))
     t = range(10)
     x = range(2)
@@ -127,13 +128,11 @@ def test_linear_trend():
             x_fit = t
             y_fit = data[:, xi, yi]
             fit = np.array(stats.linregress(x_fit, y_fit))
-            assert np.allclose(fit, fit_da.sel(x=xi, y=yi).data)
+            test = fit_da.sel(x=xi, y=yi).data
+            assert np.allclose(fit, test)
 
     # Test with other timedim (previously was not caught)
     data = dsa.from_array(np.random.random([2, 10, 2]), chunks=(1, 10, 1))
-    t = range(10)
-    x = range(2)
-    y = range(2)
     data_da = xr.DataArray(data, dims=['x', 'time',  'y'],
                            coords={
                                    'x': ('x', x),

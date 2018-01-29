@@ -31,8 +31,8 @@ def parse_xgcm_attributes(ds, xc='xt_ocean', xg='xu_ocean',
 def recreate_distances(ds, grid):
     '''The mom5 data uses a b grid, and is thus missing the distances at the
     cell faces. Here we interpolate them'''
-    ds.coords['dxc'] = grid.interp(ds.coords['dxu'], 'Y')
-    ds.coords['dyc'] = grid.interp(ds.coords['dyu'], 'X')
+    ds.coords['dxtn'] = grid.interp(ds.coords['dxu'], 'Y')
+    ds.coords['dyte'] = grid.interp(ds.coords['dyu'], 'X')
     return ds
 
 
