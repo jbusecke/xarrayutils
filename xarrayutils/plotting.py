@@ -43,13 +43,15 @@ def plot_line_shaded_std(x, y, std_y, horizontal=True,
         ax.fill_betweenx(x, y-std_y, y+std_y, **fill_defaults)
 
 
-def box_plot(box, **kwargs):
+def box_plot(box, ax=None, split_detection='True', **kwargs):
     """plots box despite coordinate discontinuities.
     INPUT
     -----
     box: np.array
         Defines the box in the coordinates of the current axis.
         Describing the box corners [x1, x2, y1, y2]
+    ax: matplotlib.axis
+        axis for plotting. Defaults to plt.gca()
     kwargs: optional
         anything that can be passed to plot can be put as kwarg
     """
@@ -62,11 +64,15 @@ def box_plot(box, **kwargs):
     x_split = False
     y_split = False
 
-    if np.diff([box[0], box[1]]) < 0:
-        x_split = True
+    if ax is None:
+        ax = plt.gca()
 
-    if np.diff([box[2], box[3]]) < 0:
-        y_split = True
+    if split_detection:
+        if np.diff([box[0], box[1]]) < 0:
+            x_split = True
+
+        if np.diff([box[2], box[3]]) < 0:
+            y_split = True
 
     if y_split and not x_split:
         plt.plot([box[0], box[0], box[1], box[1], box[0]],

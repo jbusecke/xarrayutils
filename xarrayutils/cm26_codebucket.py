@@ -638,7 +638,9 @@ def cm26_readin_annual_means(name, run,
         yearformat = '%04i'
         rename = {}
         file_kwargs = dict(chunks={'st_ocean': 1},
-                           concat_dim='time')
+                           concat_dim='time',
+                           engine='scipy') # I should rewrite the o2_sat files
+                           # as netcdf4 files...the scipy backend is whack.
     elif name == 'minibling_src':
         path = pjoin(rundir, 'annual_averages/budgets')
         name = '*.src.nc'
