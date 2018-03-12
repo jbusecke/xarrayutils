@@ -276,15 +276,15 @@ def load_obs_dict(fid_dict=None, drop_dict=None, mimoc_fix=True, debug=False,
                               shift_lon_kwargs=dict(shift=360, crit=0,
                                                     smaller=True)
                               )),
-            'MLD_Holte': ('/work/Julius.Busecke/shared_data/Argo_mixedlayers_monthlyclim_03192017.nc',
-                          dict(
-                             read_kwargs=dict(chunks={'iMONTH': 1}),
-                             swap_dims={'iLON': 'lon', 'iLAT': 'lat',
-                                        'iMONTH': 'month'},
-                             rename=dict(lat='yt_ocean', lon='xt_ocean'),
-                             shift_lon_kwargs=dict(shift=360, crit=0,
-                                                   smaller=True)
-                              )),
+            # 'MLD_Holte': ('/work/Julius.Busecke/shared_data/Argo_mixedlayers_monthlyclim_03192017.nc',
+            #               dict(
+            #                  read_kwargs=dict(chunks={'iMONTH': 1}),
+            #                  swap_dims={'iLON': 'lon', 'iLAT': 'lat',
+            #                             'iMONTH': 'month'},
+            #                  rename=dict(lat='yt_ocean', lon='xt_ocean'),
+            #                  shift_lon_kwargs=dict(shift=360, crit=0,
+            #                                        smaller=True)
+            #                   )),
             'MIMOC': ('/work/Julius.Busecke/shared_data/mimoc/MIMOC_Z_GRID_v2.2_PT_S.nc',
                       dict(
                           read_kwargs=dict(chunks={'month_of_year': 1}),
@@ -354,9 +354,13 @@ def load_obs_dict(fid_dict=None, drop_dict=None, mimoc_fix=True, debug=False,
         return ds_dict
 
 
-def cm26_load_obs(ref_ds, combo=True, masking=True):
+def cm26_load_obs(ref_ds, fid_dict=None, combo=True, masking=True):
+    """
+    Loads all observations and wrestles them into cm2.6 grid
+    fid_dict can be used to only load a subset.
+    """
     # TODO: I should replace the ref_ds with the grid file once ready
-    ds_dict = load_obs_dict()
+    ds_dict = load_obs_dict(fid_dict=fid_dict)
 
     # Select fields for data that is given with errors...
     if combo:
