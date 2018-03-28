@@ -13,6 +13,27 @@ import warnings
 """
 Collection of several useful routines for xarray
 """
+# needs testing
+def time_filter(data, std, timedim='time'):
+    kernel = Gaussian1DKernel(std)
+
+    def smooth_raw(data):
+        # works on xarray data
+
+        raw_data = getattr(data, 'values', data)
+        result = convolve_fft(raw_data, kernel, boundary='wrap')
+        result[np.isnan(raw_data)] = np.nan
+        return result
+
+    def temporal_smoother(data):
+        dims = ([timedim])
+        return xr.apply_ufunc(smooth_raw, data,
+                              vectorize=True,
+                              dask='parallelized',
+                              input_core_dims = [dims],
+                              output_core_dims = [dims],
+                              output_dtypes=[data.dtype])
+    return temporal_smoother(data)
 
 
 def _linregress_ufunc(a, b):
