@@ -6,6 +6,7 @@ from scipy import stats
 from dask.array import coarsen
 from dask.array.core import Array
 import warnings
+from astropy.convolution import (convolve_fft, Gaussian1DKernel)
 # from scipy import optimize
 # import dask.array as dsa
 
@@ -14,7 +15,7 @@ import warnings
 Collection of several useful routines for xarray
 """
 # needs testing
-def time_filter(data, std, timedim='time'):
+def filter_1D(data, std, dim='time'):
     kernel = Gaussian1DKernel(std)
 
     def smooth_raw(data):
@@ -26,7 +27,7 @@ def time_filter(data, std, timedim='time'):
         return result
 
     def temporal_smoother(data):
-        dims = ([timedim])
+        dims = ([dim])
         return xr.apply_ufunc(smooth_raw, data,
                               vectorize=True,
                               dask='parallelized',
