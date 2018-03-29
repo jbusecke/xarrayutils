@@ -570,12 +570,13 @@ def ds_add_track_dummy(ds, refvar):
 
 
 def time_add_refyear(ds, timedim='time', refyear=2000):
+    raise RuntimeWarning('This destroys chunks and is currently useless')
     ds = ds.copy()
     # Fix the time axis (I added 1900 years, since otherwise the stupid panda
     # indexing does not work)
     new_time_units = 'days since %s-01-01 00:00:00' % str(refyear+1)
     ds.time.attrs['units'] = new_time_units
-    ds = xr.decode_cf(ds)
+    ds.time = xr.decode_cf(ds.time)
     ds.attrs['refyear_shift'] = refyear
     return ds
 
