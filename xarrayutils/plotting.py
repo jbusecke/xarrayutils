@@ -75,30 +75,30 @@ def box_plot(box, ax=None, split_detection='True', **kwargs):
             y_split = True
 
     if y_split and not x_split:
-        plt.plot([box[0], box[0], box[1], box[1], box[0]],
+        ax.plot([box[0], box[0], box[1], box[1], box[0]],
                  [ylim[1], box[2], box[2], ylim[1], ylim[1]], **kwargs)
 
-        plt.plot([box[0], box[0], box[1], box[1], box[0]],
+        ax.plot([box[0], box[0], box[1], box[1], box[0]],
                  [ylim[0], box[3], box[3], ylim[0], ylim[0]], **kwargs)
 
     elif x_split and not y_split:
-        plt.plot([xlim[1], box[0], box[0], xlim[1], xlim[1]],
+        ax.plot([xlim[1], box[0], box[0], xlim[1], xlim[1]],
                  [box[2], box[2], box[3], box[3], box[2]], **kwargs)
 
-        plt.plot([xlim[0], box[1], box[1], xlim[0], xlim[0]],
+        ax.plot([xlim[0], box[1], box[1], xlim[0], xlim[0]],
                  [box[2], box[2], box[3], box[3], box[2]], **kwargs)
 
     elif x_split and y_split:
-        plt.plot([xlim[1], box[0], box[0]], [box[2], box[2], ylim[1]],
+        ax.plot([xlim[1], box[0], box[0]], [box[2], box[2], ylim[1]],
                  **kwargs)
 
-        plt.plot([xlim[0], box[1], box[1]], [box[2], box[2], ylim[1]],
+        ax.plot([xlim[0], box[1], box[1]], [box[2], box[2], ylim[1]],
                  **kwargs)
 
-        plt.plot([xlim[1], box[0], box[0]], [box[3], box[3], ylim[0]],
+        ax.plot([xlim[1], box[0], box[0]], [box[3], box[3], ylim[0]],
                  **kwargs)
 
-        plt.plot([xlim[0], box[1], box[1]], [box[3], box[3], ylim[0]],
+        ax.plot([xlim[0], box[1], box[1]], [box[3], box[3], ylim[0]],
                  **kwargs)
 
     elif not x_split and not y_split:

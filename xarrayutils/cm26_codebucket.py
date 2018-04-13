@@ -437,13 +437,14 @@ def convert_units(ds, name, new_unit, factor):
 
 def shift_lon(ds, londim, shift=360, crit=0, smaller=True, sort=True):
     ds = ds.copy()
-    if smaller:
-        ds[londim].data[ds[londim] < crit] = \
-            ds[londim].data[ds[londim] < crit] + shift
-    else:
-        ds[londim].data[ds[londim] > crit] = \
-            ds[londim].data[ds[londim] > crit] + shift
+    lon = ds[londim].data
 
+    if smaller:
+        lon[lon < crit] = lon[lon < crit] + shift
+    else:
+        lon[lon > crit] = lon[lon > crit] + shift
+
+    ds[londim].data = lon
     if sort:
         ds = ds.sortby(londim)
     return ds
