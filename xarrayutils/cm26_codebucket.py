@@ -14,24 +14,24 @@ def parse_xgcm_attributes(ds, xc='xt_ocean', xg='xu_ocean',
                           yc='yt_ocean', yg='yu_ocean',
                           zc='st_ocean', zg='sw_ocean'):
     """ Adds axis attributes needed for xgcm to recognize the grid"""
-    if xc not None:
+    if xc is not None:
         ds[xc] = ds[xc].assign_attrs(axis='X')
 
-    if xg not None:
+    if xg is not None:
         ds[xg] = ds[xg].assign_attrs(axis='X')
         ds[xg] = ds[xg].assign_attrs(c_grid_axis_shift=0.5)
 
-    if yc not None:
+    if yc is not None:
         ds[yc] = ds[yc].assign_attrs(axis='Y')
 
-    if yg not None:
+    if yg is not None:
         ds[yg] = ds[yg].assign_attrs(axis='Y')
         ds[yg] = ds[yg].assign_attrs(c_grid_axis_shift=0.5)
 
-    if zc not None:
+    if zc is not None:
         ds[zc] = ds[zc].assign_attrs(axis='Z')
 
-    if zg not None:
+    if zg is not None:
         ds[zg] = ds[zg].assign_attrs(axis='Z')
         ds[zg] = ds[zg].assign_attrs(c_grid_axis_shift=0.5)
     return ds
