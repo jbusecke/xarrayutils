@@ -768,7 +768,17 @@ def cm26_reconstruct_annual_grid(ds, load=None):
 
 
 def regiondict():
-    return {'Pacific': 3}
+    return {'Souther Ocean': 1,
+            'Atlantic': 2,
+            'Pacific': 3,
+            'Arctic': 4,
+            'Indian': 5,
+            'Med': 6,
+            'Black Sea': 7,
+            'Labrador Sea': 8,
+            'Baltic': 9,
+            'Red Sea': 10,
+            }
 
 
 def region2masknum(regionstr):
