@@ -102,5 +102,5 @@ def box_plot(box, ax=None, split_detection='True', **kwargs):
                  **kwargs)
 
     elif not x_split and not y_split:
-        plt.plot([box[0], box[0], box[1], box[1], box[0]],
+        ax.plot([box[0], box[0], box[1], box[1], box[0]],
                  [box[2], box[3], box[3], box[2], box[2]], **kwargs)
