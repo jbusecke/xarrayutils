@@ -1019,13 +1019,19 @@ def cm26_cut_region(obj, region, remove_nan_domain=True,
     obj = obj.copy()
 
     if regionfile is None:
-        regionfile = '/work/Julius.Busecke/CM2.6_staged/static/regionmask_cm26_020813.nc'
+        regionfile = '/work/Julius.Busecke/CM2.6/static/ \
+                        regionmask_cm26_020813.nc'
 
     if rename_dict is None:
         rename_dict = dict(XT_OCEAN='xt_ocean', YT_OCEAN='yt_ocean',
                            XU_OCEAN='xu_ocean', YU_OCEAN='yu_ocean')
-
-    regionmask = xr.open_dataset(regionfile).rename(rename_dict)
+    if isinstance(regionfile, str):
+        regionmask = xr.open_dataset(regionfile).rename(rename_dict)
+    elif isinstance(regionfile, xr.DataArray):
+        regionmask = regionfile
+    else:
+        raise RuntimeError('regionfile can be either a filepath or \
+                                xarray Datarray is: %s' % type(regionfile))
     # TODO: Extend this to u mask for matching variables
     # At the same time, I should find a way to adjust the tolerance
     # for coordinate comparison, so I dont have to swap them
@@ -1046,23 +1052,26 @@ def cm26_cut_region(obj, region, remove_nan_domain=True,
             print('Regionmask not applied to ""s"%' % vv)
             print(obj[vv])
 
-    #Cheap implementation of a nan cut: Check where the regionmask (only t)
+    # Cheap implementation of a nan cut: Check where the regionmask (only t)
     # is nan along a dimension and cut that sucker
 
     # TODO: This needs to work on all x and y dimensions
 
     if remove_nan_domain:
-        mask = tmask
-        margin = 0
-        for x in ['xt_ocean', 'xu_ocean']:
-            if x in obj.dims:
-                data_idx = np.where(mask.any('yt_ocean'))[0]
-                test = {x: slice(data_idx[0]-margin, data_idx[-1]+margin)}
-                obj = obj[test]
-        for y in ['yt_ocean', 'yu_ocean']:
-            if y in obj.dims:
-                data_idx = np.where(mask.any('xt_ocean'))[0]
-                test = {y: slice(data_idx[0]-margin, data_idx[-1]+margin)}
-                obj = obj[test]
+        obj = cut_nans(obj, tmask, margin=0)
 
     return obj
+
+
+def cut_nans(ds, mask, margin=0):
+    for x in ['xt_ocean', 'xu_ocean']:
+        if x in ds.dims:
+            data_idx = np.where(mask.any('yt_ocean'))[0]
+            test = {x: slice(data_idx[0]-margin, data_idx[-1]+margin)}
+            ds = ds[test]
+    for y in ['yt_ocean', 'yu_ocean']:
+        if y in ds.dims:
+            data_idx = np.where(mask.any('xt_ocean'))[0]
+            test = {y: slice(data_idx[0]-margin, data_idx[-1]+margin)}
+            ds = ds[test]
+    return ds
