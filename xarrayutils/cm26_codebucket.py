@@ -1048,6 +1048,9 @@ def cm26_cut_region(obj, region, remove_nan_domain=True,
 
     #Cheap implementation of a nan cut: Check where the regionmask (only t)
     # is nan along a dimension and cut that sucker
+
+    # TODO: This needs to work on all x and y dimensions
+
     if remove_nan_domain:
         mask = tmask
         margin = 0

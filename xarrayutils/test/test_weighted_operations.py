@@ -29,6 +29,8 @@ def test_weighted_mean():
                           dimcheck=False)
     xmean = weighted_mean(a_dsa, w_dsa, dim=['x'],
                           dimcheck=False)
+    xmean_alt = weighted_mean(a_dsa, w_dsa, dim='x',
+                              dimcheck=False)
 
     with pytest.raises(RuntimeError):
         weighted_mean(a_dsa, w_dsa, dim=['x', 'y'], dimcheck=True)
@@ -36,6 +38,7 @@ def test_weighted_mean():
     assert np.isclose(mean, expected_mean)
     assert np.all(np.isclose(ymean, expected_ymean))
     assert np.all(np.isclose(xmean, expected_xmean))
+    assert np.all(np.isclose(xmean, xmean_alt))
 
 
 def test_weighted_sum():
@@ -61,9 +64,8 @@ def test_weighted_sum():
                          dimcheck=False)
     xmean = weighted_sum(a_dsa, w_dsa, dim=['x'],
                          dimcheck=False)
-
-    print(xmean)
-    print(xmean.data.compute())
+    xmean_alt = weighted_sum(a_dsa, w_dsa, dim='x',
+                             dimcheck=False)
 
     with pytest.raises(RuntimeError):
         weighted_sum(a_dsa, w_dsa, dim=['x', 'y'], dimcheck=True)
@@ -71,6 +73,7 @@ def test_weighted_sum():
     assert np.isclose(mean, expected_mean)
     assert np.all(np.isclose(ymean, expected_ymean))
     assert np.all(np.isclose(xmean, expected_xmean))
+    assert np.all(np.isclose(xmean, xmean_alt))
 
 
 def test_broadcast_weights():
