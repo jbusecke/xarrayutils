@@ -178,7 +178,8 @@ def draw_dens_contours_teos10(sigma='sigma0', add_labels=True, ax=None,
 def tsdiagram(salt, temp, color=None, size=None,
               lon=None, lat=None, pressure=None,
               convert_teos10=True, ts_kwargs={},
-              ax=None, **kwargs):
+              ax=None, draw_density_contours=True,
+              **kwargs):
     if ax is None:
         ax = plt.gca()
 
@@ -193,7 +194,8 @@ def tsdiagram(salt, temp, color=None, size=None,
     scatter_kw_defaults = dict(s=size, c=color)
     scatter_kw_defaults.update(kwargs)
     s = ax.scatter(salt, temp, **scatter_kw_defaults)
-    draw_dens_contours_teos10(ax=ax, **ts_kwargs)
+    if draw_density_contours:
+        draw_dens_contours_teos10(ax=ax, **ts_kwargs)
     if color:
-        if len(color) > 1:
+        if (len(color) > 1) and not isinstance(color, str):
             plt.colorbar(s)
