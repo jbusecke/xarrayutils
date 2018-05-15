@@ -1,4 +1,5 @@
 import numpy as np
+import xarray as xr
 import matplotlib.pyplot as plt
 import gsw
 
@@ -179,6 +180,7 @@ def tsdiagram(salt, temp, color=None, size=None,
               lon=None, lat=None, pressure=None,
               convert_teos10=True, ts_kwargs={},
               ax=None, draw_density_contours=True,
+              draw_cbar=True,
               **kwargs):
     if ax is None:
         ax = plt.gca()
@@ -196,7 +198,11 @@ def tsdiagram(salt, temp, color=None, size=None,
     s = ax.scatter(salt, temp, **scatter_kw_defaults)
     if draw_density_contours:
         draw_dens_contours_teos10(ax=ax, **ts_kwargs)
-    if color:
-        # TODO this has to be improved...how do the matplotlib funcs do it?
-        if (len(color) > 1) and not isinstance(color, str):
+    if draw_cbar and color is not None:
+        if isinstance(color, str) or isinstance(color, tuple):
+            pass
+        elif isinstance(color, list) or isinstance(color, np.ndarray) or \
+                isinstance(color, xr.DataArray):
             plt.colorbar(s)
+        else:
+            raise RuntimeError('`color` not recognized. %s' % type(color))
