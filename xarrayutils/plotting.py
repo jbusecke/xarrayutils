@@ -206,3 +206,4 @@ def tsdiagram(salt, temp, color=None, size=None,
             plt.colorbar(s)
         else:
             raise RuntimeError('`color` not recognized. %s' % type(color))
+    return s
