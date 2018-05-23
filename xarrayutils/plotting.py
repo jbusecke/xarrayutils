@@ -107,6 +107,21 @@ def box_plot(box, ax=None, split_detection='True', **kwargs):
         ax.plot([box[0], box[0], box[1], box[1], box[0]],
                  [box[2], box[3], box[3], box[2], box[2]], **kwargs)
 
+def dict2box(di, xdim='lon', ydim='lat'):
+    return np.array([di[xdim].start, di[xdim].stop,
+                     di[ydim].start, di[ydim].stop])
+
+
+def box_plot_dict(di, xdim='lon', ydim='lat', **kwargs):
+    """plot box from xarray selection dict e.g.
+    `{'xdim':slice(a, b), 'ydim':slice(c,d), ...}`"""
+
+    # extract box from dict
+    box  = dict2box(di, xdim='lon', ydim='lat')
+    # plot
+    box_plot(box, **kwargs)
+
+
 
 def draw_dens_contours_teos10(sigma='sigma0', add_labels=True, ax=None,
                               density_grid=20, dens_interval=1.0,
