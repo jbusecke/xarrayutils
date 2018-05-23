@@ -117,7 +117,7 @@ def box_plot_dict(di, xdim='lon', ydim='lat', **kwargs):
     `{'xdim':slice(a, b), 'ydim':slice(c,d), ...}`"""
 
     # extract box from dict
-    box  = dict2box(di, xdim='lon', ydim='lat')
+    box  = dict2box(di, xdim=xdim, ydim=ydim)
     # plot
     box_plot(box, **kwargs)
 
