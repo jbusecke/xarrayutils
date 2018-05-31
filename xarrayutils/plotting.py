@@ -194,11 +194,14 @@ def draw_dens_contours_teos10(sigma='sigma0', add_labels=True, ax=None,
 def tsdiagram(salt, temp, color=None, size=None,
               lon=None, lat=None, pressure=None,
               convert_teos10=True, ts_kwargs={},
-              ax=None, draw_density_contours=True,
+              ax=None, fig=None, draw_density_contours=True,
               draw_cbar=True,
               **kwargs):
     if ax is None:
         ax = plt.gca()
+        
+    if fig is None:
+        fig = plt.gcf()
 
     if convert_teos10:
         if any([a is None for a in [lon, lat, pressure]]):
@@ -218,7 +221,7 @@ def tsdiagram(salt, temp, color=None, size=None,
             pass
         elif isinstance(color, list) or isinstance(color, np.ndarray) or \
                 isinstance(color, xr.DataArray):
-            plt.colorbar(s)
+            fig.colorbar(s, ax=ax)
         else:
             raise RuntimeError('`color` not recognized. %s' % type(color))
     return s
