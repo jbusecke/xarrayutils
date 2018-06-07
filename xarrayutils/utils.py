@@ -3,7 +3,7 @@ import numpy as np
 import xarray as xr
 from scipy.signal import filtfilt, gaussian
 from scipy import stats
-from dask.array import coarsen
+from dask.array import coarsen, ones_like
 from dask.array.core import Array
 import warnings
 from astropy.convolution import (convolve_fft, Gaussian1DKernel)
@@ -387,6 +387,23 @@ def extractBoxes(da, bo, xname=None, yname=None, xdim='lon', ydim='lat'):
 #     boxname_dim = concat_dim_da(list(bo.keys()), 'boxname')
 #     out = xr.concat(timeseries, boxname_dim)
 #     return out
+
+
+# TODO: This needs a test and perhaps I can refactor it into a 'budget tools
+# Module'
+def convert_flux_array(da, da_full, dim, top=True, fillval=0):
+    dummy = xr.DataArray(ones_like(da_full.data) * fillval,
+                         coords=da_full.coords,
+                         dims=da_full.dims)
+    if top:
+        da.coords[dim] = da_full[dim][0]
+        dummy_cut = dummy[{dim: slice(1, None)}]
+        out = xr.concat([da, dummy_cut], dim=dim)
+    else:
+        da.coords[dim] = da_full[dim][-1]
+        dummy_cut = dummy[{dim: slice(0, -1)}]
+        out = xr.concat([dummy_cut, da], dim=dim)
+    return out
 
 
 def composite(data, index, bounds):
