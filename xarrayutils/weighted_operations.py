@@ -27,8 +27,10 @@ def weighted_mean(da_data, da_weight, **kwargs):
         do not include all elements of 'dim' error is raised
     """
     data, weight_expanded = weighted_sum_raw(da_data, da_weight, **kwargs)
+    out = data / weight_expanded
+    out.attrs = data.attrs
+    return out
 
-    return data/weight_expanded
 
 def weighted_sum(da_data, da_weight, **kwargs):
     """calculate sum of da_data weighted by da_weight
@@ -56,7 +58,7 @@ def weighted_sum(da_data, da_weight, **kwargs):
 
 
 def weighted_sum_raw(da_data, da_weight, dim=None,
-                     preweighted=False, dimcheck=True):
+                     preweighted=False, dimcheck=True, **kwargs):
     """calculate sum of da_data weighted by da_weight and the weights themselves
 
     Parameters
@@ -86,20 +88,30 @@ def weighted_sum_raw(da_data, da_weight, dim=None,
             if not set(dim).issubset(da_weight.dims):
                 raise RuntimeError("Dimensions of 'da_weight' do not include all averaging dimensions.\
                 Broadcast da_weight or deactivate 'dim_check'.")
+    if 'keep_attrs' in kwargs.keys():
+        keep_attrs = kwargs['keep_attrs']
+    else:
+        keep_attrs = False
 
-    weight_expanded = _broadcast_weights(da_data, da_weight)
+    weight_expanded = _broadcast_weights(da_data, da_weight,
+                                         keep_attrs=keep_attrs)
 
     if preweighted:
         data = da_data
     else:
-        data = da_data*weight_expanded
+        data = da_data * weight_expanded
+        data.attrs = da_data.attrs
 
-    return data.sum(dim), weight_expanded.sum(dim)
+    return data.sum(dim, **kwargs), weight_expanded.sum(dim, **kwargs)
 
 
-def _broadcast_weights(da_data, da_weight):
+def _broadcast_weights(da_data, da_weight, keep_attrs=False):
     """broadcasts da_weights to the same shape as da_data and \
-    masks missing values"""
-    ones = (da_data.copy()*0)+1
-    weights_expanded = ones*da_weight
+    masks the same missing values"""
+    da_data = da_data.copy()
+    ones = (da_data * 0) + 1
+    weights_expanded = ones * da_weight
+    # add attrs back in
+    if keep_attrs:
+        weights_expanded.attrs = da_data.attrs
     return weights_expanded
