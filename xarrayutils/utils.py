@@ -389,6 +389,29 @@ def extractBoxes(da, bo, xname=None, yname=None, xdim='lon', ydim='lat'):
 #     return out
 
 
+# Mapping related stuff
+def dll_dist(dlon, dlat, lon, lat):
+        """Converts lat/lon differentials into distances
+
+        PARAMETERS
+        ----------
+        dlon : xarray.DataArray longitude differentials
+        dlat : xarray.DataArray latitude differentials
+        lon  : xarray.DataArray longitude values
+        lat  : xarray.DataArray latitude values
+
+        RETURNS
+        -------
+        dx  : xarray.DataArray distance inferred from dlon
+        dy  : xarray.DataArray distance inferred from dlat
+        """
+
+        dll_factor = 111000.0
+        dx = dlon * xr.ufuncs.cos(xr.ufuncs.deg2rad(lat)) * dll_factor
+        dy = ((lon * 0) + 1) * dlat * dll_factor
+        return dx, dy
+
+
 # TODO: This needs a test and perhaps I can refactor it into a 'budget tools
 # Module'
 def convert_flux_array(da, da_full, dim, top=True, fillval=0):
