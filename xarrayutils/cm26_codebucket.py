@@ -223,7 +223,7 @@ def load_obs_dict(fid_dict=None, drop_dict=None, mimoc_fix=True, debug=False,
 
     if not isinstance(fid_dict, dict):
         fid_dict = {
-            'CM26_init': ('/work/Julius.Busecke/CM2.6_staged/init/WOA01-05_CM2.6_annual.nc',
+            'CM26_init': ('/work/Julius.Busecke/CM2.6/init/WOA01-05_CM2.6_annual.nc',
                           dict(
                               read_kwargs={'chunks': {'depth': 1}},
                               rename={'depth': 'st_ocean',
@@ -603,9 +603,9 @@ def time_add_refyear(ds, timedim='time', refyear=2000):
     ds_clean['time'] = ds['time']
     return ds_clean
 
-
+# should be deprecated (with many others here.)
 def cm26_readin_annual_means(name, run,
-                             rootdir='/work/Julius.Busecke/CM2.6_staged/',
+                             rootdir='/work/Julius.Busecke/',
                              print_flist=False,
                              autoclose=False,
                              years=None,
@@ -735,13 +735,13 @@ def cm26_reconstruct_annual_grid(ds, load=None):
     load_kwargs = dict(decode_times=False, concat_dim='time',
                        chunks={'st_ocean': 1})
     if load == 'control':
-        odir = '/work/Julius.Busecke/CM2.6_staged/CM2.6_A_Control-1860_V03/annual_averages/grid_fields'
+        odir = '/work/Julius.Busecke/CM2.6/CM2.6_A_Control-1860_V03/annual_averages/grid_fields'
         ds_dzt = xr.open_mfdataset(pjoin(odir, '*dzt_control.nc'),
                                    **load_kwargs)
         dz = ds_dzt['dzt']
 
     elif load == 'forced':
-        odir = '/work/Julius.Busecke/CM2.6_staged/CM2.6_A_V03_1PctTo2X/annual_averages/grid_fields'
+        odir = '/work/Julius.Busecke/CM2.6/CM2.6_A_V03_1PctTo2X/annual_averages/grid_fields'
         ds_dzt = xr.open_mfdataset(pjoin(odir, '*dzt_forced.nc'),
                                    **load_kwargs)
         dz = ds_dzt['dzt']
@@ -808,7 +808,7 @@ def drop_all_coords(ds, exclude_coords=[]):
 
 
 def cm26_loadall_run(run,
-                     rootdir='/work/Julius.Busecke/CM2.6_staged/',
+                     rootdir='/work/Julius.Busecke/CM2.6/',
                      normalize_budgets=True,
                      reconstruct_grids=True,
                      grid_load=False,
@@ -917,7 +917,7 @@ def cm26_loadall_run(run,
             print(ds)
 
     # now update all coords from one files
-    grid_path = '/work/Julius.Busecke/CM2.6_staged/static/grid_complete.nc'
+    grid_path = '/work/Julius.Busecke/CM2.6/static/grid_complete.nc'
     chunks_raw = {'st_ocean': 1, 'sw_ocean': 1,
                   'xt_ocean': 3600, 'xu_ocean': 3600,
                   'yt_ocean': 2700, 'yu_ocean': 2700}
