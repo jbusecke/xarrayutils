@@ -633,7 +633,7 @@ def extract_surf(da_ind, da_target, surf_val, dim, masking=True,
     if method == 'index':
         # fill index array, since otherwise armin does raise ValueError
         da_ind = da_ind.fillna(fill_value)
-        idx = abs(da_ind - surf_val).argmin(dim)
+        idx = abs(da_ind - surf_val.fillna(0)).argmin(dim)
         # if the idx data is a dask array it needs to be loaded
         if isinstance(idx.data, Array):
             idx = idx.load()
