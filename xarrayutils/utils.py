@@ -615,7 +615,7 @@ def extract_surf(da_ind, da_target, surf_val, dim, masking=True,
     if surf_val == 'min':
         surf_val = da_ind.min(dim)
     elif surf_val == 'max':
-        surf_val = da_ind.min(dim)
+        surf_val = da_ind.max(dim)
     else:
         if type(surf_val) not in [xr.DataArray, int, float]:
             raise ValueError("`surf_val needs to be a scalar, xr.DataArray (with matching dimensions) \
@@ -632,6 +632,9 @@ def extract_surf(da_ind, da_target, surf_val, dim, masking=True,
 
     if method == 'index':
         idx = abs(da_ind - surf_val).argmin(dim)
+        # if the idx data is a dask array it needs to be loaded
+        if isinstance(idx.data, Array):
+            idx = idx.load()
         target_on_surf = da_target[{dim: idx}]
         dim_on_surf = da_target[dim][{dim: idx}]
     else:
