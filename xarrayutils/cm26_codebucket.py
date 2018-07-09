@@ -362,7 +362,6 @@ def load_obs_dict(fid_dict=None, drop_dict=None, mimoc_fix=True, debug=False,
 
         return ds_dict
 
-
 def cm26_load_obs(ref_ds, fid_dict=None, combo=True, masking=True):
     """
     Loads all observations and wrestles them into cm2.6 grid

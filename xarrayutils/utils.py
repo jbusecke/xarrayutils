@@ -603,7 +603,7 @@ def corrmap(a, b, shifts=0,
 
 
 def extract_surf(da_ind, da_target, surf_val, dim, masking=True,
-                 method='index', **kwargs):
+                 method='index', fill_value=-1e15, **kwargs):
     """
     Extract a surface and surface position out of `da_target`.
     The surface is defined by lookup of `surf_val` along dimension `dim` in
@@ -631,12 +631,17 @@ def extract_surf(da_ind, da_target, surf_val, dim, masking=True,
                                  (da_ind.min(dim) > surf_val))
 
     if method == 'index':
+        # fill index array, since otherwise armin does raise ValueError
+        da_ind = da_ind.fillna(fill_value)
         idx = abs(da_ind - surf_val).argmin(dim)
         # if the idx data is a dask array it needs to be loaded
         if isinstance(idx.data, Array):
             idx = idx.load()
         target_on_surf = da_target[{dim: idx}]
         dim_on_surf = da_target[dim][{dim: idx}]
+        # remove all values where the dim_on_surf is equal to the fill_value
+        target_on_surf = target_on_surf.where(dim_on_surf != fill_value)
+        dim_on_surf = dim_on_surf.where(dim_on_surf != fill_value)
     else:
         print('No other methods implemented yet. Interpolation is coming soon')
 
