@@ -602,7 +602,51 @@ def corrmap(a, b, shifts=0,
     return out_c, out_p, out_s
 
 
-def find_surf_ind(da, surf_val, dim):
+def extract_surf(da_ind, da_target, surf_val, dim, masking=True,
+                 method='index', **kwargs):
+    """
+    Extract a surface and surface position out of `da_target`.
+    The surface is defined by lookup of `surf_val` along dimension `dim` in
+    `da_target`.
+    Surf value can be one of {xr.DataArray, float, {'min', 'max'}}.
+    Returns ds_target on surface and the position along dim.
+    """
+
+    if surf_val == 'min':
+        surf_val = da_ind.min(dim)
+    elif surf_val == 'max':
+        surf_val = da_ind.min(dim)
+    else:
+        if type(surf_val) not in [xr.DataArray, int, float]:
+            raise ValueError("`surf_val needs to be a scalar, xr.DataArray (with matching dimensions) \
+            or one of 'min'/'max'")
+
+    # Mask out areas where the surface runs into the boundary
+    da_ind = da_ind.copy()
+    da_target = da_target.copy()
+
+    if masking:
+        condition = \
+            xr.ufuncs.logical_or((da_ind.max(dim) < surf_val),
+                                 (da_ind.min(dim) > surf_val))
+
+    if method == 'index':
+        idx = abs(da_ind - surf_val).argmin(dim)
+        target_on_surf = da_target[{dim: idx}]
+        dim_on_surf = da_target[dim][{dim: idx}]
+    else:
+        print('No other methods implemented yet. Interpolation is coming soon')
+
+    # Mask out the regions where the surface outcrops at the top or bottom
+    if masking:
+        target_on_surf = target_on_surf.where(~condition)
+        dim_on_surf = dim_on_surf.where(~condition)
+
+    return target_on_surf, dim_on_surf
+
+
+# TODO: Deprecate this function
+def find_surf_ind_legacy(da, surf_val, dim):
     """finds the index along dim that corresponds to the value of
     da closest to surf_val for each remaining dim"""
     # TODO can I specify how to handle multiple occurences?
@@ -613,15 +657,9 @@ def find_surf_ind(da, surf_val, dim):
     return abs(da - surf_val_exp).argmin(dim)
 
 
-# def extract_surf_ind(da, ind, dim):
-#     """squash the array to the values defined in ind"""
-#     # TODO: This seems error prone...is there another way then using
-# the mean?
-#     return da.where(da[dim] == ind).mean(dim)
-
-
-def extract_surf(da_ind, da_target, surf_val, dim,
-                 constant_dims=['time'], fill_value=1000, masking=True):
+# TODO: Deprecate this function
+def extract_surf_legacy(da_ind, da_target, surf_val, dim,
+                        constant_dims=['time'], fill_value=1000, masking=True):
     """Extract values of 'da_target' on a surface in 'da_ind', specified as nearest
     value to 'surf_val along 'dim'"""
     # Mask out areas where the surface runs into the boundary
