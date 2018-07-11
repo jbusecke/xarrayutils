@@ -2,7 +2,7 @@ from __future__ import print_function
 import numpy as np
 import xarray as xr
 from scipy.signal import filtfilt, gaussian
-from scipy import stats
+from scipy import stats, interpolate
 from dask.array import coarsen, ones_like
 from dask.array.core import Array
 import warnings
@@ -601,6 +601,90 @@ def corrmap(a, b, shifts=0,
     out_p['timeshifts'] = shifts
 
     return out_c, out_p, out_s
+
+
+def _coord_remapping_interp(x, y, y_target, remap):
+    """Remap dataarray onto new dimension. E.g. express y(x) as y(remap)
+    using interpolation"""
+    idx = np.logical_or(np.isnan(y_target), np.isnan(y))
+    if sum(~idx) < 2:
+        y_remapped = remap * np.nan
+    else:
+        y_remapped = interpolate.interp1d(y_target[~idx], y[~idx],
+                                          bounds_error=False)(remap)
+    return y_remapped
+
+
+def coord_remapping(x, y, y_target, remap, x_dim=None, remap_dim=None):
+    """
+    remaps datasets/dataarray `y` with coordinate `x` to new coordinate
+    `y_target` with values specified in `remap`
+    E.g. a dataset with coordinate depth(x) will be remapped to coordinate
+    temp(y_target) as a vertical coordinate, with spacing given by `remap`)
+
+    Parameters
+    ----------
+
+    x: xr.DataArray
+        The original dim/coordinate used for remapping
+
+    y: {xr.DataArray, xr.Dataset}
+        the data to be remapped
+
+    y_target: xr.DataArray
+        The new coordinate used for remapping
+
+    remap: {range, np.array, xr.DataArray}
+        Values of `y_target` used as new coordinate.
+
+    Returns
+    -------
+    remapped_y: xr.Dataset
+        dataset with remapped variables of y and the remapped position of
+        x (e.g. depth of the temperature values given in remap)
+    """
+
+    # infer dim from input
+    if x_dim is None:
+        if len(x.dims) != 1:
+            raise RuntimeError('if x_dim is not specified, \
+                               x must be a 1D array.')
+        dim = x.dims[0]
+    else:
+        dim = x_dim
+
+    if remap_dim is not None:
+        raise RuntimeError('multidim remap is not implemented yet.')
+
+    # if dataset is passed drop all data_vars that dont contain dim
+    if isinstance(y, xr.Dataset):
+        drop_vars = [a for a in y.data_vars if dim not in y[a].dims]
+        if drop_vars:
+            print('Found incompatible data variables (%s) in dataset. They do \
+            not contain the dimension `%s` and will be dropped.' \
+            % (drop_vars, dim))
+            y = y.drop(drop_vars)
+
+    # convert remap to dataarray?
+    if not isinstance(remap, xr.DataArray):
+        remap = xr.DataArray(remap, coords=[('remapped_dim', remap)])
+
+    args = (y_target, remap)
+    kwargs = dict(
+            input_core_dims=[[dim], [dim], [dim], ['remapped_dim']],
+            output_core_dims=[['remapped_dim']],
+            vectorize=True,
+            dask='parallelized',
+            output_dtypes=[y_target.dtype],
+            output_sizes={'remapped_dim': len(remap)}
+                )
+
+    remapped_y = xr.apply_ufunc(_coord_remapping_interp, x, y, *args, **kwargs)
+
+    remapped_pos = xr.apply_ufunc(_coord_remapping_interp, x, x, *args,
+                                  **kwargs)
+    remapped_y.coords['remapped_%s' % x.name] = remapped_pos
+    return remapped_y
 
 
 def extract_surf(da_ind, da_target, surf_val, dim, masking=True,
