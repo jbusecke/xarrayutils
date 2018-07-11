@@ -471,7 +471,8 @@ def composite(data, index, bounds):
     zones_coords = ['high', 'neutral', 'low']
     out = xr.concat([data.where(z) for z in zones], comp_name)
     out[comp_name] = zones_coords
-
+    counts = np.array([a.sum().data for a in zones])
+    out.coords['counts'] = xr.DataArray(counts, coords=[out[comp_name]])
     out.attrs['IndexName'] = index.name
     out.attrs['CompositeBounds'] = bounds
 
