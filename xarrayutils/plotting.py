@@ -4,6 +4,20 @@ import matplotlib.pyplot as plt
 import gsw
 
 
+def center_lim(ax, which='y'):
+    if which == 'y':
+        lim = np.array(ax.get_ylim())
+        ax.set_ylim(np.array([-1, 1]) * abs(lim).max())
+    elif which == 'x':
+        lim = np.array(ax.get_xlim())
+        ax.set_xlim(np.array([-1, 1]) * abs(lim).max())
+    elif which in ['xy', 'yx']:
+        center_lim(ax, 'x')
+        center_lim(ax, 'y')
+    else:
+        raise ValueError('`which` is not in (`x,`y`, `xy`) found %s' % which)
+
+
 def depth_logscale(ax, yscale=400, ticks=None):
     if ticks is None:
         ticks = [0, 100, 250, 500, 1000, 2500, 5000]
@@ -199,7 +213,7 @@ def tsdiagram(salt, temp, color=None, size=None,
               **kwargs):
     if ax is None:
         ax = plt.gca()
-        
+
     if fig is None:
         fig = plt.gcf()
 
