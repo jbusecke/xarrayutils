@@ -708,7 +708,7 @@ def extract_surf(da_target, da_ind, surf_val, dim, masking=False,
 
     # all datavariable have to have all the dimensions of da_ind
     non_matching_vars = []
-    for vv in da_target.data_vars:
+    for vv in list(da_target.data_vars):
         if not set(da_ind.dims).issubset(set(da_target[vv].dims)):
             non_matching_vars.append(vv)
     if non_matching_vars:
