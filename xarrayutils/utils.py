@@ -687,15 +687,34 @@ def coord_remapping(x, y, y_target, remap, x_dim=None, remap_dim=None):
     return remapped_y
 
 
-def extract_surf(da_ind, da_target, surf_val, dim, masking=True,
+def extract_surf(da_target, da_ind, surf_val, dim, masking=False,
                  method='index', fill_value=-1e15, **kwargs):
     """
+    !!!TODO: The naming is ambiguous...change
     Extract a surface and surface position out of `da_target`.
     The surface is defined by lookup of `surf_val` along dimension `dim` in
     `da_target`.
     Surf value can be one of {xr.DataArray, float, {'min', 'max'}}.
     Returns ds_target on surface and the position along dim.
     """
+    # da_ind cannot be a dataset
+    if not isinstance(da_ind, xr.DataArray):
+        raise RuntimeError('`da_ind` must be a DataArray.')
+
+    # check if dim is in all dataarrays
+    for ds_check in [da_ind, da_target]:
+        if dim not in list(ds_check.dims):
+            raise RuntimeError('no dimension %s found in input arrays' % dim)
+
+    # all datavariable have to have all the dimensions of da_ind
+    non_matching_vars = []
+    for vv in da_target.data_vars:
+        if not set(da_ind.dims).issubset(set(da_target[vv].dims)):
+            non_matching_vars.append(vv)
+    if non_matching_vars:
+        da_target = da_target.drop(non_matching_vars)
+        print('`da_target` contains variables with non matching dimension. \
+              %s have been dropped ' % non_matching_vars)
 
     if surf_val == 'min':
         surf_val = da_ind.min(dim)
@@ -719,6 +738,7 @@ def extract_surf(da_ind, da_target, surf_val, dim, masking=True,
         # fill index array, since otherwise armin does raise ValueError
         da_ind = da_ind.fillna(fill_value)
         idx = abs(da_ind - surf_val.fillna(0)).argmin(dim)
+
         # if the idx data is a dask array it needs to be loaded
         if isinstance(idx.data, Array):
             idx = idx.load()
