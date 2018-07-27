@@ -190,15 +190,7 @@ def draw_dens_contours_teos10(sigma='sigma0', add_labels=True, ax=None,
     ch = ax.contour(x, y, sig, **c_kwarg_defaults)
     ax.clabel(ch, **c_label_kwarg_defaults)
 
-    ct_label = 'Conservative Temperature [$^{\circ}C$]'
-    sa_label = 'Absolute Salinity [$g/kg$]'
     if add_labels:
-        if salt_on_x:
-            ax.set_xlabel(sa_label)
-            ax.set_ylabel(ct_label)
-        else:
-            ax.set_ylabel(sa_label)
-            ax.set_xlabel(ct_label)
         plt.text(0.05, 0.05, '$\sigma_{%s}$' % (sigma[-1]), fontsize=14,
                  verticalalignment='center',
                  horizontalalignment='center', transform=ax.transAxes,
@@ -209,7 +201,7 @@ def tsdiagram(salt, temp, color=None, size=None,
               lon=None, lat=None, pressure=None,
               convert_teos10=True, ts_kwargs={},
               ax=None, fig=None, draw_density_contours=True,
-              draw_cbar=True,
+              draw_cbar=True, add_labels=True,
               **kwargs):
     if ax is None:
         ax = plt.gca()
@@ -218,12 +210,21 @@ def tsdiagram(salt, temp, color=None, size=None,
         fig = plt.gcf()
 
     if convert_teos10:
+        temp_label = 'Conservative Temperature [$^{\circ}C$]'
+        salt_label = 'Absolute Salinity [$g/kg$]'
         if any([a is None for a in [lon, lat, pressure]]):
             raise ValueError('when converting to teos10 variables, \
                              input for lon, lat and pressure is needed')
         else:
             salt = gsw.SA_from_SP(salt, pressure, lon, lat)
             temp = gsw.CT_from_pt(salt, temp)
+    else:
+        temp_label = 'Potential Temperature [$^{\circ}C$]'
+        salt_label = 'Practical Salinity [$g/kg$]'
+
+    if add_labels:
+        ax.set_xlabel(salt_label)
+        ax.set_ylabel(temp_label)
 
     scatter_kw_defaults = dict(s=size, c=color)
     scatter_kw_defaults.update(kwargs)
