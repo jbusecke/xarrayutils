@@ -32,7 +32,29 @@ def plot_line_shaded_std(x, y, std_y, horizontal=True,
                          ax=None,
                          line_kwargs=dict(),
                          fill_kwargs=dict()):
-    """Plot wrapper to draw line for y and shaded patch according to std_y """
+    """Plot wrapper to draw line for y and shaded patch according to std_y.
+    The shading represents one std on each side of the line..
+
+    Parameters
+    ----------
+    x : numpy.array or xr.DataArray
+        Coordinate.
+    y : numpy.array or xr.DataArray
+        line data.
+    std_y : numpy.array or xr.DataArray
+        std corresponding to y.
+    horizontal : bool
+        Determines if the plot is horizontal or vertical (e.g. x is plotted
+        on the y-axis).
+    ax : matplotlib.axes
+        Matplotlib axes object to plot on (the default is plt.gca()).
+    line_kwargs : dict
+        optional parameters for line plot.
+    fill_kwargs : dict
+        optional parameters for std fill plot.
+
+    """
+
     line_defaults = {}
 
     # Set plot defaults into the kwargs
