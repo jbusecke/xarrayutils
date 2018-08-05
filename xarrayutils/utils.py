@@ -689,14 +689,38 @@ def coord_remapping(x, y, y_target, remap, x_dim=None, remap_dim=None):
 
 def extract_surf(da_target, da_ind, surf_val, dim, masking=False,
                  method='index', fill_value=-1e15, **kwargs):
-    """
-    !!!TODO: The naming is ambiguous...change
-    Extract a surface and surface position out of `da_target`.
+    """Extract a surface and surface position out of `da_target`.
     The surface is defined by lookup of `surf_val` along dimension `dim` in
     `da_target`.
-    Surf value can be one of {xr.DataArray, float, {'min', 'max'}}.
-    Returns ds_target on surface and the position along dim.
+
+    Parameters
+    ----------
+    da_target : {xr.DataArray, xr.Dataset}
+        Description of parameter `da_target`.
+    da_ind : xr.DataArray
+        Description of parameter `da_ind`.
+    surf_val : {xr.DataArray, float, {'min', 'max'}}
+        Value of surface to be extracted.
+    dim : str
+        Dimension if `da_ind` along which to extract surface.
+    masking : bool
+        If True, masks values that are at the first or last value of `dim`.
+    method : {'index'}
+        Method to find surface. Either through indexing or interpolation.
+    fill_value : float
+        Value used to pad missing values.
+        Should be well outside of the data range (the default is -1e15).
+    **kwargs :
+         Unused atm.
+
+    Returns
+    -------
+    target_on_surf : {xr.DataArray, xr.Dataset}
+        `da_target` on the extracted surface
+    dim_on_surf : xr.DataArray
+        position of the surface on `dim`
     """
+    # !!!TODO: The naming is ambiguous...change
     # da_ind cannot be a dataset
     if not isinstance(da_ind, xr.DataArray):
         raise RuntimeError('`da_ind` must be a DataArray.')
@@ -706,15 +730,21 @@ def extract_surf(da_target, da_ind, surf_val, dim, masking=False,
         if dim not in list(ds_check.dims):
             raise RuntimeError('no dimension %s found in input arrays' % dim)
 
-    # all datavariable have to have all the dimensions of da_ind
-    non_matching_vars = []
-    for vv in list(da_target.data_vars):
-        if not set(da_ind.dims).issubset(set(da_target[vv].dims)):
-            non_matching_vars.append(vv)
-    if non_matching_vars:
-        da_target = da_target.drop(non_matching_vars)
-        print('`da_target` contains variables with non matching dimension. \
-              %s have been dropped ' % non_matching_vars)
+    if isinstance(da_target, xr.DataArray):
+        if not set(da_ind.dims).issubset(set(da_target.dims)):
+            raise RuntimeError('da_target has non matching dimensions.')
+    elif isinstance(da_target, xr.Dataset):
+        # all datavariable have to have all the dimensions of da_ind
+        non_matching_vars = []
+        for vv in list(da_target.data_vars):
+            if not set(da_ind.dims).issubset(set(da_target[vv].dims)):
+                non_matching_vars.append(vv)
+        if non_matching_vars:
+            da_target = da_target.drop(non_matching_vars)
+            print('`da_target` contains variables with non matching dimension. \
+                  %s have been dropped ' % non_matching_vars)
+    else:
+        raise RuntimeError('da_target needs to be xarray DataArray or Dataset')
 
     if surf_val == 'min':
         surf_val = da_ind.min(dim)
