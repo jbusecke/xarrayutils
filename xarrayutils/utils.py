@@ -44,6 +44,32 @@ def _linregress_ufunc(a, b):
 
 
 def xr_linregress(a, b, dim='time', convert_to_dataset=True, dtype=None):
+    """Applies scipy.stats.linregress over two xr.DataArrays or xr.Datasets.
+
+    Parameters
+    ----------
+    a : {xr.DataArray}
+        Independent variable for linear regression. E.g. time.
+    b : {xr.DataArray, xr.Dataset}
+        Dependent variable.
+    dim : str
+        Dimension over which to perform linear regression.
+        Must be present in both `a` and `b` (the default is 'time').
+    convert_to_dataset : bool
+        Converts the output parameter to data_variables instead of an
+        additional dimension (the default is True).
+    dtype : dtype
+         Dtype for the output. If None, defaults to dtype of `b`, or `b`s
+         first data variable(the default is None).
+
+    Returns
+    -------
+    type(b)
+        Returns a dataarray containing the parameter values of
+        scipy.stats.linregress for each data_variable in `b`.
+
+    """
+
     if dtype is None:
         if isinstance(b, xr.Dataset):
             dtype = b[list(b.data_vars)[0]].dtype
