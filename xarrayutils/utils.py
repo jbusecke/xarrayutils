@@ -43,13 +43,17 @@ def _linregress_ufunc(a, b):
     return np.array([slope, intercept, r_value, p_value, std_err])
 
 
-def xr_linregress(a, b, dim='time', convert_to_dataset=True):
+def xr_linregress(a, b, dim='time', convert_to_dataset=True, dtype=None):
+    if dtype is None:
+        if isinstance(b, xr.Dataset):
+            dtype = b[list(b.data_vars)[0]].dtype
+            print('No `dytpe` chosen. Defaults to %s' %dtype)
     stats = xr.apply_ufunc(_linregress_ufunc, a, b,
                            input_core_dims=[[dim], [dim]],
                            output_core_dims=[['parameter']],
                            vectorize=True,
                            dask='parallelized',
-                           output_dtypes=[a.dtype],
+                           output_dtypes=[dtype],
                            output_sizes={'parameter': 5}
                            )
     stats['parameter'] = xr.DataArray(['slope', 'intercept',
