@@ -47,7 +47,12 @@ def xr_linregress(a, b, dim='time', convert_to_dataset=True, dtype=None):
     if dtype is None:
         if isinstance(b, xr.Dataset):
             dtype = b[list(b.data_vars)[0]].dtype
-            print('No `dytpe` chosen. Defaults to %s' %dtype)
+            print('No `dtype` chosen. Input is Dataset. Defaults to %s' % dtype)
+        elif isinstance(b, xr.DataArray):
+            dtype = b.dtype
+            print('No `dtype` chosen. Input is DataArray. \
+                    Defaults to %s' % dtype)
+
     stats = xr.apply_ufunc(_linregress_ufunc, a, b,
                            input_core_dims=[[dim], [dim]],
                            output_core_dims=[['parameter']],
