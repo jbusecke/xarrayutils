@@ -887,3 +887,35 @@ def concat_dim_da(data, name):
     return xr.DataArray(data, dims=[name],
                         coords={name: (name, data)},
                         name=name)
+
+
+def xr_detrend(b, dim='time', trend_params=None, convert_datetime=True):
+    """Removes linear trend along dimension `dim` from dataarray `b`. If no `trend_params` are passed (default), 
+    the linear trend is calculated using `xr_linregress`.
+    Parameters
+    ----------
+    b : {xr.DataArray, xr.Dataset}                                          
+        Data source to be detrended.
+    dim : str
+        Dimension along which to remove linear trend
+    trend_params: {xr.DataArray, xr.Dataset, None}
+        Precomputed output of xr_linregress. This can be usefull for large datasets where intermediate results are saved already.
+        Defaults to None, meaning the linear trend is computed within the function.
+    convert_datetime: bool
+        If true (default), the dimension `dim` is converted from a datetime to float.
+    """
+    if convert_datetime:
+        t_data = b[dim].astype(np.float64)
+    else:
+        t_data = b[dim]
+    
+    if trend_params is None:
+        out = xr_linregress(t_data,b)
+    else:
+        out = trend_params
+
+    # Create new time dataarray                                              
+    trend_full = t_data * out.slope + out.intercept
+    trend_full[dim].data = b[dim].data
+
+    return b-trend_full
