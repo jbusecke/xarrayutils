@@ -887,3 +887,40 @@ def concat_dim_da(data, name):
     return xr.DataArray(data, dims=[name],
                         coords={name: (name, data)},
                         name=name)
+
+
+
+def da_detrend(a, b, start_shift=0, timedim='time'):
+    """Detrends the dataarray b using slope from xr_linregress. start_shift 
+value is necessary to account for different time periods                    
+    e.g. when a forced run is coupled out at a certain point.               
+    Positive values indicate that the trend is starting earlier than the dat
+a, and vice versa for negative values.                                      
+    Time is converted from datetime to float so that unequally spaced timest
+eps can be handled (vs. using integer indexing)                             
+    Time dimension should have no chunks, i.e. v = v.chunk({'time': -1})    
+    a : {xr.DataArray}                                                      
+        Time variable for linear regression in datetime format              
+        before calling xr_linregress. This should be ok regardless of input 
+a.                                                                          
+                                                                            
+    b : {xr.DataArray, xr.Dataset}                                          
+        Dependent variable.                                                 
+    start_shift: datetime format                                            
+        Defines the difference between the start of the trend (where its 0 by definition) and the start of the detrended data                         
+    """
+
+    t_data = a.astype(np.float64)
+    t_trend = t_data+start_shift
+
+    out = xr_linregress(a.astype(np.float64),b)
+
+    # Create new time dataarray                                              
+    trend_time = xr.DataArray(t_trend, dims=[timedim], coords={timedim:(time\
+dim,t_data)})
+    trend_full = trend_time*out.slope + out.intercept
+
+    da_detrended = b.copy()
+    da_detrended.data = b.data-trend_full.data
+
+    return da_detrended
