@@ -889,39 +889,33 @@ def concat_dim_da(data, name):
                         name=name)
 
 
-
-def da_detrend(a, b, convert_datetime=True, xdim='time'):
-    """Detrends the dataarray b using slope from xr_linregress. start_shift 
-value is necessary to account for different time periods                    
-    e.g. when a forced run is coupled out at a certain point.               
-    Positive values indicate that the trend is starting earlier than the dat
-a, and vice versa for negative values.                                      
-    Time is converted from datetime to float so that unequally spaced timest
-eps can be handled (vs. using integer indexing)                             
-    Time dimension should have no chunks, i.e. v = v.chunk({'time': -1})    
-    a : {xr.DataArray}                                                      
-        Time variable for linear regression in datetime format              
-        before calling xr_linregress. This should be ok regardless of input 
-a.                                                                          
-                                                                            
+def xr_detrend(b, dim='time', trend_params=None, convert_datetime=True):
+    """Removes linear trend along dimension `dim` from dataarray `b`. If no `trend_params` are passed (default), 
+    the linear trend is calculated using `xr_linregress`.
+    Parameters
+    ----------
     b : {xr.DataArray, xr.Dataset}                                          
-        Dependent variable.                                                 
-    start_shift: datetime format                                            
-        Defines the difference between the start of the trend (where its 0 by definition) and the start of the detrended data                         
+        Data source to be detrended.
+    dim : str
+        Dimension along which to remove linear trend
+    trend_params: {xr.DataArray, xr.Dataset, None}
+        Precomputed output of xr_linregress. This can be usefull for large datasets where intermediate results are saved already.
+        Defaults to None, meaning the linear trend is computed within the function.
+    convert_datetime: bool
+        If true (default), the dimension `dim` is converted from a datetime to float.
     """
     if convert_datetime = True:
-        t_data = a.astype(np.float64)
+        t_data = b[dim].astype(np.float64)
     else:
-        t_data = a
-    t_trend = t_data
-
-    out = xr_linregress(t_data,b)
+        t_data = b[dim]
+    
+    if trend_params is None:
+        out = xr_linregress(t_data,b)
+    else:
+        out = trend_params
 
     # Create new time dataarray                                              
-    trend_time = xr.DataArray(t_trend, dims=[xdim], coords={xdim:(xdim,t_data)})
-    trend_full = trend_time*out.slope + out.intercept
-
-    da_detrended = b.copy()
-    da_detrended.data = b.data-trend_full.data
+    trend_full = t_data * out.slope + out.intercept
+    trend_full[dim].data = b[dim].data
 
     return da_detrended
