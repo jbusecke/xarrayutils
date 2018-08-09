@@ -904,7 +904,7 @@ def xr_detrend(b, dim='time', trend_params=None, convert_datetime=True):
     convert_datetime: bool
         If true (default), the dimension `dim` is converted from a datetime to float.
     """
-    if convert_datetime = True:
+    if convert_datetime:
         t_data = b[dim].astype(np.float64)
     else:
         t_data = b[dim]
