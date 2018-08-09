@@ -890,7 +890,7 @@ def concat_dim_da(data, name):
 
 
 
-def da_detrend(a, b, start_shift=0, timedim='time'):
+def da_detrend(a, b, convert_datetime=True, xdim='time'):
     """Detrends the dataarray b using slope from xr_linregress. start_shift 
 value is necessary to account for different time periods                    
     e.g. when a forced run is coupled out at a certain point.               
@@ -909,15 +909,16 @@ a.
     start_shift: datetime format                                            
         Defines the difference between the start of the trend (where its 0 by definition) and the start of the detrended data                         
     """
+    if convert_datetime = True:
+        t_data = a.astype(np.float64)
+    else:
+        t_data = a
+    t_trend = t_data
 
-    t_data = a.astype(np.float64)
-    t_trend = t_data+start_shift
-
-    out = xr_linregress(a.astype(np.float64),b)
+    out = xr_linregress(t_data,b)
 
     # Create new time dataarray                                              
-    trend_time = xr.DataArray(t_trend, dims=[timedim], coords={timedim:(time\
-dim,t_data)})
+    trend_time = xr.DataArray(t_trend, dims=[xdim], coords={xdim:(xdim,t_data)})
     trend_full = trend_time*out.slope + out.intercept
 
     da_detrended = b.copy()
