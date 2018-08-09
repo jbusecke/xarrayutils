@@ -2,12 +2,13 @@ import xarray as xr
 from xarrayutils.weighted_operations import weighted_mean
 from . utils import xr_detrend
 
+
 def calculate_ninox_index(ds_surf, area, timedim='time', xdim='xt_ocean',
                           ydim='yt_ocean', clim_period=None, detrend=False):
     """Calculates NINOx index following the methodology in
         https://climatedataguide.ucar.edu/climate-data/nino-sst-indices-nino-12-3-34-4-oni-and-tni?qt-climatedatasetmaintabs=1#qt-climatedatasetmaintabs
     If detrend is true, a linear trend is removed in step b, before computing the climatology
-	"""
+        """
 
     # (a) Compute area averaged total SST from Niño X region
     sst_mean = weighted_mean(ds_surf, area, dim=[xdim, ydim]).load()
@@ -26,8 +27,6 @@ def calculate_ninox_index(ds_surf, area, timedim='time', xdim='xt_ocean',
     # !!! generalize this for weeks, days if the data is of higher resolution?
     # for now it only works for monthly data
 
-    
-
     clim_time_spec = '%s.month' % timedim
     sst_clim = sst_clim.groupby(clim_time_spec).mean('time')
     sst_anomaly = sst_mean.groupby(clim_time_spec) - sst_clim
@@ -35,12 +34,14 @@ def calculate_ninox_index(ds_surf, area, timedim='time', xdim='xt_ocean',
     # (c) Smooth the anomalies with a 5-month running mean
     steps_in_month = 1
     sst_anomaly_smooth = \
-        sst_anomaly.rolling(**{timedim: 5 * steps_in_month, 'center': True}).construct('win').mean('win')
+        sst_anomaly.rolling(
+            **{timedim: 5 * steps_in_month, 'center': True}).construct('win').mean('win')
 
     # Normalize the smoothed values by its standard deviation over the
     # climatological period
     if clim_period:
-        clim_std = sst_anomaly_smooth.loc[{timedim: clim_period}].std([timedim])
+        clim_std = sst_anomaly_smooth.loc[{
+            timedim: clim_period}].std([timedim])
     else:
         clim_std = sst_anomaly_smooth.std(timedim)
 
@@ -66,7 +67,7 @@ def extract_climate_indicies(ds, timedim='time', depth_dim='st_ocean',
         'NINO3': {xdim: slice(-150, -90), ydim: slice(-5, 5)},
         'NINO3.4': {xdim: slice(-170, -120), ydim: slice(-5, 5)},
         'NINO4': {xdim: slice(-200, -150), ydim: slice(-5, 5)},
-                }
+    }
 
     # visualize the data to make sure that all indicies areas are covered
     if print_map:
@@ -84,8 +85,8 @@ def extract_climate_indicies(ds, timedim='time', depth_dim='st_ocean',
         for nb in NINO_boxes.keys():
             box_plot_dict(NINO_boxes[nb], xdim=xdim, ydim=ydim,
                           ax=ax, transform=ccrs.PlateCarree())
-        ax.set_global();
-        ax.coastlines();
+        ax.set_global()
+        ax.coastlines()
 
     # calulate indicies
     ds_indicies = xr.Dataset()
