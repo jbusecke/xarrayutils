@@ -918,4 +918,4 @@ def xr_detrend(b, dim='time', trend_params=None, convert_datetime=True):
     trend_full = t_data * out.slope + out.intercept
     trend_full[dim].data = b[dim].data
 
-    return da_detrended
+    return b-trend_full
