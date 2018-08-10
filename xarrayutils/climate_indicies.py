@@ -11,10 +11,10 @@ def calculate_ninox_index(ds_surf, area, timedim='time', xdim='xt_ocean',
     Note that dask arrays cannot be chunked along `timedim`. Use (ds_surf.chunk({timedim:-1}), before processing.
     Warning: This can significantly increase memory usage, and chunking along another dimension might be necessary.
         """
-    
+
     if detrend:
         sst_mean = xr_detrend(ds_surf, dim=timedim)
-    
+
     # (a) Compute area averaged total SST from Niño X region
     sst_mean = weighted_mean(ds_surf, area, dim=[xdim, ydim]).load()
 
