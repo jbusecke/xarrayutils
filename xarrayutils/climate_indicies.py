@@ -7,9 +7,14 @@ def calculate_ninox_index(ds_surf, area, timedim='time', xdim='xt_ocean',
                           ydim='yt_ocean', clim_period=None, detrend=False):
     """Calculates NINOx index following the methodology in
         https://climatedataguide.ucar.edu/climate-data/nino-sst-indices-nino-12-3-34-4-oni-and-tni?qt-climatedatasetmaintabs=1#qt-climatedatasetmaintabs
-    If detrend is true, a linear trend is removed in step b, before computing the climatology
+    If detrend is true, a linear trend is removed for each gridpoint seperately, before applying the processing.
+    Note that dask arrays cannot be chunked along `timedim`. Use (ds_surf.chunk({timedim:-1}), before processing.
+    Warning: This can significantly increase memory usage, and chunking along another dimension might be necessary.
         """
-
+    
+    if detrend:
+        sst_mean = xr_detrend(ds_surf, dim=timedim)
+    
     # (a) Compute area averaged total SST from Niño X region
     sst_mean = weighted_mean(ds_surf, area, dim=[xdim, ydim]).load()
 
@@ -17,8 +22,6 @@ def calculate_ninox_index(ds_surf, area, timedim='time', xdim='xt_ocean',
     # total SST from Niño X region,
     # and subtract climatology from area averaged total SST time series to
     # obtain anomalies;
-    if detrend:
-        sst_mean = detrend(sst_mean, dim=timedim)
 
     if clim_period:
         sst_clim = sst_mean.loc[{timedim: clim_period}]
