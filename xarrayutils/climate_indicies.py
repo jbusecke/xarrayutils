@@ -16,7 +16,7 @@ def calculate_ninox_index(ds_surf, area, timedim='time', xdim='xt_ocean',
         """
 
     if detrend:
-        sst_mean = xr_detrend(ds_surf, dim=timedim)
+        ds_surf = xr_detrend(ds_surf, dim=timedim)
 
     # (a) Compute area averaged total SST from Niño X region
     sst_mean = weighted_mean(ds_surf, area, dim=[xdim, ydim]).load()
