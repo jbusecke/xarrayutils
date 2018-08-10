@@ -59,12 +59,12 @@ def calculate_ninox_index(ds_surf, area, timedim='time', xdim='xt_ocean',
 
 def extract_climate_indicies(ds, timedim='time', depth_dim='st_ocean',
                              xdim='xt_ocean', ydim='yt_ocean', temp_var='temp',
-                             area_coord='area_t', print_map=False):
+                             area_coord='area_t', print_map=False, **kwargs):
     """Calculates various climate indicies from an xarray dataset.
 
-
-
-
+	kwargs are passed to the climate indicies processing functions.
+	Most notable right now would be the `detrend` option (disabled by default), 
+	which removes a linear trend from each gridbox before processing.
     """
     # !!! TODO, make this work with other lon conventions like -180-180 etc.
 
@@ -102,7 +102,7 @@ def extract_climate_indicies(ds, timedim='time', depth_dim='st_ocean',
         box = ds.sel(**NINO_boxes[nb])
         if depth_dim in ds.dims:
             box = box[{depth_dim: 0}]
-        ds_indicies[nb] = calculate_ninox_index(box[temp_var], box[area_coord])
+        ds_indicies[nb] = calculate_ninox_index(box[temp_var], box[area_coord], **kwargs)
 
     # Calculate additional ENSO inicies
     print('Calculating TNI index')
