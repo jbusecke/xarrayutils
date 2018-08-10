@@ -6,12 +6,12 @@ from . utils import xr_detrend
 def calculate_ninox_index(ds_surf, area, timedim='time', xdim='xt_ocean',
                           ydim='yt_ocean', clim_period=None, detrend=False):
     """Calculates NINOx index following the methodology in
-    https://climatedataguide.ucar.edu/climate-data/nino-sst-indices-nino-12-3-34-4-oni-and-tni    
-    If detrend is true, a linear trend is removed for each gridpoint seperately, 
+    `climatedataguide.ucar.edu/climate-data/nino-sst-indices-nino-12-3-34-4-oni-and-tni`    
+    If detrend is true, a linear trend is removed for each gridpoint seperately,
     before applying the processing.
-    Note that dask arrays cannot be chunked along `timedim`. 
+    Note that dask arrays cannot be chunked along `timedim`.
     Use (ds_surf.chunk({timedim:-1}), before processing.
-    Warning: This can significantly increase memory usage, 
+    Warning: This can significantly increase memory usage,
     and chunking along another dimension might be necessary.
         """
 
