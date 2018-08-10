@@ -6,10 +6,13 @@ from . utils import xr_detrend
 def calculate_ninox_index(ds_surf, area, timedim='time', xdim='xt_ocean',
                           ydim='yt_ocean', clim_period=None, detrend=False):
     """Calculates NINOx index following the methodology in
-        https://climatedataguide.ucar.edu/climate-data/nino-sst-indices-nino-12-3-34-4-oni-and-tni?qt-climatedatasetmaintabs=1#qt-climatedatasetmaintabs
-    If detrend is true, a linear trend is removed for each gridpoint seperately, before applying the processing.
-    Note that dask arrays cannot be chunked along `timedim`. Use (ds_surf.chunk({timedim:-1}), before processing.
-    Warning: This can significantly increase memory usage, and chunking along another dimension might be necessary.
+    https://climatedataguide.ucar.edu/climate-data/nino-sst-indices-nino-12-3-34-4-oni-and-tni    
+    If detrend is true, a linear trend is removed for each gridpoint seperately, 
+    before applying the processing.
+    Note that dask arrays cannot be chunked along `timedim`. 
+    Use (ds_surf.chunk({timedim:-1}), before processing.
+    Warning: This can significantly increase memory usage, 
+    and chunking along another dimension might be necessary.
         """
 
     if detrend:
@@ -38,7 +41,8 @@ def calculate_ninox_index(ds_surf, area, timedim='time', xdim='xt_ocean',
     steps_in_month = 1
     sst_anomaly_smooth = \
         sst_anomaly.rolling(
-            **{timedim: 5 * steps_in_month, 'center': True}).construct('win').mean('win')
+            **{timedim: 5 * steps_in_month,
+               'center': True}).construct('win').mean('win')
 
     # Normalize the smoothed values by its standard deviation over the
     # climatological period
