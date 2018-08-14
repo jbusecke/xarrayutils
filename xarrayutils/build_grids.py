@@ -3,6 +3,7 @@ import xgcm
 import xarray as xr
 import dask.array as da
 import numpy as np
+# import warnings
 
 from . utils import aggregate
 
@@ -263,74 +264,75 @@ def grid_aggregate(grid, axis_bins):
     out = rebuild_grid(out)
     return out
 
-def raw_diff(grid,x,dim,method='pad',wrap_ref=360.0,shift_grid=False):
-
-    if method == 'pad':
-        #shift automatically pads the 'shifted around' values with nan
-        x2 = x.shift(**{dim:-1}).copy()
-        x1 = x.shift(**{dim:0}).copy()
-    elif method in ['roll','wrap']:
-        x2 = x.roll(**{dim:-1}).copy()
-        x1 = x.roll(**{dim:0}).copy()
-    else:
-        raise RuntimeError("'method' not recognized")
-
-    if method == 'wrap':
-        warnings.warn("WARNING: option 'wrap' loads the dask array into
-memory")
-        x2.load()
-        x2[{dim:-1}] = x2[{dim:-1}]+wrap_ref
-        # This is highly problematic when swap_dims is activated in
-         xmitgcm/open_mdsdataset
-        # Because one cannot replace index variables!
-
-    diff_raw = x2.data-x1.data
-
-    # Do i need the grid input here? Not really since
-    # I am keeping the dims and coords the same
-
-    # c = dict([])
-    # for ii in x.coords.keys():
-    #         c[ii] = grid[ii]
-
-    # So lets try this...
-    c = dict([])
-    for ii in x.coords.keys():
-            c[ii] = x.coords[ii]
-
-    diff = xr.DataArray(diff_raw,coords=x.coords,dims=x.dims)
-    # This purposely does not switch the dims from grid to center at this
-    #   point,
-    # That needs to be set in the calling routine.
-    # if the method is not wrap and it makes sense the border has to be set
-    # to nan...
-
-    return diff
-
-def inferGfromC(grid,x,dim,method='wrap',namesuffix='G',dimsuffix='_g'):
-    dx = raw_diff(grid,x,dim,method=method)
-    x_out = x-(dx/2)
-    out = reassign_grid(grid,x_out,dim,dim+dimsuffix)
-
-    # this could probably be accomplished with the interpolation once done
-    return out
-# Test: Convert the actual XC into XG and check if they match
-# test =  inferGfromC(grid_diag,ds_diag.YC,'j',method='roll')
-# np.all(np.all(np.isclose(test.data,ds_diag.YG.data),axis=1)[0:-1]
-
-def reassign_grid(grid,x,old,new,debug=False):
-    dims = list(x.dims)
-    dims[dims.index(old)] = new
-    if new in list(grid.dims):
-        rename_switch = False
-    else:
-        rename_switch = True
-
-    coords = dict([])
-    for ii in dims:
-        if ii == new and rename_switch:
-            coords[ii] = grid[old].rename({old:new})
-        else:
-            coords[ii] = grid[ii]
-
-    return xr.DataArray(x.data,coords=coords,dims=dims)
+# def raw_diff(grid,x,dim,method='pad',wrap_ref=360.0,shift_grid=False):
+#
+#     if method == 'pad':
+#         #shift automatically pads the 'shifted around' values with nan
+#         x2 = x.shift(**{dim:-1}).copy()
+#         x1 = x.shift(**{dim:0}).copy()
+#     elif method in ['roll','wrap']:
+#         x2 = x.roll(**{dim:-1}).copy()
+#         x1 = x.roll(**{dim:0}).copy()
+#     else:
+#         raise RuntimeError("'method' not recognized")
+#
+#     if method == 'wrap':
+#         warnings.warn("WARNING: option 'wrap' loads the dask array into memory")
+#         x2.load()
+#         x2[{dim: -1}] = x2[{dim: -1}]+wrap_ref
+#         # This is highly problematic when swap_dims is activated in
+#         # xmitgcm/open_mdsdataset
+#         # Because one cannot replace index variables!
+#
+#     diff_raw = x2.data-x1.data
+#
+#     # Do i need the grid input here? Not really since
+#     # I am keeping the dims and coords the same
+#
+#     # c = dict([])
+#     # for ii in x.coords.keys():
+#     #         c[ii] = grid[ii]
+#
+#     # So lets try this...
+#     c = dict([])
+#     for ii in x.coords.keys():
+#             c[ii] = x.coords[ii]
+#
+#     diff = xr.DataArray(diff_raw, coords=x.coords, dims=x.dims)
+#     # This purposely does not switch the dims from grid to center at this
+#     #   point,
+#     # That needs to be set in the calling routine.
+#     # if the method is not wrap and it makes sense the border has to be set
+#     # to nan...
+#
+#     return diff
+#
+#
+# def inferGfromC(grid, x, dim, method='wrap', amesuffix='G', dimsuffix='_g'):
+#     dx = raw_diff(grid, x, dim, method=method)
+#     x_out = x-(dx/2)
+#     out = reassign_grid(grid, x_out, dim, dim+dimsuffix)
+#
+#     # this could probably be accomplished with the interpolation once done
+#     return out
+# # Test: Convert the actual XC into XG and check if they match
+# # test =  inferGfromC(grid_diag,ds_diag.YC,'j',method='roll')
+# # np.all(np.all(np.isclose(test.data,ds_diag.YG.data),axis=1)[0:-1]
+#
+#
+# def reassign_grid(grid, x, old, new, debug=False):
+#     dims = list(x.dims)
+#     dims[dims.index(old)] = new
+#     if new in list(grid.dims):
+#         rename_switch = False
+#     else:
+#         rename_switch = True
+#
+#     coords = dict([])
+#     for ii in dims:
+#         if ii == new and rename_switch:
+#             coords[ii] = grid[old].rename({old: new})
+#         else:
+#             coords[ii] = grid[ii]
+#
+#     return xr.DataArray(x.data, coords=coords, dims=dims)
