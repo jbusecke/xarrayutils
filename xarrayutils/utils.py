@@ -359,10 +359,10 @@ def extractBox_dict(ds, box, concat_wrap=True):
         concat_wrap = concat_wrap_dict
 
     ds = ds.copy()
-    for dim in box.keys():
-        ind = box[dim].data
+    for dim, ind in box.items():
         wrap = concat_wrap[dim]
-        if np.diff(ind) < 0:  # box is defined over a discontinuity
+        if np.diff(ind) < 0: # This would trigger a python 2 error
+        # if (ind[1] - ind[0]) < 0: # box is defined over a discontinuity
             dim_data = ds[dim].data
             split_a = dim_data[dim_data > ind[0]].max()
             split_b = dim_data[dim_data < ind[1]].min()
@@ -890,11 +890,11 @@ def concat_dim_da(data, name):
 
 
 def xr_detrend(b, dim='time', trend_params=None, convert_datetime=True):
-    """Removes linear trend along dimension `dim` from dataarray `b`. If no `trend_params` are passed (default), 
+    """Removes linear trend along dimension `dim` from dataarray `b`. If no `trend_params` are passed (default),
     the linear trend is calculated using `xr_linregress`.
     Parameters
     ----------
-    b : {xr.DataArray, xr.Dataset}                                          
+    b : {xr.DataArray, xr.Dataset}
         Data source to be detrended.
     dim : str
         Dimension along which to remove linear trend
@@ -908,13 +908,13 @@ def xr_detrend(b, dim='time', trend_params=None, convert_datetime=True):
         t_data = b[dim].astype(np.float64)
     else:
         t_data = b[dim]
-    
+
     if trend_params is None:
         out = xr_linregress(t_data,b)
     else:
         out = trend_params
 
-    # Create new time dataarray                                              
+    # Create new time dataarray
     trend_full = t_data * out.slope + out.intercept
     trend_full[dim].data = b[dim].data
 
