@@ -6,7 +6,8 @@ from scipy import stats
 # import os
 
 from xarrayutils.utils import aggregate, aggregate_w_nanmean, extractBox_dict,\
-    linear_trend, _lin_trend_legacy, _linregress_ufunc, xr_linregress, xr_detrend
+    linear_trend, _lin_trend_legacy, _linregress_ufunc, \
+    xr_linregress, xr_detrend
 
 from numpy.testing import assert_allclose
 
