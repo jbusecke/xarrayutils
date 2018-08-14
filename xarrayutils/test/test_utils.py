@@ -174,11 +174,10 @@ def test_linear_trend():
                           ({'x': np.array([2.5, 0.5]),
                             'y':np.array([3.5, 1])},
                            {'x': True, 'y': False},
-                          np.array([[30, 60, 150],
-                                    [0, 0, 0]]))
+                           np.array([[30, 60, 150],
+                                     [0, 0, 0]]))
                           ]
                          )
-
 def test_extractBox_dict(box, concat_wrap, result):
     x = xr.DataArray(np.array([0, 1, 2, 3]),
                      dims=['x'],
@@ -286,22 +285,23 @@ def test_aggregate_w_nanmean(dataarray_2d_ones, dataarray_2d_ones_nan):
         weights = dataarray_2d_ones_nan
         a = aggregate_w_nanmean(data, weights, blocks)
 
+
 def test_detrend():
     # based on test_linear_trend
-    # TODO implement a test for nans 
+    # TODO implement a test for nans
     data = dsa.from_array(np.random.random([10, 2, 2]), chunks=(10, 1, 1))
     t = range(10)
     x = range(2)
     y = range(2)
     data_da = xr.DataArray(data, dims=['time',  'x',  'y'],
                            coords={
-                                   'time': ('time', t),
-                                   'x': ('x', x),
-                                   'y': ('y', y)
-                                    })
+        'time': ('time', t),
+        'x': ('x', x),
+        'y': ('y', y)
+    })
 
     detrended_da = xr_detrend(data_da)
-    
+
     for xi in x:
         for yi in y:
             x_fit = t
@@ -316,13 +316,13 @@ def test_detrend():
     data = dsa.from_array(np.random.random([2, 10, 2]), chunks=(1, 10, 1))
     data_da = xr.DataArray(data, dims=['x', 'time',  'y'],
                            coords={
-                                   'x': ('x', x),
-                                   'time': ('time', t),
-                                   'y': ('y', y)
-                                    })
+        'x': ('x', x),
+        'time': ('time', t),
+        'y': ('y', y)
+    })
 
     detrended_da = xr_detrend(data_da)
-    
+
     for xi in x:
         for yi in y:
             x_fit = t
