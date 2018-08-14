@@ -14,13 +14,16 @@ from astropy.convolution import (convolve_fft, Gaussian1DKernel)
 """
 Collection of several useful routines for xarray
 """
+
+
 # needs testing
-def filter_1D(data, std, dim='time'):
+def filter_1D(data, std, dim='time', dtype=None):
+    if dtype is None:
+        dtype = set_dtype(data)
+
     kernel = Gaussian1DKernel(std)
 
     def smooth_raw(data):
-        # works on xarray data
-
         raw_data = getattr(data, 'values', data)
         result = convolve_fft(raw_data, kernel, boundary='wrap')
         result[np.isnan(raw_data)] = np.nan
@@ -31,9 +34,9 @@ def filter_1D(data, std, dim='time'):
         return xr.apply_ufunc(smooth_raw, data,
                               vectorize=True,
                               dask='parallelized',
-                              input_core_dims = [dims],
-                              output_core_dims = [dims],
-                              output_dtypes=[data.dtype])
+                              input_core_dims=[dims],
+                              output_core_dims=[dims],
+                              output_dtypes=[dtype])
     return temporal_smoother(data)
 
 
@@ -41,6 +44,16 @@ def _linregress_ufunc(a, b):
     '''ufunc to wrap scipy.stats.linregress for xr_linregress'''
     slope, intercept, r_value, p_value, std_err = stats.linregress(a, b)
     return np.array([slope, intercept, r_value, p_value, std_err])
+
+
+def set_dtype(aa):
+    if isinstance(aa, xr.Dataset):
+        dtype = aa[list(aa.data_vars)[0]].dtype
+        print('No `dtype` chosen. Input is Dataset. \
+        Defaults to %s' % dtype)
+    elif isinstance(aa, xr.DataArray):
+        dtype = aa.dtype
+    return dtype
 
 
 def xr_linregress(a, b, dim='time', convert_to_dataset=True, dtype=None):
@@ -71,12 +84,7 @@ def xr_linregress(a, b, dim='time', convert_to_dataset=True, dtype=None):
     """
 
     if dtype is None:
-        if isinstance(b, xr.Dataset):
-            dtype = b[list(b.data_vars)[0]].dtype
-            print('No `dtype` chosen. Input is Dataset. \
-            Defaults to %s' % dtype)
-        elif isinstance(b, xr.DataArray):
-            dtype = b.dtype
+        dtype = set_dtype(b)
 
     stats = xr.apply_ufunc(_linregress_ufunc, a, b,
                            input_core_dims=[[dim], [dim]],
