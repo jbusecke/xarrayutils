@@ -8,6 +8,7 @@ dependencies:
   - future
   - scipy
   - flake8
+  - astropy
   - pip:
     - codecov
     - pytest-cov
