@@ -361,8 +361,8 @@ def extractBox_dict(ds, box, concat_wrap=True):
     ds = ds.copy()
     for dim, ind in box.items():
         wrap = concat_wrap[dim]
-        if np.diff(ind) < 0: # This would trigger a python 2 error
-        # if (ind[1] - ind[0]) < 0: # box is defined over a discontinuity
+        if np.diff(ind) < 0:  # This would trigger a python 2 error
+            # if (ind[1] - ind[0]) < 0: # box is defined over a discontinuity
             dim_data = ds[dim].data
             split_a = dim_data[dim_data > ind[0]].max()
             split_b = dim_data[dim_data < ind[1]].min()
