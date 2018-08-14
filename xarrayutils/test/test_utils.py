@@ -326,7 +326,7 @@ def test_detrend():
 
     for xi in x:
         for yi in y:
-            x_fit = t
+            x_fit = np.array(t)
             y_fit = data[xi, :, yi]
             fit = np.array(stats.linregress(x_fit, y_fit))
             detrended = y_fit - (fit[1]+fit[0]*x_fit)
