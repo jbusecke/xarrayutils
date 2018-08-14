@@ -6,7 +6,8 @@ from scipy import stats
 # import os
 
 from xarrayutils.utils import aggregate, aggregate_w_nanmean, extractBox_dict,\
-    linear_trend, _lin_trend_legacy, _linregress_ufunc, xr_linregress
+    linear_trend, _lin_trend_legacy, _linregress_ufunc, \
+    xr_linregress, xr_detrend
 
 from numpy.testing import assert_allclose
 
@@ -174,8 +175,8 @@ def test_linear_trend():
                           ({'x': np.array([2.5, 0.5]),
                             'y':np.array([3.5, 1])},
                            {'x': True, 'y': False},
-                          np.array([[30, 60, 150],
-                                    [0, 0, 0]]))
+                           np.array([[30, 60, 150],
+                                     [0, 0, 0]]))
                           ]
                          )
 def test_extractBox_dict(box, concat_wrap, result):
@@ -284,3 +285,50 @@ def test_aggregate_w_nanmean(dataarray_2d_ones, dataarray_2d_ones_nan):
         data = dataarray_2d_ones
         weights = dataarray_2d_ones_nan
         a = aggregate_w_nanmean(data, weights, blocks)
+
+
+def test_detrend():
+    # based on test_linear_trend
+    # TODO implement a test for nans
+    data = dsa.from_array(np.random.random([10, 2, 2]), chunks=(10, 1, 1))
+    t = range(10)
+    x = range(2)
+    y = range(2)
+    data_da = xr.DataArray(data, dims=['time',  'x',  'y'],
+                           coords={
+        'time': ('time', t),
+        'x': ('x', x),
+        'y': ('y', y)
+    })
+
+    detrended_da = xr_detrend(data_da)
+
+    for xi in x:
+        for yi in y:
+            x_fit = np.array(t)
+            y_fit = data[:, xi, yi]
+            fit = np.array(stats.linregress(x_fit, y_fit))
+            detrended = y_fit - (fit[1]+fit[0]*x_fit)
+            test = detrended_da.sel(x=xi, y=yi).data
+            assert np.allclose(detrended, test)
+
+    # Test with other timedim (previously was not caught)
+    # could test with timedim named other than 'time'
+    data = dsa.from_array(np.random.random([2, 10, 2]), chunks=(1, 10, 1))
+    data_da = xr.DataArray(data, dims=['x', 'time',  'y'],
+                           coords={
+        'x': ('x', x),
+        'time': ('time', t),
+        'y': ('y', y)
+    })
+
+    detrended_da = xr_detrend(data_da)
+
+    for xi in x:
+        for yi in y:
+            x_fit = np.array(t)
+            y_fit = data[xi, :, yi]
+            fit = np.array(stats.linregress(x_fit, y_fit))
+            detrended = y_fit - (fit[1]+fit[0]*x_fit)
+            test = detrended_da.sel(x=xi, y=yi).data
+            assert np.allclose(detrended, test)
