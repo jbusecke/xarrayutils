@@ -7,12 +7,23 @@ from scipy import stats
 
 from xarrayutils.utils import aggregate, aggregate_w_nanmean, extractBox_dict,\
     linear_trend, _lin_trend_legacy, _linregress_ufunc, \
-    xr_linregress, xr_detrend
+    xr_linregress, xr_detrend, lag_and_combine
 
 from numpy.testing import assert_allclose
 
 from . datasets import dataarray_2d_example,\
     dataarray_2d_ones, dataarray_2d_ones_nan
+
+
+def test_lag_and_combine():
+    x = np.arange(5)
+    y = np.arange(5)*3
+    y_lagged = np.hstack((y[1:], [np.nan]))
+    da = xr.DataArray(y, coords=[x], dims=['x'])
+    da_lagged = lag_and_combine(da, lags=[-1], dim='x')
+    da_lagged_test = xr.DataArray(y_lagged, coords=[x], dims=['x'])
+    assert_allclose(da_lagged.squeeze().data, da_lagged_test.data)
+
 
 @pytest.mark.parametrize("box, concat_wrap, result",
                         [
