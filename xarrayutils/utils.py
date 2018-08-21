@@ -45,8 +45,9 @@ def _linregress_ufunc(a, b):
        and to handle nans, but I wonder if there is a faster way to 
        do this '''
     mask = ~np.isnan(a) & ~np.isnan(b)
-    if sum(mask[mask==True])>1:
-        slope, intercept, r_value, p_value, std_err = stats.linregress(a[mask], b[mask])
+    if sum(mask[mask == True]) > 1:
+        slope, intercept, r_value, p_value, std_err = stats.linregress(
+            a[mask], b[mask])
         return np.array([slope, intercept, r_value, p_value, std_err])
     else:
         return np.empty(5)
@@ -88,7 +89,7 @@ def xr_linregress(a, b, dim='time', convert_to_dataset=True, dtype=None):
         scipy.stats.linregress for each data_variable in `b`.
 
     """
-    
+
     if dtype is None:
         dtype = set_dtype(b)
 
