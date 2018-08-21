@@ -41,9 +41,15 @@ def filter_1D(data, std, dim='time', dtype=None):
 
 
 def _linregress_ufunc(a, b):
-    '''ufunc to wrap scipy.stats.linregress for xr_linregress'''
-    slope, intercept, r_value, p_value, std_err = stats.linregress(a, b)
-    return np.array([slope, intercept, r_value, p_value, std_err])
+    '''ufunc to wrap scipy.stats.linregress for xr_linregress
+       and to handle nans, but I wonder if there is a faster way to 
+       do this '''
+    mask = ~np.isnan(a) & ~np.isnan(b)
+    if sum(mask[mask==True])>1:
+        slope, intercept, r_value, p_value, std_err = stats.linregress(a[mask], b[mask])
+        return np.array([slope, intercept, r_value, p_value, std_err])
+    else:
+        return np.empty(5)
 
 
 def set_dtype(aa):
@@ -61,7 +67,7 @@ def xr_linregress(a, b, dim='time', convert_to_dataset=True, dtype=None):
 
     Parameters
     ----------
-    a : {xr.DataArray}
+    a : {xr.DataArray} (does it have to be tho? my 'a' is vector)
         Independent variable for linear regression. E.g. time.
     b : {xr.DataArray, xr.Dataset}
         Dependent variable.
@@ -82,7 +88,7 @@ def xr_linregress(a, b, dim='time', convert_to_dataset=True, dtype=None):
         scipy.stats.linregress for each data_variable in `b`.
 
     """
-
+    
     if dtype is None:
         dtype = set_dtype(b)
 
