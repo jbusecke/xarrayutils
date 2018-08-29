@@ -33,7 +33,7 @@ def plot_line_shaded_std(x, y, std_y, horizontal=True,
                          line_kwargs=dict(),
                          fill_kwargs=dict()):
     """Plot wrapper to draw line for y and shaded patch according to std_y.
-    The shading represents one std on each side of the line..
+    The shading represents one std on each side of the line...
 
     Parameters
     ----------
@@ -52,6 +52,11 @@ def plot_line_shaded_std(x, y, std_y, horizontal=True,
         optional parameters for line plot.
     fill_kwargs : dict
         optional parameters for std fill plot.
+
+    Returns
+    -------
+    ?
+        handle to line plot.
 
     """
 
@@ -79,6 +84,7 @@ def plot_line_shaded_std(x, y, std_y, horizontal=True,
         ax.fill_between(x, y-std_y, y+std_y, **fill_defaults)
     else:
         ax.fill_betweenx(x, y-std_y, y+std_y, **fill_defaults)
+    return p
 
 
 def box_plot(box, ax=None, split_detection='True', **kwargs):
