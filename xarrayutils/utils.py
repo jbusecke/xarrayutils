@@ -14,8 +14,6 @@ from astropy.convolution import (convolve_fft, Gaussian1DKernel)
 """
 Collection of several useful routines for xarray
 """
-
-
 # needs testing
 def filter_1D(data, std, dim='time', dtype=None):
     if dtype is None:
@@ -38,6 +36,8 @@ def filter_1D(data, std, dim='time', dtype=None):
                               output_core_dims=[dims],
                               output_dtypes=[dtype])
     return temporal_smoother(data)
+
+# TODO spatial filter
 
 
 def _linregress_ufunc(a, b):
