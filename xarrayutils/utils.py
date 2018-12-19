@@ -46,8 +46,9 @@ def _linregress_ufunc(a, b, nanmask=False):
         idxa = np.isnan(a)
         idxb = np.isnan(b)
         mask = np.logical_and(~idxa, ~idxb)
-        a = a[mask]
-        b = b[mask]
+        if sum(~mask) < len(b):  # only applies the mask if not all nan
+            a = a[mask]
+            b = b[mask]
     slope, intercept, r_value, p_value, std_err = stats.linregress(a, b)
     return np.array([slope, intercept, r_value, p_value, std_err])
 

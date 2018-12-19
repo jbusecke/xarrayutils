@@ -122,6 +122,9 @@ def test_linregress_ufunc():
     fit = np.array(stats.linregress(x[1:], y[1:]))
     assert np.isnan(_linregress_ufunc(x, y)).all()
     assert np.allclose(fit, _linregress_ufunc(x, y, nanmask=True))
+    # test with all nansum
+    y[:] = np.nan
+    assert np.isnan(_linregress_ufunc(x, y, nanmask=True)).all()
 
 # TODO: Needs a high level test for xr_linregress
 
