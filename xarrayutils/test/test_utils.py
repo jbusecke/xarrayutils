@@ -117,8 +117,13 @@ def test_linregress_ufunc():
     x = np.arange(len(y))
     fit = np.array(stats.linregress(x, y))
     assert np.allclose(fit, _linregress_ufunc(x, y))
+    # test with nans
+    y[0] = np.nan
+    fit = np.array(stats.linregress(x[1:], y[1:]))
+    assert np.isnan(_linregress_ufunc(x, y)).all()
+    assert np.allclose(fit, _linregress_ufunc(x, y, nanmask=True))
 
-
+# TODO: Needs a high level test for xr_linregress
 
 def test_linear_trend():
     #TODO implement a test for nans

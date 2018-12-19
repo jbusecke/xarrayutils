@@ -40,8 +40,14 @@ def filter_1D(data, std, dim='time', dtype=None):
 # TODO spatial filter
 
 
-def _linregress_ufunc(a, b):
+def _linregress_ufunc(a, b, nanmask=False):
     '''ufunc to wrap scipy.stats.linregress for xr_linregress'''
+    if nanmask:
+        idxa = np.isnan(a)
+        idxb = np.isnan(b)
+        mask = np.logical_and(~idxa, ~idxb)
+        a = a[mask]
+        b = b[mask]
     slope, intercept, r_value, p_value, std_err = stats.linregress(a, b)
     return np.array([slope, intercept, r_value, p_value, std_err])
 
@@ -56,7 +62,8 @@ def set_dtype(aa):
     return dtype
 
 
-def xr_linregress(a, b, dim='time', convert_to_dataset=True, dtype=None):
+def xr_linregress(a, b, dim='time', convert_to_dataset=True,
+                  dtype=None, nanmask=False):
     """Applies scipy.stats.linregress over two xr.DataArrays or xr.Datasets.
 
     Parameters
@@ -74,6 +81,9 @@ def xr_linregress(a, b, dim='time', convert_to_dataset=True, dtype=None):
     dtype : dtype
          Dtype for the output. If None, defaults to dtype of `b`, or `b`s
          first data variable(the default is None).
+    nanmask: bool
+        optional masking of nans in the data to avoid nan output from
+        regression (the default is False)
 
     Returns
     -------
@@ -86,8 +96,8 @@ def xr_linregress(a, b, dim='time', convert_to_dataset=True, dtype=None):
     if dtype is None:
         dtype = set_dtype(b)
 
-    stats = xr.apply_ufunc(_linregress_ufunc, a, b,
-                           input_core_dims=[[dim], [dim]],
+    stats = xr.apply_ufunc(_linregress_ufunc, a, b, nanmask,
+                           input_core_dims=[[dim], [dim], []],
                            output_core_dims=[['parameter']],
                            vectorize=True,
                            dask='parallelized',
