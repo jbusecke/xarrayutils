@@ -39,6 +39,21 @@ def filter_1D(data, std, dim='time', dtype=None):
 
 # TODO spatial filter
 
+# Needs testing
+def shift_lon(ds, londim, shift=360, crit=0, smaller=True, sort=True):
+    ds = ds.copy()
+    lon = ds[londim].data
+
+    if smaller:
+        lon[lon < crit] = lon[lon < crit] + shift
+    else:
+        lon[lon > crit] = lon[lon > crit] + shift
+
+    ds[londim].data = lon
+    if sort:
+        ds = ds.sortby(londim)
+    return ds
+
 
 def _linregress_ufunc(a, b, nanmask=False):
     '''ufunc to wrap scipy.stats.linregress for xr_linregress'''

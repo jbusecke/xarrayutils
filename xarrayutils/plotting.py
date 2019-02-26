@@ -2,6 +2,126 @@ import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
 import gsw
+from matplotlib.transforms import blended_transform_factory
+import string
+import cartopy
+
+
+def xr_violinplot(ds, ax=None, x_dim='xt_ocean', width=1, color='0.5'):
+    """Wrapper of matplotlib violinplot for xarray.DataArray.
+
+    Parameters
+    ----------
+    ds : xr.DataArray
+        Input data.
+    ax : matplotlib.axis
+        Plotting axis (the default is None).
+    x_dim : str
+        dimension that defines the x-axis of the
+        plot (the default is 'xt_ocean').
+    width : float
+        Scaling width of each violin (the default is 1).
+    color : type
+        Color of the violin (the default is '0.5').
+
+    Returns
+    -------
+    type
+        Description of returned object.
+
+    """
+    x = ds[x_dim].data.copy()
+    y = [ds.loc[{x_dim: xx}].data for xx in x]
+    y = [data[~np.isnan(data)] for data in y]
+    # check if all are nan
+    idx = [len(dat) == 0 for dat in y]
+    x = [xx for xx, ii in zip(x, idx) if not ii]
+    y = [yy for yy, ii in zip(y, idx) if not ii]
+
+    if ax is None:
+        ax = plt.gca()
+    vp = ax.violinplot(y, x, widths=width, showextrema=False,
+                       showmedians=False, showmeans=True)
+    [item.set_facecolor(color) for item in vp['bodies']]
+
+    for item in ['cmaxes', 'cmins', 'cbars', 'cmedians', 'cmeans']:
+        if item in vp.keys():
+            vp[item].set_edgecolor(color)
+
+    return vp
+
+
+def axis_arrow(ax, x_loc, text):
+    """Puts an arrow pointing at `x_loc` onto (but outside of ) the xaxis of
+    a plot.For now only works on xaxis and on the top. Modify when necessary
+
+    Parameters
+    ----------
+    ax : matplotlib.axis
+        axis to plot on.
+    x_loc : type
+        Position of the arrow (in units of `ax` x-axis).
+    text : str
+        Text next to arrow.
+
+
+    """
+    tform = blended_transform_factory(ax.transData, ax.transAxes)
+    ax.annotate(text, xy=[x_loc, 1], xytext=(x_loc, 1.25),
+                xycoords=tform, textcoords=tform,
+                ha='center', va='center',
+                arrowprops=dict(fc='k', lw=1.5, ec=None))
+
+
+def letter_subplots(axes, start_idx=0, box_color=None, **kwargs):
+    """Adds panel letters in boxes to each element of `axes` in the
+    upper left corner.
+
+    Parameters
+    ----------
+    axes : list, array_like
+        List or array of matplotlib axes objects.
+    start_idx : type
+        Starting index in the alphabet (e.g. 0 is 'a').
+    box_color : type
+        Color of the box behind each letter (the default is None).
+    **kwargs : type
+        kwargs passed to matplotlib.axis.text
+
+    """
+
+    for ax, letter in zip(axes.flat, list(string.ascii_lowercase)[start_idx:]):
+        t = ax.text(0.1, 0.85, letter+')', horizontalalignment='center',
+                    verticalalignment='center', transform=ax.transAxes,
+                    **kwargs)
+        if box_color:
+            t.set_bbox(dict(facecolor=box_color, alpha=0.5, edgecolor=None))
+
+
+def map_util_plot(ax, land_color='0.7', coast_color='0.3',
+                  lake_alpha=0.5, labels=False):
+    """Helper tool to add good default map to cartopy axes.
+
+    Parameters
+    ----------
+    ax : cartopy.geoaxes (not sure this is right)
+        The axis to plot on (must be a cartopy axis).
+    land_color : type
+        Color of land fill (the default is '0.7').
+    coast_color : type
+        Color of costline (the default is '0.3').
+    lake_alpha : type
+        Transparency of lakes (the default is 0.5).
+    labels : type
+        Not implemented.
+
+    """
+    # I could default to plt.gca() for ax, but does it work when I just pass
+    # the axis object as positonal argument?
+    ax.add_feature(cartopy.feature.LAND, color=land_color)
+    ax.add_feature(cartopy.feature.COASTLINE, edgecolor=coast_color)
+    ax.add_feature(cartopy.feature.LAKES, alpha=lake_alpha)
+    # add option for gridlines and labelling
 
 
 def center_lim(ax, which='y'):
