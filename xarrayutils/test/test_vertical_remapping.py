@@ -23,7 +23,7 @@ def test_groupby_vert(bins):
     da_group.name = "density"  # needed for groupby_bins
 
     truth = da.groupby_bins(da_group, bins).sum()
-    new = _groupby_vert(da.data, da_group.data, bins, np.nansum)
+    new = _groupby_vert(da.data, da_group.data, bins)
 
     np.testing.assert_allclose(new, truth.data)
 
@@ -62,8 +62,8 @@ def test_xr_1d_groupby(bins):
     sample = dict(x=1, y=0, time=1)  # randomize
 
     check = da.isel(**sample).groupby_bins(da_group.isel(**sample), bins).sum()
-    test = xr_1d_groupby(da, da_group, bins, "depth", np.nansum).isel(**sample)
+    test = xr_1d_groupby(da, da_group, bins, "depth").isel(**sample)
 
     np.testing.assert_allclose(check.data, test.data)
     with pytest.raises(ValueError):
-        xr_1d_groupby(da, da_group_unnamed, bins, "depth", np.nansum)
+        xr_1d_groupby(da, da_group_unnamed, bins, "depth")

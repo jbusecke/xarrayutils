@@ -8,7 +8,7 @@ import xarray as xr
 # Does not handle decreasing values, this is probably related to the above
 
 
-def _groupby_vert(data, group_data, bins, func):
+def _groupby_vert(data, group_data, bins):
     # Replicates the behaviour of xarrays `groupby_bins` along one dimension
     # with numpy
     axis = -1  # xr.apply_ufunc transposes core dims to the end
@@ -21,7 +21,10 @@ def _groupby_vert(data, group_data, bins, func):
         data_masked = data.copy()
         data_masked[~mask] = np.nan
         nanmask = np.all(~mask, axis=axis)
-        layer = func(data_masked, axis=axis)
+        # There were some problems with passing the function as func=...
+        # kwarg. So for now I will hardcode the solution
+        # layer = func(data_masked, axis=axis)
+        layer = np.nansum(data_masked, axis=axis)
         # there might be an exeption when this is run on a 1d vector...
         # but for now this works...
         # I formerly did this with ma.masked_array,
@@ -36,7 +39,7 @@ def _groupby_vert(data, group_data, bins, func):
     return np.stack(layers, axis=-1)
 
 
-def xr_1d_groupby(data, group_data, bins, dim, func=np.nansum):
+def xr_1d_groupby(data, group_data, bins, dim):
     """Short summary.
 
     Parameters
@@ -71,8 +74,7 @@ def xr_1d_groupby(data, group_data, bins, dim, func=np.nansum):
         data,
         group_data,
         bins,
-        func,
-        input_core_dims=[[dim], [dim], ["bins"], []],
+        input_core_dims=[[dim], [dim], ["bins"]],
         output_core_dims=[[bin_dim]],
         dask="parallelized",
         output_dtypes=[data.dtype],
@@ -100,7 +102,7 @@ def xr_remapping(
     content_var=False,
     return_average=True,
 ):
-    """Performs remapping into another tracer coordinate system.
+    """Performs conservative remapping into another tracer coordinate system.
 
     Parameters
     ----------
