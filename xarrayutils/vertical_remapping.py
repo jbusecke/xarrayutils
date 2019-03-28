@@ -62,7 +62,7 @@ def xr_1d_groupby(data, group_data, bins, dim):
 
     """
     bin_name = group_data.name
-    bin_dim = "%s_layers" % bin_name
+    bin_dim = "%s_layer" % bin_name
     bin_center = (bins[:-1] + bins[1:]) / 2
 
     name = group_data.name
