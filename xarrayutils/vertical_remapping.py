@@ -151,11 +151,9 @@ def xr_remapping(
     if not content_var:
         da_data = da_data * da_thick
 
-    func = np.nansum
-
-    data_remapped = xr_1d_groupby(da_data, da_group, bins, dim, func=func)
-    thickness = xr_1d_groupby(da_thick, da_group, bins, dim, func=func)
-    layer_pos = xr_1d_groupby(da_dim, da_group, bins, dim, func=func)
+    data_remapped = xr_1d_groupby(da_data, da_group, bins, dim)
+    thickness = xr_1d_groupby(da_thick, da_group, bins, dim)
+    layer_pos = xr_1d_groupby(da_dim, da_group, bins, dim)
 
     if return_average:
         data_remapped = data_remapped / thickness
