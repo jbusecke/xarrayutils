@@ -57,9 +57,8 @@ def xr_1d_groupby(data, group_data, bins, dim):
 
     Returns
     -------
-    type
-        Description of returned object.
-
+    xr.DataArray
+        Remapped data
     """
     bin_name = group_data.name
     bin_dim = "%s_layer" % bin_name
@@ -126,21 +125,28 @@ def xr_remapping(
 
     Returns
     -------
-    type
-        Description of returned object.
+    xr.DataArray
+        Remapped data with additional coordinates;
+         `{da_group.name}_layer_up/down`(upper/lower bound of remapped layer)
+         `{da_group.name}_layer_{distance_coord.name}` (thickness of remapped
+                                                        layer)
+         `{da_group.name}_layer_{dim}` (mean position of layer along `dim`,
+                                        e.g. mean depth of isopycnal layer)
 
     """
     da_data = da_data.copy()
     da_group = da_group.copy()
     if not (set(da_data.dims) == set(da_group.dims)):
         raise ValueError(
-            "`da_data` and `da_group` do not have identical dims. Please interpolate broadcast appropriately before remapping"
+            "`da_data` and `da_group` do not have identical dims. \
+            Please interpolate broadcast appropriately before remapping"
         )
 
     da_thick = da_data.coords[distance_coord].copy()
     da_dim = da_data.coords[dim].copy()
 
-    # make sure that the thickness data is not counted anywhere else but where there is data
+    # make sure that the thickness data is not counted
+    # anywhere else but where there is data
     thick_name = da_thick.name  # seems to be overwritten by the line below
     da_thick = da_thick * ((da_data * 0) + 1)
     # Same for the layer position
