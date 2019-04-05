@@ -57,7 +57,7 @@ def xr_violinplot(ds, ax=None, x_dim="xt_ocean", width=1, color="0.5"):
     return vp
 
 
-def axis_arrow(ax, x_loc, text, arrowprops, **kwargs):
+def axis_arrow(ax, x_loc, text, arrowprops={}, **kwargs):
     """Puts an arrow pointing at `x_loc` onto (but outside of ) the xaxis of
     a plot.For now only works on xaxis and on the top. Modify when necessary
 
