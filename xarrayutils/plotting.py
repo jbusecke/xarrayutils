@@ -362,9 +362,9 @@ def draw_dens_contours_teos10(
 
     # get salt (default: xaxis) and temp (default: yaxis) limits
     if salt_on_x:
-        if not slim:
+        if not (slim is None):
             slim = ax.get_xlim()
-        if not tlim:
+        if not (tlim is None):
             tlim = ax.get_ylim()
         x = np.linspace(*slim, density_grid)
         y = np.linspace(*tlim, density_grid)
