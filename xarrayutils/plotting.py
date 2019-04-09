@@ -207,8 +207,8 @@ def plot_line_shaded_std(
 
     Returns
     -------
-    ?
-        handle to line plot.
+    (ll, ff)
+        Tuple of line and patch objects.
 
     """
 
@@ -222,20 +222,24 @@ def plot_line_shaded_std(
     line_defaults.update(line_kwargs)
 
     if horizontal:
-        p = ax.plot(x, y, **line_defaults)
+        ll = ax.plot(x, y, **line_defaults)
     else:
-        p = ax.plot(y, x, **line_defaults)
+        ll = ax.plot(y, x, **line_defaults)
 
-    fill_defaults = {"color": p[-1].get_color(), "alpha": 0.35}
+    fill_defaults = {
+        "facecolor": ll[-1].get_color(),
+        "alpha": 0.35,
+        "edgecolor": "none",
+    }
 
     # Apply defaults but respect input
     fill_defaults.update(fill_kwargs)
 
     if horizontal:
-        ax.fill_between(x, y - std_y, y + std_y, **fill_defaults)
+        ff = ax.fill_between(x, y - std_y, y + std_y, **fill_defaults)
     else:
-        ax.fill_betweenx(x, y - std_y, y + std_y, **fill_defaults)
-    return p
+        ff = ax.fill_betweenx(x, y - std_y, y + std_y, **fill_defaults)
+    return ll, ff
 
 
 def box_plot(box, ax=None, split_detection="True", **kwargs):
