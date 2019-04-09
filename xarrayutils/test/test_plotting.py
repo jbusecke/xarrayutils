@@ -1,7 +1,6 @@
 from xarrayutils.plotting import plot_line_shaded_std
 from matplotlib.colors import to_rgb
 import numpy as np
-import pytest
 
 
 def test_plot_line_shaded_std():
