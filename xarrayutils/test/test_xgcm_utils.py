@@ -17,7 +17,6 @@ def test_infer_gridtype():
     u_b = xr.DataArray(np.random.rand(4, 4), coords=[("xu", xu), ("yu", yu)])
     v_b = xr.DataArray(np.random.rand(4, 4), coords=[("xu", xu), ("yu", yu)])
 
-
     u_c = xr.DataArray(np.random.rand(4, 4), coords=[("xu", xu), ("yt", yt)])
     v_c = xr.DataArray(np.random.rand(4, 4), coords=[("xt", xt), ("yu", yu)])
 
