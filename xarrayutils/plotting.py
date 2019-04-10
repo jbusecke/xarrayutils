@@ -1,6 +1,13 @@
 import numpy as np
 import xarray as xr
-import matplotlib.pyplot as plt
+
+# import mpl and change the backend before other mpl imports
+try:
+    import matplotlib as mpl
+    import matplotlib.pyplot as plt
+except ImportError:
+    pass
+
 import gsw
 from matplotlib.transforms import blended_transform_factory
 import string
