@@ -1,6 +1,15 @@
 import numpy as np
 import xarray as xr
-import matplotlib.pyplot as plt
+
+# import mpl and change the backend before other mpl imports
+try:
+    import matplotlib as mpl
+
+    mpl.use("Agg")
+    import matplotlib.pyplot as plt
+except ImportError:
+    pass
+
 import gsw
 from matplotlib.transforms import blended_transform_factory
 import string
@@ -362,19 +371,19 @@ def draw_dens_contours_teos10(
 
     # get salt (default: xaxis) and temp (default: yaxis) limits
     if salt_on_x:
-        if not slim:
+        if not (slim is None):
             slim = ax.get_xlim()
-        if not tlim:
+        if not (tlim is None):
             tlim = ax.get_ylim()
-        x = np.linspace(*slim, density_grid)
-        y = np.linspace(*tlim, density_grid)
+        x = np.linspace(*(slim + [density_grid]))
+        y = np.linspace(*(tlim + [density_grid]))
     else:
         if not tlim:
             tlim = ax.get_xlim()
         if not slim:
             slim = ax.get_ylim()
-        x = np.linspace(*slim, density_grid)
-        y = np.linspace(*tlim, density_grid)
+        x = np.linspace(*(slim + [density_grid]))
+        y = np.linspace(*(tlim + [density_grid]))
 
     if salt_on_x:
         ss, tt = np.meshgrid(x, y)

@@ -1,4 +1,6 @@
 name: test_env
+channels:
+  - conda-forge
 dependencies:
   - python=3.5
   - xarray
@@ -9,6 +11,10 @@ dependencies:
   - scipy
   - flake8
   - astropy
+  - matplotlib
+  # Necesary additions for the plotting tools (might have to make thos optional)
+  - gsw
+  - cartopy
   - pip:
     - codecov
     - pytest-cov
