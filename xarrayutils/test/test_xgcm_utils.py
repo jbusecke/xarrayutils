@@ -2,7 +2,7 @@ from xgcm import Grid
 import xarray as xr
 import numpy as np
 import pytest
-from xarrayutils.xgcm_stash import _infer_gridtype
+from xarrayutils.xgcm_utils import _infer_gridtype
 
 
 def test_infer_gridtype():
@@ -13,6 +13,8 @@ def test_infer_gridtype():
 
     u_b = xr.DataArray(np.random.rand(4, 4), coords=[("xu", xu), ("yu", yu)])
     v_b = xr.DataArray(np.random.rand(4, 4), coords=[("xu", xu), ("yu", yu)])
+    # Need to add a tracer here to get the tracer dimsuffix
+    t_b = xr.DataArray(np.random.rand(4, 4), coords=[("xt", xt), ("yt", yt)])
 
     u_c = xr.DataArray(np.random.rand(4, 4), coords=[("xu", xu), ("yt", yt)])
     v_c = xr.DataArray(np.random.rand(4, 4), coords=[("xt", xt), ("yu", yu)])
@@ -22,7 +24,7 @@ def test_infer_gridtype():
         "Y": {"center": "yt", "right": "yu"},
     }
 
-    ds_b = xr.Dataset({"u": u_b, "v": v_b})
+    ds_b = xr.Dataset({"u": u_b, "v": v_b, "tracer": t_b})
     grid_b = Grid(ds_b, coords=coords)
 
     ds_c = xr.Dataset({"u": u_c, "v": v_c})
