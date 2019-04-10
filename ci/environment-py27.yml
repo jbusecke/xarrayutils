@@ -12,7 +12,9 @@ dependencies:
   - flake8
   - astropy
   - matplotlib
+  # Necesary additions for the plotting tools (might have to make thos optional)
   - gsw
+  - cartopy
   - pip:
     - codecov
     - pytest-cov
