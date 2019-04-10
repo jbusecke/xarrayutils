@@ -11,10 +11,12 @@ def test_infer_gridtype():
     yt = np.arange(4)
     yu = yt + 0.5
 
+    # Need to add a tracer here to get the tracer dimsuffix
+    tr = xr.DataArray(np.random.rand(4, 4), coords=[("xt", xt), ("yt", yt)])
+
     u_b = xr.DataArray(np.random.rand(4, 4), coords=[("xu", xu), ("yu", yu)])
     v_b = xr.DataArray(np.random.rand(4, 4), coords=[("xu", xu), ("yu", yu)])
-    # Need to add a tracer here to get the tracer dimsuffix
-    t_b = xr.DataArray(np.random.rand(4, 4), coords=[("xt", xt), ("yt", yt)])
+
 
     u_c = xr.DataArray(np.random.rand(4, 4), coords=[("xu", xu), ("yt", yt)])
     v_c = xr.DataArray(np.random.rand(4, 4), coords=[("xt", xt), ("yu", yu)])
@@ -24,16 +26,16 @@ def test_infer_gridtype():
         "Y": {"center": "yt", "right": "yu"},
     }
 
-    ds_b = xr.Dataset({"u": u_b, "v": v_b, "tracer": t_b})
+    ds_b = xr.Dataset({"u": u_b, "v": v_b, "tracer": tr})
     grid_b = Grid(ds_b, coords=coords)
 
-    ds_c = xr.Dataset({"u": u_c, "v": v_c})
+    ds_c = xr.Dataset({"u": u_c, "v": v_c, "tracer": tr})
     grid_c = Grid(ds_c, coords=coords)
 
     # This should fail
-    ds_fail = xr.Dataset({"u": u_b, "v": v_c})
+    ds_fail = xr.Dataset({"u": u_b, "v": v_c, "tracer": tr})
     grid_fail = Grid(ds_fail, coords=coords)
-
+    print(_infer_gridtype(grid_b, ds_b.u, ds_b.v))
     assert _infer_gridtype(grid_b, ds_b.u, ds_b.v) == "B"
     assert _infer_gridtype(grid_c, ds_c.u, ds_c.v) == "C"
     with pytest.raises(RuntimeError, match=r"Gridtype not recognized *"):
@@ -44,7 +46,7 @@ def test_infer_gridtype():
         "X": {"center": "xt", "outer": "xu"},
         "Y": {"center": "yt", "outer": "yu"},
     }
-    ds_fail2 = xr.Dataset({"u": u_b, "v": v_c})
+    ds_fail2 = xr.Dataset({"u": u_b, "v": v_c, "tracer": tr})
     grid_fail2 = Grid(ds_fail2, coords=coords2)
 
     with pytest.raises(RuntimeError):  # , match=r'`inner` or `outer` *'
