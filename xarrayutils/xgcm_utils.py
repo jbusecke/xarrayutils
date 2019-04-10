@@ -4,17 +4,38 @@
 import xarray as xr
 
 
+def _get_name(coord):
+    """Gets name from coord if xr.DataArray is passed."""
+    # It seems the content of grid.axes[..].coords has changed from a name
+    # to the actual DataArray. This is just for backwards compatibility.
+    if isinstance(coord, xr.DataArray):
+        return coord.name
+    elif isinstance(coord, str):
+        return coord
+    else:
+        raise ValueError(
+            "coord input not recognized.\
+         Needs to be xr.DataArray or str. Is %s"
+            % (type(coord))
+        )
+
+
+def _get_axis_dims(grid, axis, da):
+    co = grid.axes[axis].coords
+    return [k for k, v in co.items() if _get_name(v) in da.dims][0]
+
+
 def _infer_gridtype(grid, u, v, verbose=False):
     """Infer Grid type (https://en.wikipedia.org/wiki/Arakawa_grids).
     Currently supports B and C grids"""
     u = u.copy()
     v = v.copy()
 
-    u_x_pos = [k for k, vv in grid.axes["X"].coords.items() if vv in u.dims][0]
-    u_y_pos = [k for k, vv in grid.axes["Y"].coords.items() if vv in u.dims][0]
+    u_x_pos = _get_axis_dims(grid, "X", u)
+    u_y_pos = _get_axis_dims(grid, "Y", u)
 
-    v_x_pos = [k for k, vv in grid.axes["X"].coords.items() if vv in v.dims][0]
-    v_y_pos = [k for k, vv in grid.axes["Y"].coords.items() if vv in v.dims][0]
+    v_x_pos = _get_axis_dims(grid, "X", v)
+    v_y_pos = _get_axis_dims(grid, "Y", v)
 
     # should I check if each of these has more than one element?
     if any(
