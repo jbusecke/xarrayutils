@@ -10,6 +10,7 @@ dependencies:
   - flake8
   - astropy
   - matplotlib
+  - gsw
   - pip:
     - codecov
     - pytest-cov
