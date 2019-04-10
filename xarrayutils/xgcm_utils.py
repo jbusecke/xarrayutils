@@ -20,7 +20,7 @@ def _get_name(coord):
         )
 
 
-def _get_axis_dims(grid, axis, da):
+def _get_axis_dim(grid, axis, da):
     co = grid.axes[axis].coords
     return [k for k, v in co.items() if _get_name(v) in da.dims][0]
 
@@ -31,11 +31,11 @@ def _infer_gridtype(grid, u, v, verbose=False):
     u = u.copy()
     v = v.copy()
 
-    u_x_pos = _get_axis_dims(grid, "X", u)
-    u_y_pos = _get_axis_dims(grid, "Y", u)
+    u_x_pos = _get_axis_dim(grid, "X", u)
+    u_y_pos = _get_axis_dim(grid, "Y", u)
 
-    v_x_pos = _get_axis_dims(grid, "X", v)
-    v_y_pos = _get_axis_dims(grid, "Y", v)
+    v_x_pos = _get_axis_dim(grid, "X", v)
+    v_y_pos = _get_axis_dim(grid, "Y", v)
 
     # should I check if each of these has more than one element?
     if any(
@@ -78,6 +78,8 @@ def _check_dims(a, b, a_name):
             Expected %s, but found %s"
             % (a_name, list(b.dims), list(a.dims))
         )
+    else:
+        return True
 
 
 def calculate_rel_vorticity(grid, u, v, dx, dy, area, gridtype=None):
@@ -149,12 +151,15 @@ def interp_all(grid, ds, target="center"):
     ds_new = xr.Dataset()
 
     def _core_interp(da, grid):
-        for ax in ["X", "Y", "Z"]:
+        for ax in grid.axes.keys():
             # Check if any dimension matches this axis
-            match = [a for a in da.dims if a in grid.axes[ax].coords.values()]
+            ax_coords = [_get_name(a) for a in grid.axes[ax].coords.values()]
+            match = [a for a in da.dims if a in ax_coords]
             if len(match) > 0:
                 pos = [
-                    p for p, a in grid.axes[ax].coords.items() if a in match
+                    p
+                    for p, a in grid.axes[ax].coords.items()
+                    if _get_name(a) in match
                 ]
                 if target not in pos:
                     da = grid.interp(da, ax, to=target)
