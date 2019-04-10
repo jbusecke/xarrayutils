@@ -366,15 +366,15 @@ def draw_dens_contours_teos10(
             slim = ax.get_xlim()
         if not (tlim is None):
             tlim = ax.get_ylim()
-        x = np.linspace(*slim, density_grid)
-        y = np.linspace(*tlim, density_grid)
+        x = np.linspace(*(slim + [density_grid]))
+        y = np.linspace(*(tlim + [density_grid]))
     else:
         if not tlim:
             tlim = ax.get_xlim()
         if not slim:
             slim = ax.get_ylim()
-        x = np.linspace(*slim, density_grid)
-        y = np.linspace(*tlim, density_grid)
+        x = np.linspace(*(slim + [density_grid]))
+        y = np.linspace(*(tlim + [density_grid]))
 
     if salt_on_x:
         ss, tt = np.meshgrid(x, y)
