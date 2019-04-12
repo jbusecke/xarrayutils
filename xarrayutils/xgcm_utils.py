@@ -42,7 +42,10 @@ def _find_dim(grid, obj, axis):
         # internals?
         matches = [d for d in dimlist if d in obj.dims]
         if len(matches) == 0:
-            return None
+            raise ValueError(
+                "no matches found. \
+                Check if the `grid` object corresponds to `obj`"
+            )
         else:
             return matches
 
@@ -111,7 +114,8 @@ def _find_metric(da, dim_metric_list):
     matches = [m for m in dim_metric_list if m in da.coords]
     if len(matches) > 1:
         raise ValueError(
-            "found more than one matching metric(%s), something is wrong"
+            "found more than one matching metric(%s), \
+                something is wrong with the `metric_list`"
             % matches
         )
     elif len(matches) == 0:
@@ -130,12 +134,6 @@ def w_mean(grid, dat, axis, dim_metric_list, verbose=False):
     if dim is None:
         return dat
     else:
-        if len(dim) > 1:
-            raise ValueError(
-                "more than two dimension along axis %s found in data. \
-                Something is wrong"
-                % axis
-            )
         # Proceed with weighted average
         metric = _find_metric(dat, dim_metric_list)
         if verbose:

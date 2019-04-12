@@ -140,10 +140,13 @@ def test_find_metric():
     datadict = datasets()
     ds = datadict["C"]
     metric_list = ["dx_n", "dx_e", "dx_t", "dx_ne"]
+    fail_metric_list = ["dx_n", "dy_n"]
     assert _find_metric(ds["tracer"], metric_list) == "dx_t"
     assert _find_metric(ds["u"], metric_list) == "dx_e"
     assert _find_metric(ds["v"], metric_list) == "dx_n"
     assert _find_metric(ds["u"].drop("dx_e"), metric_list) is None
+    with pytest.raises(ValueError):
+        _find_metric(ds["v"], fail_metric_list)
 
 
 def test_find_dim():
@@ -151,6 +154,8 @@ def test_find_dim():
     ds = datadict["C"]
     grid = Grid(ds)
     assert _find_dim(grid, ds, "X") == ["xt", "xu"]
+    with pytest.raises(ValueError):
+        _find_dim(grid, ds.rename({"xt": "aa", "xu": "bb"}), "X")
     assert _find_dim(grid, ds, "Z") is None
     assert _find_dim(grid, ds["tracer"], "X") == ["xt"]
     assert _find_dim(grid, ds["u"], "X") == ["xu"]
@@ -208,17 +213,24 @@ def test_check_dims():
 
 def test_w_mean():
     axis = "X"
+    fail_metric_list = ["dx_fail"]
 
     datadict = datasets()
     ds = datadict["C"]
     grid = Grid(ds)
     metric_list = ["dx_t", "dx_e", "dx_n", "dx_ne"]
+
     for var, metric, dim in zip(
         ["tracer", "u", "v"], ["dx_t", "dx_e", "dx_n"], ["xt", "xu", "xt"]
     ):
-        a = w_mean(grid, ds[var], axis, metric_list)
+        a = w_mean(grid, ds[var], axis, metric_list, verbose=True)
         b = weighted_mean(ds[var], ds[metric], dim=dim)
         assert_allclose(a, b)
+
+        # when the dimension is not found in the list,
+        # w_mean returns the raw data
+        a_fail = w_mean(grid, ds[var], axis, fail_metric_list)
+        assert_allclose(a_fail, ds[var])
 
     datadict = datasets()
     ds = datadict["B"]
@@ -231,6 +243,9 @@ def test_w_mean():
         b = weighted_mean(ds[var], ds[metric], dim=dim)
         assert_allclose(a, b)
 
+        a_fail = w_mean(grid, ds[var], axis, fail_metric_list)
+        assert_allclose(a_fail, ds[var])
+
 
 def test_xgcm_weighted_mean():
     datadict = datasets()
@@ -240,11 +255,15 @@ def test_xgcm_weighted_mean():
     metric_list = ["dx_t", "dx_e", "dx_n", "dx_ne"]
     a = xgcm_weighted_mean(grid, ds, axis, metric_list)
     b = xr.Dataset()
+    c = xr.Dataset()
     for var, metric, dim in zip(
         ["tracer", "u", "v"], ["dx_t", "dx_ne", "dx_ne"], ["xt", "xu", "xu"]
     ):
         b[var] = w_mean(grid, ds[var], axis, metric_list)
+        c[var] = xgcm_weighted_mean(grid, ds[var], axis, metric_list)
+
     assert_allclose(a, b)
+    assert_allclose(b, c)
 
 
 def test_calculate_rel_vorticity():
