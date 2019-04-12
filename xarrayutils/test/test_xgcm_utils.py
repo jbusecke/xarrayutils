@@ -3,13 +3,19 @@ import xarray as xr
 import numpy as np
 import pytest
 from xarray.testing import assert_allclose
+from xarrayutils.weighted_operations import weighted_mean
 from xarrayutils.xgcm_utils import (
     _infer_gridtype,
     _get_name,
-    _get_axis_dim,
+    _get_axis_pos,
     _check_dims,
+    _find_metric,
+    _find_dim,
+    w_mean,
+    xgcm_weighted_mean,
     interp_all,
     calculate_rel_vorticity,
+    dll_dist,
 )
 
 
@@ -32,15 +38,31 @@ def datasets():
     dx = 0.3
     dy = 2
 
-    dx_ne = xr.DataArray(np.ones([4, 4]) * dx, coords=[("xu", xu), ("yu", yu)])
-    dx_n = xr.DataArray(np.ones([4, 4]) * dx, coords=[("xt", xt), ("yu", yu)])
-    dx_e = xr.DataArray(np.ones([4, 4]) * dx, coords=[("xu", xu), ("yt", yt)])
-    dx_t = xr.DataArray(np.ones([4, 4]) * dx, coords=[("xt", xt), ("yt", yt)])
+    dx_ne = xr.DataArray(
+        np.ones([4, 4]) * dx - 0.1, coords=[("xu", xu), ("yu", yu)]
+    )
+    dx_n = xr.DataArray(
+        np.ones([4, 4]) * dx - 0.2, coords=[("xt", xt), ("yu", yu)]
+    )
+    dx_e = xr.DataArray(
+        np.ones([4, 4]) * dx - 0.3, coords=[("xu", xu), ("yt", yt)]
+    )
+    dx_t = xr.DataArray(
+        np.ones([4, 4]) * dx - 0.4, coords=[("xt", xt), ("yt", yt)]
+    )
 
-    dy_ne = xr.DataArray(np.ones([4, 4]) * dy, coords=[("xu", xu), ("yu", yu)])
-    dy_n = xr.DataArray(np.ones([4, 4]) * dy, coords=[("xt", xt), ("yu", yu)])
-    dy_e = xr.DataArray(np.ones([4, 4]) * dy, coords=[("xu", xu), ("yt", yt)])
-    dy_t = xr.DataArray(np.ones([4, 4]) * dy, coords=[("xt", xt), ("yt", yt)])
+    dy_ne = xr.DataArray(
+        np.ones([4, 4]) * dy + 0.1, coords=[("xu", xu), ("yu", yu)]
+    )
+    dy_n = xr.DataArray(
+        np.ones([4, 4]) * dy + 0.2, coords=[("xt", xt), ("yu", yu)]
+    )
+    dy_e = xr.DataArray(
+        np.ones([4, 4]) * dy + 0.3, coords=[("xu", xu), ("yt", yt)]
+    )
+    dy_t = xr.DataArray(
+        np.ones([4, 4]) * dy + 0.4, coords=[("xt", xt), ("yt", yt)]
+    )
 
     area_ne = dx_ne * dy_ne
     area_n = dx_n * dy_n
@@ -80,6 +102,13 @@ def datasets():
             ],
         ):
             obj.coords[name] = data
+        # add xgcm attrs
+        for ii in ["xu", "xt"]:
+            obj[ii].attrs["axis"] = "X"
+        for ii in ["yu", "yt"]:
+            obj[ii].attrs["axis"] = "Y"
+        for ii in ["xu", "yu"]:
+            obj[ii].attrs["c_grid_axis_shift"] = 0.5
         return obj
 
     coords = {
@@ -107,18 +136,45 @@ def datasets():
     }
 
 
+def test_find_metric():
+    datadict = datasets()
+    ds = datadict["C"]
+    metric_list = ["dx_n", "dx_e", "dx_t", "dx_ne"]
+    fail_metric_list = ["dx_n", "dy_n"]
+    assert _find_metric(ds["tracer"], metric_list) == "dx_t"
+    assert _find_metric(ds["u"], metric_list) == "dx_e"
+    assert _find_metric(ds["v"], metric_list) == "dx_n"
+    assert _find_metric(ds["u"].drop("dx_e"), metric_list) is None
+    with pytest.raises(ValueError):
+        _find_metric(ds["v"], fail_metric_list)
+
+
+def test_find_dim():
+    datadict = datasets()
+    ds = datadict["C"]
+    grid = Grid(ds)
+    assert _find_dim(grid, ds, "X") == ["xt", "xu"]
+    with pytest.raises(ValueError):
+        _find_dim(grid, ds.rename({"xt": "aa", "xu": "bb"}), "X")
+    assert _find_dim(grid, ds, "Z") is None
+    assert _find_dim(grid, ds["tracer"], "X") == ["xt"]
+    assert _find_dim(grid, ds["u"], "X") == ["xu"]
+
+
 def test_get_name():
     datadict = datasets()
     ds = datadict["C"]
     assert _get_name(ds.xt) == "xt"
 
 
-def test_get_axis_dim():
+def test_get_axis_pos():
     datadict = datasets()
     ds = datadict["C"]
     coords = datadict["coords"]
     grid = Grid(ds, coords=coords)
-    assert _get_axis_dim(grid, "X", ds.u)
+    assert _get_axis_pos(grid, "X", ds.u) == "right"
+    assert _get_axis_pos(grid, "X", ds.tracer) == "center"
+    assert _get_axis_pos(grid, "Z", ds.u) is None
 
 
 def test_infer_gridtype():
@@ -153,6 +209,61 @@ def test_check_dims():
     assert _check_dims(ds.u, ds.u, "dummy")
     with pytest.raises(RuntimeError):
         _check_dims(ds.u, ds.v, "dummy")
+
+
+def test_w_mean():
+    axis = "X"
+    fail_metric_list = ["dx_fail"]
+
+    datadict = datasets()
+    ds = datadict["C"]
+    grid = Grid(ds)
+    metric_list = ["dx_t", "dx_e", "dx_n", "dx_ne"]
+
+    for var, metric, dim in zip(
+        ["tracer", "u", "v"], ["dx_t", "dx_e", "dx_n"], ["xt", "xu", "xt"]
+    ):
+        a = w_mean(grid, ds[var], axis, metric_list, verbose=True)
+        b = weighted_mean(ds[var], ds[metric], dim=dim)
+        assert_allclose(a, b)
+
+        # when the dimension is not found in the list,
+        # w_mean returns the raw data
+        a_fail = w_mean(grid, ds[var], axis, fail_metric_list)
+        assert_allclose(a_fail, ds[var])
+
+    datadict = datasets()
+    ds = datadict["B"]
+    grid = Grid(ds)
+    metric_list = ["dx_t", "dx_e", "dx_n", "dx_ne"]
+    for var, metric, dim in zip(
+        ["tracer", "u", "v"], ["dx_t", "dx_ne", "dx_ne"], ["xt", "xu", "xu"]
+    ):
+        a = w_mean(grid, ds[var], axis, metric_list)
+        b = weighted_mean(ds[var], ds[metric], dim=dim)
+        assert_allclose(a, b)
+
+        a_fail = w_mean(grid, ds[var], axis, fail_metric_list)
+        assert_allclose(a_fail, ds[var])
+
+
+def test_xgcm_weighted_mean():
+    datadict = datasets()
+    ds = datadict["C"]
+    grid = Grid(ds)
+    axis = "X"
+    metric_list = ["dx_t", "dx_e", "dx_n", "dx_ne"]
+    a = xgcm_weighted_mean(grid, ds, axis, metric_list)
+    b = xr.Dataset()
+    c = xr.Dataset()
+    for var, metric, dim in zip(
+        ["tracer", "u", "v"], ["dx_t", "dx_ne", "dx_ne"], ["xt", "xu", "xu"]
+    ):
+        b[var] = w_mean(grid, ds[var], axis, metric_list)
+        c[var] = xgcm_weighted_mean(grid, ds[var], axis, metric_list)
+
+    assert_allclose(a, b)
+    assert_allclose(b, c)
 
 
 def test_calculate_rel_vorticity():
@@ -226,3 +337,44 @@ def test_interp_all():
                 print(grid)
                 ds_interp = interp_all(grid, ds, target=target)
                 assert set(ds_interp[var].dims) == set(control_dims)
+
+
+def test_dll_dist():
+    lon = np.arange(-180, 180, 10)
+    lat = np.arange(-90, 90, 10)
+    llon, llat = np.meshgrid(lon, lat)
+    dlon = np.diff(llon, axis=1)
+    dlat = np.diff(llat, axis=0)
+
+    # lon = lon[1:]
+    # lat = lat[1:]
+    # llon = llon[1:, 1:]
+    # llat = llat[1:, 1:]
+    # dlon = dlon[1:, :]
+    # dlat = dlat[:, 1:]
+
+    lon = lon[:-1]
+    lat = lat[:-1]
+    llon = llon[:-1, :-1]
+    llat = llat[:-1, :-1]
+    dlon = dlon[:-1, :]
+    dlat = dlat[:, :-1]
+
+    # convert to xarrays
+    da_lon = xr.DataArray(lon, coords=[("lon", lon)])
+    da_lat = xr.DataArray(lat, coords=[("lat", lat)])
+    print(dlon.shape)
+    print(lon.shape)
+    print(lat.shape)
+    da_dlon = xr.DataArray(dlon, coords=[lat, lon], dims=["lat", "lon"])
+    da_dlat = xr.DataArray(dlat, coords=[lat, lon], dims=["lat", "lon"])
+
+    d_raw = 111000.0  # represents the diatance of 1 deg on the Eq in m
+    dx_test = dlon * np.cos(np.deg2rad(llat)) * d_raw
+    dy_test = dlat * d_raw
+    dy_test = dy_test.T
+
+    dx, dy = dll_dist(da_dlon, da_dlat, da_lon, da_lat)
+    np.testing.assert_allclose(dx.data, dx_test)
+    np.testing.assert_allclose(dx_test[:, 0], dx.data[:, 0])
+    np.testing.assert_allclose(dy.data, dy_test)
