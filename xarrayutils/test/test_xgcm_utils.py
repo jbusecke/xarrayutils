@@ -3,11 +3,16 @@ import xarray as xr
 import numpy as np
 import pytest
 from xarray.testing import assert_allclose
+from xarrayutils.weighted_operations import weighted_mean
 from xarrayutils.xgcm_utils import (
     _infer_gridtype,
     _get_name,
-    _get_axis_dim,
+    _get_axis_pos,
     _check_dims,
+    _find_metric,
+    _find_dim,
+    w_mean,
+    xgcm_weighted_mean,
     interp_all,
     calculate_rel_vorticity,
 )
@@ -32,15 +37,31 @@ def datasets():
     dx = 0.3
     dy = 2
 
-    dx_ne = xr.DataArray(np.ones([4, 4]) * dx, coords=[("xu", xu), ("yu", yu)])
-    dx_n = xr.DataArray(np.ones([4, 4]) * dx, coords=[("xt", xt), ("yu", yu)])
-    dx_e = xr.DataArray(np.ones([4, 4]) * dx, coords=[("xu", xu), ("yt", yt)])
-    dx_t = xr.DataArray(np.ones([4, 4]) * dx, coords=[("xt", xt), ("yt", yt)])
+    dx_ne = xr.DataArray(
+        np.ones([4, 4]) * dx - 0.1, coords=[("xu", xu), ("yu", yu)]
+    )
+    dx_n = xr.DataArray(
+        np.ones([4, 4]) * dx - 0.2, coords=[("xt", xt), ("yu", yu)]
+    )
+    dx_e = xr.DataArray(
+        np.ones([4, 4]) * dx - 0.3, coords=[("xu", xu), ("yt", yt)]
+    )
+    dx_t = xr.DataArray(
+        np.ones([4, 4]) * dx - 0.4, coords=[("xt", xt), ("yt", yt)]
+    )
 
-    dy_ne = xr.DataArray(np.ones([4, 4]) * dy, coords=[("xu", xu), ("yu", yu)])
-    dy_n = xr.DataArray(np.ones([4, 4]) * dy, coords=[("xt", xt), ("yu", yu)])
-    dy_e = xr.DataArray(np.ones([4, 4]) * dy, coords=[("xu", xu), ("yt", yt)])
-    dy_t = xr.DataArray(np.ones([4, 4]) * dy, coords=[("xt", xt), ("yt", yt)])
+    dy_ne = xr.DataArray(
+        np.ones([4, 4]) * dy + 0.1, coords=[("xu", xu), ("yu", yu)]
+    )
+    dy_n = xr.DataArray(
+        np.ones([4, 4]) * dy + 0.2, coords=[("xt", xt), ("yu", yu)]
+    )
+    dy_e = xr.DataArray(
+        np.ones([4, 4]) * dy + 0.3, coords=[("xu", xu), ("yt", yt)]
+    )
+    dy_t = xr.DataArray(
+        np.ones([4, 4]) * dy + 0.4, coords=[("xt", xt), ("yt", yt)]
+    )
 
     area_ne = dx_ne * dy_ne
     area_n = dx_n * dy_n
@@ -80,6 +101,13 @@ def datasets():
             ],
         ):
             obj.coords[name] = data
+        # add xgcm attrs
+        for ii in ["xu", "xt"]:
+            obj[ii].attrs["axis"] = "X"
+        for ii in ["yu", "yt"]:
+            obj[ii].attrs["axis"] = "Y"
+        for ii in ["xu", "yu"]:
+            obj[ii].attrs["c_grid_axis_shift"] = 0.5
         return obj
 
     coords = {
@@ -107,18 +135,40 @@ def datasets():
     }
 
 
+def test_find_metric():
+    datadict = datasets()
+    ds = datadict["C"]
+    metric_list = ["dx_n", "dx_e", "dx_t", "dx_ne"]
+    assert _find_metric(ds["tracer"], metric_list) == "dx_t"
+    assert _find_metric(ds["u"], metric_list) == "dx_e"
+    assert _find_metric(ds["v"], metric_list) == "dx_n"
+    assert _find_metric(ds["u"].drop("dx_e"), metric_list) is None
+
+
+def test_find_dim():
+    datadict = datasets()
+    ds = datadict["C"]
+    grid = Grid(ds)
+    assert _find_dim(grid, ds, "X") == ["xt", "xu"]
+    assert _find_dim(grid, ds, "Z") is None
+    assert _find_dim(grid, ds["tracer"], "X") == ["xt"]
+    assert _find_dim(grid, ds["u"], "X") == ["xu"]
+
+
 def test_get_name():
     datadict = datasets()
     ds = datadict["C"]
     assert _get_name(ds.xt) == "xt"
 
 
-def test_get_axis_dim():
+def test_get_axis_pos():
     datadict = datasets()
     ds = datadict["C"]
     coords = datadict["coords"]
     grid = Grid(ds, coords=coords)
-    assert _get_axis_dim(grid, "X", ds.u)
+    assert _get_axis_pos(grid, "X", ds.u) == "right"
+    assert _get_axis_pos(grid, "X", ds.tracer) == "center"
+    assert _get_axis_pos(grid, "Z", ds.u) is None
 
 
 def test_infer_gridtype():
@@ -153,6 +203,47 @@ def test_check_dims():
     assert _check_dims(ds.u, ds.u, "dummy")
     with pytest.raises(RuntimeError):
         _check_dims(ds.u, ds.v, "dummy")
+
+
+def test_w_mean():
+    axis = "X"
+
+    datadict = datasets()
+    ds = datadict["C"]
+    grid = Grid(ds)
+    metric_list = ["dx_t", "dx_e", "dx_n", "dx_ne"]
+    for var, metric, dim in zip(
+        ["tracer", "u", "v"], ["dx_t", "dx_e", "dx_n"], ["xt", "xu", "xt"]
+    ):
+        a = w_mean(grid, ds[var], axis, metric_list)
+        b = weighted_mean(ds[var], ds[metric], dim=dim)
+        assert_allclose(a, b)
+
+    datadict = datasets()
+    ds = datadict["B"]
+    grid = Grid(ds)
+    metric_list = ["dx_t", "dx_e", "dx_n", "dx_ne"]
+    for var, metric, dim in zip(
+        ["tracer", "u", "v"], ["dx_t", "dx_ne", "dx_ne"], ["xt", "xu", "xu"]
+    ):
+        a = w_mean(grid, ds[var], axis, metric_list)
+        b = weighted_mean(ds[var], ds[metric], dim=dim)
+        assert_allclose(a, b)
+
+
+def test_xgcm_weighted_mean():
+    datadict = datasets()
+    ds = datadict["C"]
+    grid = Grid(ds)
+    axis = "X"
+    metric_list = ["dx_t", "dx_e", "dx_n", "dx_ne"]
+    a = xgcm_weighted_mean(grid, ds, axis, metric_list)
+    b = xr.Dataset()
+    for var, metric, dim in zip(
+        ["tracer", "u", "v"], ["dx_t", "dx_ne", "dx_ne"], ["xt", "xu", "xu"]
+    ):
+        b[var] = w_mean(grid, ds[var], axis, metric_list)
+    assert_allclose(a, b)
 
 
 def test_calculate_rel_vorticity():
