@@ -120,7 +120,7 @@ def _find_metric(da, dim_metric_list):
         return matches[0]
 
 
-############## Simple Operations using metrics ##############
+# Simple Operations using metrics #
 
 
 def w_mean(grid, dat, axis, dim_metric_list, verbose=False):
@@ -156,7 +156,8 @@ def w_mean(grid, dat, axis, dim_metric_list, verbose=False):
 
 
 def xgcm_weighted_mean(grid, dat, axis, dim_metric_list, verbose=False):
-    # TODO: Should keep attrs and also add details in them about the processing...
+    # TODO: Should keep attrs and also add details in them about the
+    # processing...
     # the dim metric list should be callable from the grid object
     dat = dat.copy()
     if isinstance(dat, xr.Dataset):
@@ -170,7 +171,7 @@ def xgcm_weighted_mean(grid, dat, axis, dim_metric_list, verbose=False):
     return ds_mean
 
 
-############## High level vector calculus ################
+# High level vector calculus #
 
 
 def calculate_rel_vorticity(grid, u, v, dx, dy, area, gridtype=None):
@@ -231,7 +232,7 @@ def calculate_rel_vorticity(grid, u, v, dx, dy, area, gridtype=None):
     return zeta
 
 
-###################### convenience functions ######################
+# convenience functions #
 
 
 def interp_all(grid, ds, target="center"):
@@ -261,7 +262,7 @@ def interp_all(grid, ds, target="center"):
     return ds_new
 
 
-################# mappiing/autogenerate stuff ##########
+# mappiing/autogenerate stuff #
 
 
 def dll_dist(dlon, dlat, lon, lat):
