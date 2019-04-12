@@ -259,3 +259,28 @@ def interp_all(grid, ds, target="center"):
     for vv in ds.data_vars:
         ds_new[vv] = _core_interp(ds[vv], grid)
     return ds_new
+
+
+################# mappiing/autogenerate stuff ##########
+
+
+def dll_dist(dlon, dlat, lon, lat):
+    """Converts lat/lon differentials into distances in meters
+
+    PARAMETERS
+    ----------
+    dlon : xarray.DataArray longitude differentials
+    dlat : xarray.DataArray latitude differentials
+    lon  : xarray.DataArray longitude values
+    lat  : xarray.DataArray latitude values
+
+    RETURNS
+    -------
+    dx  : xarray.DataArray distance inferred from dlon
+    dy  : xarray.DataArray distance inferred from dlat
+    """
+
+    distance_1deg_equator = 111000.0
+    dx = dlon * xr.ufuncs.cos(xr.ufuncs.deg2rad(lat)) * distance_1deg_equator
+    dy = ((lon * 0) + 1) * dlat * distance_1deg_equator
+    return dx, dy

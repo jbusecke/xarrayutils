@@ -15,6 +15,7 @@ from xarrayutils.xgcm_utils import (
     xgcm_weighted_mean,
     interp_all,
     calculate_rel_vorticity,
+    dll_dist,
 )
 
 
@@ -317,3 +318,44 @@ def test_interp_all():
                 print(grid)
                 ds_interp = interp_all(grid, ds, target=target)
                 assert set(ds_interp[var].dims) == set(control_dims)
+
+
+def test_dll_dist():
+    lon = np.arange(-180, 180, 10)
+    lat = np.arange(-90, 90, 10)
+    llon, llat = np.meshgrid(lon, lat)
+    dlon = np.diff(llon, axis=1)
+    dlat = np.diff(llat, axis=0)
+
+    # lon = lon[1:]
+    # lat = lat[1:]
+    # llon = llon[1:, 1:]
+    # llat = llat[1:, 1:]
+    # dlon = dlon[1:, :]
+    # dlat = dlat[:, 1:]
+
+    lon = lon[:-1]
+    lat = lat[:-1]
+    llon = llon[:-1, :-1]
+    llat = llat[:-1, :-1]
+    dlon = dlon[:-1, :]
+    dlat = dlat[:, :-1]
+
+    # convert to xarrays
+    da_lon = xr.DataArray(lon, coords=[("lon", lon)])
+    da_lat = xr.DataArray(lat, coords=[("lat", lat)])
+    print(dlon.shape)
+    print(lon.shape)
+    print(lat.shape)
+    da_dlon = xr.DataArray(dlon, coords=[lat, lon], dims=["lat", "lon"])
+    da_dlat = xr.DataArray(dlat, coords=[lat, lon], dims=["lat", "lon"])
+
+    d_raw = 111000.0  # represents the diatance of 1 deg on the Eq in m
+    dx_test = dlon * np.cos(np.deg2rad(llat)) * d_raw
+    dy_test = dlat * d_raw
+    dy_test = dy_test.T
+
+    dx, dy = dll_dist(da_dlon, da_dlat, da_lon, da_lat)
+    np.testing.assert_allclose(dx.data, dx_test)
+    np.testing.assert_allclose(dx_test[:, 0], dx.data[:, 0])
+    np.testing.assert_allclose(dy.data, dy_test)
