@@ -337,6 +337,11 @@ def test_interp_all():
                 print(grid)
                 ds_interp = interp_all(grid, ds, target=target)
                 assert set(ds_interp[var].dims) == set(control_dims)
+                assert set(ds_interp.coords) == set(ds.coords)
+                ds_interp_nocoords = interp_all(
+                    grid, ds, target=target, keep_coords=False
+                )
+                assert set(ds_interp_nocoords.coords) != set(ds.coords)
 
 
 def test_dll_dist():

@@ -233,9 +233,29 @@ def calculate_rel_vorticity(grid, u, v, dx, dy, area, gridtype=None):
 # convenience functions #
 
 
-def interp_all(grid, ds, target="center"):
+def interp_all(grid, ds, target="center", keep_coords=True):
     """Interpolates all variables and coordinates in `ds` onto common dimensions,
-    specified by target."""
+    specified by target.
+
+    Parameters
+    ----------
+    grid : xgcm.Grid
+        Grid object matching `ds`.
+    ds : xr.DataArray or xr.Dataset
+        Input data.
+    target : str
+        Cell position target. See xgcm definitons (the default is "center").
+    keep_coords : bool
+        Switch to keep all coordinates of the input object
+        (the default is True).
+
+    Returns
+    -------
+    type
+        Description of returned object.
+
+    """
+    """"""
 
     ds = ds.copy()
     ds_new = xr.Dataset()
@@ -257,6 +277,10 @@ def interp_all(grid, ds, target="center"):
 
     for vv in ds.data_vars:
         ds_new[vv] = _core_interp(ds[vv], grid)
+    if keep_coords:
+        for co in ds.coords:
+            if co not in list(ds_new.coords):
+                ds_new.coords[co] = ds[co]
     return ds_new
 
 
