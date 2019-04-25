@@ -42,10 +42,7 @@ def _find_dim(grid, obj, axis):
         # internals?
         matches = [d for d in dimlist if d in obj.dims]
         if len(matches) == 0:
-            raise ValueError(
-                "no matches found. \
-                Check if the `grid` object corresponds to `obj`"
-            )
+            return None
         else:
             return matches
 
