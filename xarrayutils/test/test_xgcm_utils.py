@@ -139,11 +139,27 @@ def datasets():
         "Y": {"center": "yt", "outer": "yu"},
     }
 
-    ds_b = _add_metrics(xr.Dataset({"u": u_b, "v": v_b, "tracer": tr}))
-    ds_c = _add_metrics(xr.Dataset({"u": u_c, "v": v_c, "tracer": tr}))
+    ds_b = _add_metrics(
+        xr.Dataset(
+            {"u": u_b, "v": v_b, "tracer": tr, "timeseries": timeseries}
+        )
+    )
+    ds_c = _add_metrics(
+        xr.Dataset(
+            {"u": u_c, "v": v_c, "tracer": tr, "timeseries": timeseries}
+        )
+    )
 
-    ds_fail = _add_metrics(xr.Dataset({"u": u_b, "v": v_c, "tracer": tr}))
-    ds_fail2 = _add_metrics(xr.Dataset({"u": u_b, "v": v_c, "tracer": tr}))
+    ds_fail = _add_metrics(
+        xr.Dataset(
+            {"u": u_b, "v": v_c, "tracer": tr, "timeseries": timeseries}
+        )
+    )
+    ds_fail2 = _add_metrics(
+        xr.Dataset(
+            {"u": u_b, "v": v_c, "tracer": tr, "timeseries": timeseries}
+        )
+    )
 
     return {
         "B": ds_b,
@@ -173,9 +189,9 @@ def test_find_dim():
     ds = datadict["C"]
     grid = Grid(ds)
     assert _find_dim(grid, ds, "X") == ["xt", "xu"]
-    with pytest.raises(ValueError):
-        _find_dim(grid, ds.rename({"xt": "aa", "xu": "bb"}), "X")
     assert _find_dim(grid, ds, "Z") is None
+    assert _find_dim(grid, ds["timeseries"], "X") is None
+    assert _find_dim(grid, ds["timeseries"], "X") is None
     assert _find_dim(grid, ds["tracer"], "X") == ["xt"]
     assert _find_dim(grid, ds["u"], "X") == ["xu"]
 
@@ -230,59 +246,58 @@ def test_check_dims():
         _check_dims(ds.u, ds.v, "dummy")
 
 
-def test_w_mean():
-    axis = "X"
-    fail_metric_list = ["dx_fail"]
-
-    datadict = datasets()
-    ds = datadict["C"]
+@pytest.mark.parametrize(
+    "axis, metric_list",
+    [
+        ("X", ["dx_t", "dx_e", "dx_n", "dx_ne"]),
+        ("X", ["dy_t", "dy_e", "dy_n", "dy_ne"]),
+    ],
+)
+@pytest.mark.parametrize("gridtype", ["B", "C"])
+def test_w_mean(axis, metric_list, gridtype):
+    fail_metric_list = ["fail"]
+    ds = datasets()[gridtype]
     grid = Grid(ds)
-    metric_list = ["dx_t", "dx_e", "dx_n", "dx_ne"]
-
-    for var, metric, dim in zip(
-        ["tracer", "u", "v"], ["dx_t", "dx_e", "dx_n"], ["xt", "xu", "xt"]
-    ):
+    for var in ds.data_vars:
+        metric = _find_metric(ds[var], metric_list)
+        dim = _find_dim(grid, ds[var], axis)
         a = w_mean(grid, ds[var], axis, metric_list, verbose=True)
-        b = weighted_mean(ds[var], ds[metric], dim=dim)
+        if dim is None:  # no dimension found, return the input arrays
+            b = ds[var]
+        else:
+            b = weighted_mean(ds[var], ds[metric], dim=dim)
         assert_allclose(a, b)
 
-        # when the dimension is not found in the list,
-        # w_mean returns the raw data
-        a_fail = w_mean(grid, ds[var], axis, fail_metric_list)
-        assert_allclose(a_fail, ds[var])
-
-    datadict = datasets()
-    ds = datadict["B"]
-    grid = Grid(ds)
-    metric_list = ["dx_t", "dx_e", "dx_n", "dx_ne"]
-    for var, metric, dim in zip(
-        ["tracer", "u", "v"], ["dx_t", "dx_ne", "dx_ne"], ["xt", "xu", "xu"]
-    ):
-        a = w_mean(grid, ds[var], axis, metric_list)
-        b = weighted_mean(ds[var], ds[metric], dim=dim)
-        assert_allclose(a, b)
-
+        # original array should be returned if a non matching metric list is supplied
         a_fail = w_mean(grid, ds[var], axis, fail_metric_list)
         assert_allclose(a_fail, ds[var])
 
 
-def test_xgcm_weighted_mean():
-    datadict = datasets()
-    ds = datadict["C"]
+@pytest.mark.parametrize(
+    "axis, metric_list",
+    [
+        ("X", ["dx_t", "dx_e", "dx_n", "dx_ne"]),
+        ("X", ["dy_t", "dy_e", "dy_n", "dy_ne"]),
+    ],
+)
+@pytest.mark.parametrize("gridtype", ["B", "C"])
+def test_xgcm_weighted_mean(axis, metric_list, gridtype):
+    ds = datasets()[gridtype]
     grid = Grid(ds)
-    axis = "X"
-    metric_list = ["dx_t", "dx_e", "dx_n", "dx_ne"]
     a = xgcm_weighted_mean(grid, ds, axis, metric_list)
-    b = xr.Dataset()
-    c = xr.Dataset()
-    for var, metric, dim in zip(
-        ["tracer", "u", "v"], ["dx_t", "dx_ne", "dx_ne"], ["xt", "xu", "xu"]
-    ):
-        b[var] = w_mean(grid, ds[var], axis, metric_list)
-        c[var] = xgcm_weighted_mean(grid, ds[var], axis, metric_list)
+    for var in ["tracer", "u", "v"]:
+        b = w_mean(grid, ds[var], axis, metric_list)
+        c = xgcm_weighted_mean(grid, ds[var], axis, metric_list)
 
-    assert_allclose(a, b)
-    assert_allclose(b, c)
+        assert_allclose(a[var], b)
+        assert_allclose(b, c)
+
+    for var in ["timeseries"]:
+        b = ds[var]
+        c = xgcm_weighted_mean(grid, ds[var], axis, metric_list)
+
+        assert_allclose(a[var], b)
+        assert_allclose(b, c)
 
 
 def test_calculate_rel_vorticity():
@@ -350,7 +365,8 @@ def test_interp_all():
     for var in ["u", "v", "tracer"]:
         for ds, grid in zip([ds_b, ds_c], [grid_b, grid_c]):
             for target, control_dims in zip(
-                ["center", "right"], [["xt", "yt"], ["xu", "yu"]]
+                ["center", "right"],
+                [["xt", "yt", "time"], ["xu", "yu", "time"]],
             ):
                 print(ds)
                 print(grid)
