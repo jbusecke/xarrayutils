@@ -24,15 +24,34 @@ def datasets():
     xu = xt + 0.5
     yt = np.arange(4)
     yu = yt + 0.5
+    # add a non x,y variable to test how its handled throughout.
+    t = np.arange(10)
 
     # Need to add a tracer here to get the tracer dimsuffix
-    tr = xr.DataArray(np.random.rand(4, 4), coords=[("xt", xt), ("yt", yt)])
+    tr = xr.DataArray(
+        np.random.rand(len(xt), len(yt), len(t)),
+        coords=[("xt", xt), ("yt", yt), ("time", t)],
+    )
 
-    u_b = xr.DataArray(np.random.rand(4, 4), coords=[("xu", xu), ("yu", yu)])
-    v_b = xr.DataArray(np.random.rand(4, 4), coords=[("xu", xu), ("yu", yu)])
+    u_b = xr.DataArray(
+        np.random.rand(len(xt), len(yt), len(t)),
+        coords=[("xu", xu), ("yu", yu), ("time", t)],
+    )
+    v_b = xr.DataArray(
+        np.random.rand(len(xt), len(yt), len(t)),
+        coords=[("xu", xu), ("yu", yu), ("time", t)],
+    )
 
-    u_c = xr.DataArray(np.random.rand(4, 4), coords=[("xu", xu), ("yt", yt)])
-    v_c = xr.DataArray(np.random.rand(4, 4), coords=[("xt", xt), ("yu", yu)])
+    u_c = xr.DataArray(
+        np.random.rand(len(xt), len(yt), len(t)),
+        coords=[("xu", xu), ("yt", yt), ("time", t)],
+    )
+    v_c = xr.DataArray(
+        np.random.rand(len(xt), len(yt), len(t)),
+        coords=[("xt", xt), ("yu", yu), ("time", t)],
+    )
+    # maybe also add some other combo of x,t y,t arrays....
+    timeseries = xr.DataArray(np.random.rand(len(t)), coords=[("time", t)])
 
     # northeast distance
     dx = 0.3
