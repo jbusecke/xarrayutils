@@ -268,12 +268,8 @@ def test_w_mean(axis, metric_list, gridtype):
             b = weighted_mean(ds[var], ds[metric], dim=dim)
         assert_allclose(a, b)
 
-<<<<<<< HEAD
         # original array should be returned if a non matching metric list
         # is supplied
-=======
-        # original array should be returned if a non matching metric list is supplied
->>>>>>> 8916d94523c3d01865119e5171594470a7851e62
         a_fail = w_mean(grid, ds[var], axis, fail_metric_list)
         assert_allclose(a_fail, ds[var])
 
