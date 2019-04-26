@@ -1,5 +1,5 @@
 # Based on http://conda.pydata.org/docs/travis.html
-language: python
+language: minimal
 sudo: false # use container based build
 notifications:
   email: false
@@ -27,7 +27,7 @@ install:
   - pip install --no-deps -e .
 
 script:
-  - py.test xarrayutils -v --cov=xarrayutils --cov-config .coveragerc --cov-report term-missing
+  - py.test xarrayutils --cov=xarrayutils --cov-config .coveragerc --cov-report term-missing
 
 after_success:
   - codecov
