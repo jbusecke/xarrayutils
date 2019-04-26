@@ -43,6 +43,13 @@ def _find_dim(grid, obj, axis):
         matches = [d for d in dimlist if d in obj.dims]
         if len(matches) == 0:
             return None
+<<<<<<< HEAD
+=======
+            # raise ValueError(
+            #     "no matches found. \
+            #     Check if the `grid` object corresponds to `obj`"
+            # )
+>>>>>>> 8916d94523c3d01865119e5171594470a7851e62
         else:
             return matches
 
