@@ -5,7 +5,7 @@ dependencies:
   - python=3.5
   - xarray
   - dask
-  - numpy
+  - numpy > 1.13
   - pytest
   - future
   - scipy
@@ -15,7 +15,7 @@ dependencies:
   # Necesary additions for the plotting tools (might have to make thos optional)
   - gsw
   - cartopy
+  - xgcm
   - pip:
     - codecov
     - pytest-cov
-    - "--editable=git+https://github.com/xgcm/xgcm.git@master#egg=xgcm"
