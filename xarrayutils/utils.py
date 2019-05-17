@@ -6,7 +6,8 @@ from scipy import stats, interpolate
 from dask.array import coarsen, ones_like
 from dask.array.core import Array
 import warnings
-from astropy.convolution import (convolve_fft, Gaussian1DKernel)
+from astropy.convolution import convolve_fft, Gaussian1DKernel
+
 # from scipy import optimize
 # import dask.array as dsa
 
@@ -14,30 +15,7 @@ from astropy.convolution import (convolve_fft, Gaussian1DKernel)
 """
 Collection of several useful routines for xarray
 """
-# needs testing
-def filter_1D(data, std, dim='time', dtype=None):
-    if dtype is None:
-        dtype = set_dtype(data)
 
-    kernel = Gaussian1DKernel(std)
-
-    def smooth_raw(data):
-        raw_data = getattr(data, 'values', data)
-        result = convolve_fft(raw_data, kernel, boundary='wrap')
-        result[np.isnan(raw_data)] = np.nan
-        return result
-
-    def temporal_smoother(data):
-        dims = ([dim])
-        return xr.apply_ufunc(smooth_raw, data,
-                              vectorize=True,
-                              dask='parallelized',
-                              input_core_dims=[dims],
-                              output_core_dims=[dims],
-                              output_dtypes=[dtype])
-    return temporal_smoother(data)
-
-# TODO spatial filter
 
 # Needs testing
 def shift_lon(ds, londim, shift=360, crit=0, smaller=True, sort=True):
@@ -56,7 +34,7 @@ def shift_lon(ds, londim, shift=360, crit=0, smaller=True, sort=True):
 
 
 def _linregress_ufunc(a, b, nanmask=False):
-    '''ufunc to wrap scipy.stats.linregress for xr_linregress'''
+    """ufunc to wrap scipy.stats.linregress for xr_linregress"""
     if nanmask:
         idxa = np.isnan(a)
         idxb = np.isnan(b)
@@ -71,15 +49,19 @@ def _linregress_ufunc(a, b, nanmask=False):
 def set_dtype(aa):
     if isinstance(aa, xr.Dataset):
         dtype = aa[list(aa.data_vars)[0]].dtype
-        print('No `dtype` chosen. Input is Dataset. \
-        Defaults to %s' % dtype)
+        print(
+            "No `dtype` chosen. Input is Dataset. \
+        Defaults to %s"
+            % dtype
+        )
     elif isinstance(aa, xr.DataArray):
         dtype = aa.dtype
     return dtype
 
 
-def xr_linregress(a, b, dim='time', convert_to_dataset=True,
-                  dtype=None, nanmask=False):
+def xr_linregress(
+    a, b, dim="time", convert_to_dataset=True, dtype=None, nanmask=False
+):
     """Applies scipy.stats.linregress over two xr.DataArrays or xr.Datasets.
 
     Parameters
@@ -112,17 +94,22 @@ def xr_linregress(a, b, dim='time', convert_to_dataset=True,
     if dtype is None:
         dtype = set_dtype(b)
 
-    stats = xr.apply_ufunc(_linregress_ufunc, a, b, nanmask,
-                           input_core_dims=[[dim], [dim], []],
-                           output_core_dims=[['parameter']],
-                           vectorize=True,
-                           dask='parallelized',
-                           output_dtypes=[dtype],
-                           output_sizes={'parameter': 5}
-                           )
-    stats['parameter'] = xr.DataArray(['slope', 'intercept',
-                                       'r_value', 'p_value',
-                                       'std_err'], dims=['parameter'])
+    stats = xr.apply_ufunc(
+        _linregress_ufunc,
+        a,
+        b,
+        nanmask,
+        input_core_dims=[[dim], [dim], []],
+        output_core_dims=[["parameter"]],
+        vectorize=True,
+        dask="parallelized",
+        output_dtypes=[dtype],
+        output_sizes={"parameter": 5},
+    )
+    stats["parameter"] = xr.DataArray(
+        ["slope", "intercept", "r_value", "p_value", "std_err"],
+        dims=["parameter"],
+    )
     if convert_to_dataset:
         # chug them all into a dataset
         ds_stats = xr.Dataset()
@@ -139,8 +126,11 @@ def linear_trend(obj, dim):
     given timestep. E.g. if the data is passed as yearly values, the
     trend is in units/yr.
     """
-    x = xr.DataArray(np.arange(len(obj[dim])).astype(np.float), dims=dim,
-                     coords={dim: obj[dim]})
+    x = xr.DataArray(
+        np.arange(len(obj[dim])).astype(np.float),
+        dims=dim,
+        coords={dim: obj[dim]},
+    )
     trend = xr_linregress(x, obj, dim=dim, convert_to_dataset=False)
     return trend
 
@@ -158,8 +148,10 @@ def aggregate_w_nanmean(da, weights, blocks, **kwargs):
     # make sure that the missing values are exactly equal to each otherwise
     weights = weights.where(~np.isnan(da))
     if not np.all(np.isnan(da) == np.isnan(weights)):
-        raise RuntimeError('weights cannot have more missing values \
-        then the data array')
+        raise RuntimeError(
+            "weights cannot have more missing values \
+        then the data array"
+        )
 
     weights_sum = aggregate(weights, blocks, func=np.nansum, **kwargs)
     da_sum = aggregate(da * weights, blocks, func=np.nansum, **kwargs)
@@ -223,15 +215,18 @@ def aggregate(da, blocks, func=np.nanmean, debug=False):
     # Check if the input is a dask array (I might want to convert this
     # automaticlaly in the future)
     if not isinstance(da.data, Array):
-        raise RuntimeError('data array data must be a dask array')
+        raise RuntimeError("data array data must be a dask array")
     # Check data type of blocks
     # TODO write test
-    if (not all(isinstance(n[0], str) for n in blocks) or
-            not all(isinstance(n[1], int) for n in blocks)):
+    if not all(isinstance(n[0], str) for n in blocks) or not all(
+        isinstance(n[1], int) for n in blocks
+    ):
 
-        print('blocks input', str(blocks))
-        raise RuntimeError("block dimension must be dtype(str), \
-        e.g. ('lon',4)")
+        print("blocks input", str(blocks))
+        raise RuntimeError(
+            "block dimension must be dtype(str), \
+        e.g. ('lon',4)"
+        )
 
     # Check if the given array has the dimension specified in blocks
     try:
@@ -240,8 +235,9 @@ def aggregate(da, blocks, func=np.nanmean, debug=False):
         raise RuntimeError("'blocks' contains non matching dimension")
 
     # Check the size of the excess in each aggregated axis
-    blocks = [(a[0], a[1], da.shape[da.get_axis_num(a[0])] % a[1])
-              for a in blocks]
+    blocks = [
+        (a[0], a[1], da.shape[da.get_axis_num(a[0])] % a[1]) for a in blocks
+    ]
 
     # for now default to trimming the excess
     da_coarse = coarsen(func, da.data, block_dict, trim_excess=True)
@@ -254,18 +250,20 @@ def aggregate(da, blocks, func=np.nanmean, debug=False):
         new_coords[cc] = da.coords[cc]
         for dd in blocks:
             if dd[0] in list(da.coords[cc].dims):
-                new_coords[cc] = \
-                    new_coords[cc].isel(
-                        **{dd[0]: slice(0, -(1 + dd[2]), dd[1])})
+                new_coords[cc] = new_coords[cc].isel(
+                    **{dd[0]: slice(0, -(1 + dd[2]), dd[1])}
+                )
 
-    attrs = {'Coarsened with': str(func), 'Coarsenblocks': str(blocks)}
-    da_coarse = xr.DataArray(da_coarse, dims=da.dims, coords=new_coords,
-                             name=da.name, attrs=attrs)
+    attrs = {"Coarsened with": str(func), "Coarsenblocks": str(blocks)}
+    da_coarse = xr.DataArray(
+        da_coarse, dims=da.dims, coords=new_coords, name=da.name, attrs=attrs
+    )
     return da_coarse
 
 
-def fancymean(raw, dim=None, axis=None, method='arithmetic',
-              weights=None, debug=False):
+def fancymean(
+    raw, dim=None, axis=None, method="arithmetic", weights=None, debug=False
+):
     """ extenden mean function for xarray
 
     Applies various methods to estimate mean values
@@ -274,7 +272,7 @@ def fancymean(raw, dim=None, axis=None, method='arithmetic',
     can be a coordinate in the passed xarray structure
     """
     if not isinstance(raw, xr.Dataset) and not isinstance(raw, xr.DataArray):
-        raise RuntimeError('input needs to be xarray structure')
+        raise RuntimeError("input needs to be xarray structure")
 
     # map dim to axis so this works on ndarrays and DataArray/Dataset
     # Below is the preferred way when passing a LOT of optional values
@@ -289,26 +287,27 @@ def fancymean(raw, dim=None, axis=None, method='arithmetic',
     # For now I will add this in a simple way
     if dim is not None:
         if axis is not None:
-            raise ValueError('cannot set both `dim` and `axis`')
+            raise ValueError("cannot set both `dim` and `axis`")
         if isinstance(raw, xr.Dataset):
             axis = raw[raw.data_vars.keys()[0]].get_axis_num(dim)
             if debug:
-                print('dim ', dim, ' changed to axis ', axis)
+                print("dim ", dim, " changed to axis ", axis)
         elif isinstance(raw, xr.DataArray):
             axis = raw.get_axis_num(dim)
             if debug:
-                print('dim ', dim, ' changed to axis ', axis)
+                print("dim ", dim, " changed to axis ", axis)
 
     if debug:
-        print('axis', axis)
+        print("axis", axis)
 
     if weights is None:
         w = 1
     elif isinstance(weights, str):
         w = raw[weights]
     elif isinstance(weights, np.ndarray):
-        w = xr.DataArray(np.ones_like(raw.data),
-                         coords=raw.coords, dims=raw.dims)
+        w = xr.DataArray(
+            np.ones_like(raw.data), coords=raw.coords, dims=raw.dims
+        )
 
     # make sure the w array is the same size as the raw array
     # This way also nans will be propagated correctly in a bidirectional way
@@ -319,64 +318,65 @@ def fancymean(raw, dim=None, axis=None, method='arithmetic',
     order = raw.dims
     w = w.transpose(*order)
 
-    if method == 'arithmetic':
+    if method == "arithmetic":
         up = raw * w
         down = w
         out = up.sum(axis=axis) / down.sum(axis=axis)
-    elif method == 'geometric':
+    elif method == "geometric":
         w = w.where(raw > 0)
         raw = raw.where(raw > 0)
         up = np.log10(raw) * w
         down = w
-        out = 10**(up.sum(axis=axis) / down.sum(axis=axis))
-    elif method == 'harmonic':
+        out = 10 ** (up.sum(axis=axis) / down.sum(axis=axis))
+    elif method == "harmonic":
         w = w.where(raw != 0)
         raw = raw.where(raw != 0)
         up = w / raw
         down = w
         out = down.sum(axis=axis) / up.sum(axis=axis)
     if debug:
-        print('w', w.shape)
-        print('raw', raw.shape)
-        print('up', up.shape)
-        print('down', down.shape)
-        print('out', out.shape)
+        print("w", w.shape)
+        print("raw", raw.shape)
+        print("up", up.shape)
+        print("down", down.shape)
+        print("out", out.shape)
 
     return out
 
 
-def timefilter(xr_in, steps,
-               step_spec, timename='time',
-               filtertype='gaussian', stdev=0.1):
+def timefilter(
+    xr_in, steps, step_spec, timename="time", filtertype="gaussian", stdev=0.1
+):
     timedim = xr_in.dims.index(timename)
     dt = np.diff(xr_in.time.data[0:2])[0]
     cut_dt = np.timedelta64(steps, step_spec)
 
-    if filtertype == 'gaussian':
+    if filtertype == "gaussian":
         win_length = (cut_dt / dt).astype(int)
         a = [1.0]
         win = gaussian(win_length, std=(float(win_length) * stdev))
         b = win / win.sum()
         if np.nansum(win) == 0:
-            raise RuntimeError('window to short for time interval')
-            print('win_length', str(win_length))
-            print('stddev', str(stdev))
-            print('win', str(win))
+            raise RuntimeError("window to short for time interval")
+            print("win_length", str(win_length))
+            print("stddev", str(stdev))
+            print("win", str(win))
 
     filtered = filtfilt(b, a, xr_in.data, axis=timedim, padtype=None, padlen=0)
-    out = xr.DataArray(filtered, dims=xr_in.dims, coords=xr_in.coords,
-                       attrs=xr_in.attrs)
-    out.attrs.update({'filterlength': (steps, step_spec),
-                      'filtertype': filtertype})
+    out = xr.DataArray(
+        filtered, dims=xr_in.dims, coords=xr_in.coords, attrs=xr_in.attrs
+    )
+    out.attrs.update(
+        {"filterlength": (steps, step_spec), "filtertype": filtertype}
+    )
     if xr_in.name:
-        out.name = xr_in.name + '_lowpassed'
+        out.name = xr_in.name + "_lowpassed"
     return out
 
 
-def extractBox(da, box, xdim='lon', ydim='lat'):
-    print('This is deprecated. Use extractBox_dict')
-    box_dict = {xdim: box[0, 1],
-                ydim: box[2, 3]}
+def extractBox(da, box, xdim="lon", ydim="lat"):
+    print("This is deprecated. Use extractBox_dict")
+    box_dict = {xdim: box[0, 1], ydim: box[2, 3]}
 
     return extractBox_dict(da, box_dict, concat_wrap=True)
     # box_dict = {xdim: slice(box[0], box[1]),
@@ -413,8 +413,10 @@ def extractBox_dict(ds, box, concat_wrap=True):
 
 
 # This will be deprecated
-def extractBoxes(da, bo, xname=None, yname=None, xdim='lon', ydim='lat'):
-    raise RuntimeWarning('Hard deprecated. Please use extractBox_dict instead')
+def extractBoxes(da, bo, xname=None, yname=None, xdim="lon", ydim="lat"):
+    raise RuntimeWarning("Hard deprecated. Please use extractBox_dict instead")
+
+
 # def extractBoxes(da, bo, xname=None, yname=None, xdim='lon', ydim='lat'):
 #     """ Extracts boxes from DataArray
 #
@@ -459,7 +461,7 @@ def extractBoxes(da, bo, xname=None, yname=None, xdim='lon', ydim='lat'):
 
 # Mapping related stuff
 def dll_dist(dlon, dlat, lon, lat):
-        """Converts lat/lon differentials into distances
+    """Converts lat/lon differentials into distances
 
         PARAMETERS
         ----------
@@ -474,18 +476,20 @@ def dll_dist(dlon, dlat, lon, lat):
         dy  : xarray.DataArray distance inferred from dlat
         """
 
-        dll_factor = 111000.0
-        dx = dlon * xr.ufuncs.cos(xr.ufuncs.deg2rad(lat)) * dll_factor
-        dy = ((lon * 0) + 1) * dlat * dll_factor
-        return dx, dy
+    dll_factor = 111000.0
+    dx = dlon * xr.ufuncs.cos(xr.ufuncs.deg2rad(lat)) * dll_factor
+    dy = ((lon * 0) + 1) * dlat * dll_factor
+    return dx, dy
 
 
 # TODO: This needs a test and perhaps I can refactor it into a 'budget tools
 # Module'
 def convert_flux_array(da, da_full, dim, top=True, fillval=0):
-    dummy = xr.DataArray(ones_like(da_full.data) * fillval,
-                         coords=da_full.coords,
-                         dims=da_full.dims)
+    dummy = xr.DataArray(
+        ones_like(da_full.data) * fillval,
+        coords=da_full.coords,
+        dims=da_full.dims,
+    )
     if top:
         da.coords[dim] = da_full[dim][0]
         dummy_cut = dummy[{dim: slice(1, None)}]
@@ -529,30 +533,40 @@ def composite(data, index, bounds):
         bounds = [-bounds * np.std(index), bounds * np.std(index)]
 
     if len(bounds) != 2:
-        raise RuntimeError('bounds can only have 1 or two elements')
+        raise RuntimeError("bounds can only have 1 or two elements")
 
-    comp_name = 'composite'
-    zones = [index >= bounds[1],
-             np.logical_and(index < bounds[1],
-                            index >= bounds[0]),
-             index < bounds[0]]
-    zones_coords = ['high', 'neutral', 'low']
+    comp_name = "composite"
+    zones = [
+        index >= bounds[1],
+        np.logical_and(index < bounds[1], index >= bounds[0]),
+        index < bounds[0],
+    ]
+    zones_coords = ["high", "neutral", "low"]
     out = xr.concat([data.where(z) for z in zones], comp_name)
     out[comp_name] = zones_coords
     counts = np.array([a.sum().data for a in zones])
-    out.coords['counts'] = xr.DataArray(counts, coords=[out[comp_name]])
-    out.attrs['IndexName'] = index.name
-    out.attrs['CompositeBounds'] = bounds
+    out.coords["counts"] = xr.DataArray(counts, coords=[out[comp_name]])
+    out.attrs["IndexName"] = index.name
+    out.attrs["CompositeBounds"] = bounds
 
     return out
 
 
-def corrmap(a, b, shifts=0,
-            a_x_dim='i', a_y_dim='j',
-            a_x_coord=None, a_y_coord=None,
-            b_x_dim='i', b_y_dim='j',
-            b_x_coord=None, b_y_coord=None,
-            t_dim='time', debug=True):
+def corrmap(
+    a,
+    b,
+    shifts=0,
+    a_x_dim="i",
+    a_y_dim="j",
+    a_x_coord=None,
+    a_y_coord=None,
+    b_x_dim="i",
+    b_y_dim="j",
+    b_x_coord=None,
+    b_y_coord=None,
+    t_dim="time",
+    debug=True,
+):
     """
     a -- input
     b -- target ()
@@ -567,10 +581,10 @@ def corrmap(a, b, shifts=0,
     from scipy.stats import linregress
 
     if not type(a_x_coord) == type(a_y_coord):
-        raise RuntimeError('a_x_coord and a_y_coord need to be the same type')
+        raise RuntimeError("a_x_coord and a_y_coord need to be the same type")
 
     if not type(b_x_coord) == type(b_y_coord):
-        raise RuntimeError('a_x_coord and a_y_coord need to be the same type')
+        raise RuntimeError("a_x_coord and a_y_coord need to be the same type")
 
     if isinstance(shifts, int):
         shifts = [shifts]
@@ -581,8 +595,10 @@ def corrmap(a, b, shifts=0,
     elif len(b.shape) == 1:
         arrayswitch = False
     else:
-        raise RuntimeWarning('this only works with a timseries \
-            or map of timeseries')
+        raise RuntimeWarning(
+            "this only works with a timseries \
+            or map of timeseries"
+        )
 
     # shift timeseries
     slope = []
@@ -594,15 +610,15 @@ def corrmap(a, b, shifts=0,
 
         s = a.mean(dim=t_dim).copy()
         s[:] = np.nan
-        s.name = a.name + ' regressed onto ' + b.name
+        s.name = a.name + " regressed onto " + b.name
 
         c = a.mean(dim=t_dim).copy()
         c[:] = np.nan
-        c.name = 'Corr coeff ' + a.name + '/' + b.name
+        c.name = "Corr coeff " + a.name + "/" + b.name
 
         p = a.mean(dim=t_dim).copy()
         p[:] = np.nan
-        p.name = 'p value ' + a.name + '/' + b.name
+        p.name = "p value " + a.name + "/" + b.name
 
         for ii in range(len(a[a_x_dim])):
             for jj in range(len(a[a_y_dim])):
@@ -624,49 +640,53 @@ def corrmap(a, b, shifts=0,
 
                     # rename the dimensions so it can be reindexed
                     if not b_x_coord:
-                        in_b = xr.DataArray(shifted_b.data,
-                                            coords={'xdim':
-                                                    shifted_b[b_x_dim].data,
-                                                    'ydim':
-                                                    shifted_b[b_y_dim].data,
-                                                    'time':
-                                                    shifted_b.time.data},
-                                            dims=['time', 'ydim', 'xdim'])
+                        in_b = xr.DataArray(
+                            shifted_b.data,
+                            coords={
+                                "xdim": shifted_b[b_x_dim].data,
+                                "ydim": shifted_b[b_y_dim].data,
+                                "time": shifted_b.time.data,
+                            },
+                            dims=["time", "ydim", "xdim"],
+                        )
                     else:
-                        raise RuntimeError('Not implemented yet')
+                        raise RuntimeError("Not implemented yet")
                         # This would have to be acomplished by a mask of some
                         # sort
                         # (with some tolerance around the input position)
 
                     # extract the matching timeseries
-                    in_b = in_b.sel(xdim=in_x, ydim=in_y, method='nearest')
-                    reindexed_b = in_b.reindex_like(in_a.time,
-                                                    method='nearest')
+                    in_b = in_b.sel(xdim=in_x, ydim=in_y, method="nearest")
+                    reindexed_b = in_b.reindex_like(
+                        in_a.time, method="nearest"
+                    )
                 else:
-                    reindexed_b = shifted_b.reindex_like(in_a.time,
-                                                         method='nearest')
+                    reindexed_b = shifted_b.reindex_like(
+                        in_a.time, method="nearest"
+                    )
 
                 x = reindexed_b.data
                 y = in_a.data
 
                 idx = np.logical_and(~np.isnan(y), ~np.isnan(x))
                 if y[idx].size:
-                    s[{a_x_dim: ii, a_y_dim: jj}], _, c[{a_x_dim: ii,
-                                                         a_y_dim: jj}],\
-                        p[{a_x_dim: ii, a_y_dim: jj}], _ = linregress(x[idx],
-                                                                      y[idx])
+                    s[{a_x_dim: ii, a_y_dim: jj}], _, c[
+                        {a_x_dim: ii, a_y_dim: jj}
+                    ], p[{a_x_dim: ii, a_y_dim: jj}], _ = linregress(
+                        x[idx], y[idx]
+                    )
         slope.append(s)
         corr.append(c)
         p_value.append(p)
 
-    out_s = xr.concat(slope, 'timeshifts')
-    out_s['timeshifts'] = shifts
+    out_s = xr.concat(slope, "timeshifts")
+    out_s["timeshifts"] = shifts
     # !!! I think this is a bug...this should be
     # possible with
-    out_c = xr.concat(corr, 'timeshifts')
-    out_c['timeshifts'] = shifts
-    out_p = xr.concat(p_value, 'timeshifts',)
-    out_p['timeshifts'] = shifts
+    out_c = xr.concat(corr, "timeshifts")
+    out_c["timeshifts"] = shifts
+    out_p = xr.concat(p_value, "timeshifts")
+    out_p["timeshifts"] = shifts
 
     return out_c, out_p, out_s
 
@@ -678,8 +698,9 @@ def _coord_remapping_interp(x, y, y_target, remap):
     if sum(~idx) < 2:
         y_remapped = remap * np.nan
     else:
-        y_remapped = interpolate.interp1d(y_target[~idx], y[~idx],
-                                          bounds_error=False)(remap)
+        y_remapped = interpolate.interp1d(
+            y_target[~idx], y[~idx], bounds_error=False
+        )(remap)
     return y_remapped
 
 
@@ -715,48 +736,61 @@ def coord_remapping(x, y, y_target, remap, x_dim=None, remap_dim=None):
     # infer dim from input
     if x_dim is None:
         if len(x.dims) != 1:
-            raise RuntimeError('if x_dim is not specified, \
-                               x must be a 1D array.')
+            raise RuntimeError(
+                "if x_dim is not specified, \
+                               x must be a 1D array."
+            )
         dim = x.dims[0]
     else:
         dim = x_dim
 
     if remap_dim is not None:
-        raise RuntimeError('multidim remap is not implemented yet.')
+        raise RuntimeError("multidim remap is not implemented yet.")
 
     # if dataset is passed drop all data_vars that dont contain dim
     if isinstance(y, xr.Dataset):
         drop_vars = [a for a in y.data_vars if dim not in y[a].dims]
         if drop_vars:
-            print('Found incompatible data variables (%s) in dataset. They do \
-            not contain the dimension `%s` and will be dropped.' \
-            % (drop_vars, dim))
+            print(
+                "Found incompatible data variables (%s) in dataset. They do \
+            not contain the dimension `%s` and will be dropped."
+                % (drop_vars, dim)
+            )
             y = y.drop(drop_vars)
 
     # convert remap to dataarray?
     if not isinstance(remap, xr.DataArray):
-        remap = xr.DataArray(remap, coords=[('remapped_dim', remap)])
+        remap = xr.DataArray(remap, coords=[("remapped_dim", remap)])
 
     args = (y_target, remap)
     kwargs = dict(
-            input_core_dims=[[dim], [dim], [dim], ['remapped_dim']],
-            output_core_dims=[['remapped_dim']],
-            vectorize=True,
-            dask='parallelized',
-            output_dtypes=[y_target.dtype],
-            output_sizes={'remapped_dim': len(remap)}
-                )
+        input_core_dims=[[dim], [dim], [dim], ["remapped_dim"]],
+        output_core_dims=[["remapped_dim"]],
+        vectorize=True,
+        dask="parallelized",
+        output_dtypes=[y_target.dtype],
+        output_sizes={"remapped_dim": len(remap)},
+    )
 
     remapped_y = xr.apply_ufunc(_coord_remapping_interp, x, y, *args, **kwargs)
 
-    remapped_pos = xr.apply_ufunc(_coord_remapping_interp, x, x, *args,
-                                  **kwargs)
-    remapped_y.coords['remapped_%s' % x.name] = remapped_pos
+    remapped_pos = xr.apply_ufunc(
+        _coord_remapping_interp, x, x, *args, **kwargs
+    )
+    remapped_y.coords["remapped_%s" % x.name] = remapped_pos
     return remapped_y
 
 
-def extract_surf(da_target, da_ind, surf_val, dim, masking=False,
-                 method='index', fill_value=-1e15, **kwargs):
+def extract_surf(
+    da_target,
+    da_ind,
+    surf_val,
+    dim,
+    masking=False,
+    method="index",
+    fill_value=-1e15,
+    **kwargs
+):
     """Extract a surface and surface position out of `da_target`.
     The surface is defined by lookup of `surf_val` along dimension `dim` in
     `da_target`.
@@ -791,16 +825,16 @@ def extract_surf(da_target, da_ind, surf_val, dim, masking=False,
     # !!!TODO: The naming is ambiguous...change
     # da_ind cannot be a dataset
     if not isinstance(da_ind, xr.DataArray):
-        raise RuntimeError('`da_ind` must be a DataArray.')
+        raise RuntimeError("`da_ind` must be a DataArray.")
 
     # check if dim is in all dataarrays
     for ds_check in [da_ind, da_target]:
         if dim not in list(ds_check.dims):
-            raise RuntimeError('no dimension %s found in input arrays' % dim)
+            raise RuntimeError("no dimension %s found in input arrays" % dim)
 
     if isinstance(da_target, xr.DataArray):
         if not set(da_ind.dims).issubset(set(da_target.dims)):
-            raise RuntimeError('da_target has non matching dimensions.')
+            raise RuntimeError("da_target has non matching dimensions.")
     elif isinstance(da_target, xr.Dataset):
         # all datavariable have to have all the dimensions of da_ind
         non_matching_vars = []
@@ -809,30 +843,35 @@ def extract_surf(da_target, da_ind, surf_val, dim, masking=False,
                 non_matching_vars.append(vv)
         if non_matching_vars:
             da_target = da_target.drop(non_matching_vars)
-            print('`da_target` contains variables with non matching dimension. \
-                  %s have been dropped ' % non_matching_vars)
+            print(
+                "`da_target` contains variables with non matching dimension. \
+                  %s have been dropped "
+                % non_matching_vars
+            )
     else:
-        raise RuntimeError('da_target needs to be xarray DataArray or Dataset')
+        raise RuntimeError("da_target needs to be xarray DataArray or Dataset")
 
-    if surf_val == 'min':
+    if surf_val == "min":
         surf_val = da_ind.min(dim)
-    elif surf_val == 'max':
+    elif surf_val == "max":
         surf_val = da_ind.max(dim)
     else:
         if type(surf_val) not in [xr.DataArray, int, float]:
-            raise ValueError("`surf_val needs to be a scalar, xr.DataArray (with matching dimensions) \
-            or one of 'min'/'max'")
+            raise ValueError(
+                "`surf_val needs to be a scalar, xr.DataArray (with matching dimensions) \
+            or one of 'min'/'max'"
+            )
 
     # Mask out areas where the surface runs into the boundary
     da_ind = da_ind.copy()
     da_target = da_target.copy()
 
     if masking:
-        condition = \
-            xr.ufuncs.logical_or((da_ind.max(dim) < surf_val),
-                                 (da_ind.min(dim) > surf_val))
+        condition = xr.ufuncs.logical_or(
+            (da_ind.max(dim) < surf_val), (da_ind.min(dim) > surf_val)
+        )
 
-    if method == 'index':
+    if method == "index":
         # fill index array, since otherwise armin does raise ValueError
         da_ind = da_ind.fillna(fill_value)
         idx = abs(da_ind - surf_val.fillna(0)).argmin(dim)
@@ -846,7 +885,7 @@ def extract_surf(da_target, da_ind, surf_val, dim, masking=False,
         target_on_surf = target_on_surf.where(dim_on_surf != fill_value)
         dim_on_surf = dim_on_surf.where(dim_on_surf != fill_value)
     else:
-        print('No other methods implemented yet. Interpolation is coming soon')
+        print("No other methods implemented yet. Interpolation is coming soon")
 
     # Mask out the regions where the surface outcrops at the top or bottom
     if masking:
@@ -869,31 +908,38 @@ def find_surf_ind_legacy(da, surf_val, dim):
 
 
 # TODO: Deprecate this function
-def extract_surf_legacy(da_ind, da_target, surf_val, dim,
-                        constant_dims=['time'], fill_value=1000, masking=True):
+def extract_surf_legacy(
+    da_ind,
+    da_target,
+    surf_val,
+    dim,
+    constant_dims=["time"],
+    fill_value=1000,
+    masking=True,
+):
     """Extract values of 'da_target' on a surface in 'da_ind', specified as nearest
     value to 'surf_val along 'dim'"""
     # Mask out areas where the surface runs into the boundary
     da_ind = da_ind.copy()
     da_target = da_target.copy()
     if masking:
-        condition = \
-            xr.ufuncs.logical_or((da_ind.max(dim) < surf_val),
-                                 (da_ind.min(dim) > surf_val))
+        condition = xr.ufuncs.logical_or(
+            (da_ind.max(dim) < surf_val), (da_ind.min(dim) > surf_val)
+        )
         if constant_dims:
             condition = condition.any(constant_dims)
 
     da_ind_filled = da_ind.fillna(fill_value)
-    if (isinstance(surf_val, float) or isinstance(surf_val, int)):
+    if isinstance(surf_val, float) or isinstance(surf_val, int):
         surf_val_filled = surf_val
     else:
         surf_val_filled = surf_val.fillna(fill_value).copy()
 
     ind = find_surf_ind(da_ind_filled, surf_val_filled, dim)
     # Expand ind into full dimensions
-    ind_exp = (da_ind_filled * 0)+ind
+    ind_exp = (da_ind_filled * 0) + ind
 
-    target = (da_target[dim] * 0)+range(len(da_target[dim]))
+    target = (da_target[dim] * 0) + range(len(da_target[dim]))
     target_exp = target + (da_ind_filled * 0)
     target_pos = da_target[dim] + (da_ind_filled * 0)
 
@@ -918,12 +964,12 @@ def extract_surf_legacy(da_ind, da_target, surf_val, dim,
 def concat_dim_da(data, name):
     """creates an xarray.Dataarray to label the concat dim in xarray.concat.
     data is the dimension array and name is the name (DuHHHHH)"""
-    return xr.DataArray(data, dims=[name],
-                        coords={name: (name, data)},
-                        name=name)
+    return xr.DataArray(
+        data, dims=[name], coords={name: (name, data)}, name=name
+    )
 
 
-def xr_detrend(b, dim='time', trend_params=None, convert_datetime=True):
+def xr_detrend(b, dim="time", trend_params=None, convert_datetime=True):
     """Removes linear trend along dimension `dim` from dataarray `b`. If no `trend_params` are passed (default),
     the linear trend is calculated using `xr_linregress`.
     Parameters
@@ -944,7 +990,7 @@ def xr_detrend(b, dim='time', trend_params=None, convert_datetime=True):
         t_data = b[dim]
 
     if trend_params is None:
-        out = xr_linregress(t_data,b)
+        out = xr_linregress(t_data, b)
     else:
         out = trend_params
 
@@ -952,10 +998,10 @@ def xr_detrend(b, dim='time', trend_params=None, convert_datetime=True):
     trend_full = t_data * out.slope + out.intercept
     trend_full[dim].data = b[dim].data
 
-    return b-trend_full
+    return b - trend_full
 
 
-def lag_and_combine(ds, lags, dim='time'):
+def lag_and_combine(ds, lags, dim="time"):
     """Creates lagged versions of the input object,
     combined along new `lag` dimension.
     NOTE: Lagging produces missing values at boundary. Use `.fillna(...)`
@@ -981,4 +1027,17 @@ def lag_and_combine(ds, lags, dim='time'):
     datasets = []
     for ll in lags:
         datasets.append(ds.shift(**{dim: ll}))
-    return xr.concat(datasets, dim=concat_dim_da(lags, 'lag'))
+    return xr.concat(datasets, dim=concat_dim_da(lags, "lag"))
+
+
+##################
+# Refactored stuff
+from xarrayutils.filtering import filter_1D as filter_1D_refactored
+
+
+def filter_1D(data, std, dim="time", dtype=None):
+    warnings.warn(
+        "This version of 1D filter is outdated. Please import from xarrayutils.filtering",
+        DeprecationWarning,
+    )
+    return filter_1D_refactored(data, std, dim="time", dtype=None)
