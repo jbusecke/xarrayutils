@@ -21,11 +21,11 @@ from xarrayutils.utils import (
 
 from numpy.testing import assert_allclose
 
-# from .datasets import (
-#     dataarray_2d_example,
-#     dataarray_2d_ones,
-#     dataarray_2d_ones_nan,
-# )
+from .datasets import (
+    dataarray_2d_example,
+    dataarray_2d_ones,
+    dataarray_2d_ones_nan,
+)
 
 
 def test_filter_1D():
