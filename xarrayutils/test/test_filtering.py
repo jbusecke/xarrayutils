@@ -39,4 +39,5 @@ def test_filter_2D(radius):
         # result[np.isnan(raw_data)] = np.nan
         np.testing.assert_allclose(sample, expected)
 
-    # TODO test case with nans (astropy interpolates nicely. I want to make the nan substitution optiona)
+    # TODO test case with nans (astropy interpolates nicely.
+    # I want to make the nan substitution optiona)

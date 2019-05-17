@@ -6,12 +6,12 @@ from astropy.convolution import (
     Gaussian2DKernel,
 )
 
-from xarrayutils.utils import set_dtype
+from xarrayutils.utilities import detect_dtype
 
 
 def filter_1D(data, std, dim="time", dtype=None):
     if dtype is None:
-        dtype = set_dtype(data)
+        dtype = detect_dtype(data)
 
     kernel = Gaussian1DKernel(std)
 
@@ -38,7 +38,7 @@ def filter_1D(data, std, dim="time", dtype=None):
 
 def filter_2D(data, std, dim, dtype=None):
     if dtype is None:
-        dtype = set_dtype(data)
+        dtype = detect_dtype(data)
 
     kernel = Gaussian2DKernel(std)
 

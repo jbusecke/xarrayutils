@@ -6,7 +6,10 @@ from scipy import stats, interpolate
 from dask.array import coarsen, ones_like
 from dask.array.core import Array
 import warnings
-from astropy.convolution import convolve_fft, Gaussian1DKernel
+from xarrayutils.utilities import detect_dtype
+
+# from xarrayutils.filtering import filter_1D as filter_1D_refactored
+from xarrayutils.filtering import filter_1D as filter_1D_refactored
 
 # from scipy import optimize
 # import dask.array as dsa
@@ -46,19 +49,6 @@ def _linregress_ufunc(a, b, nanmask=False):
     return np.array([slope, intercept, r_value, p_value, std_err])
 
 
-def set_dtype(aa):
-    if isinstance(aa, xr.Dataset):
-        dtype = aa[list(aa.data_vars)[0]].dtype
-        print(
-            "No `dtype` chosen. Input is Dataset. \
-        Defaults to %s"
-            % dtype
-        )
-    elif isinstance(aa, xr.DataArray):
-        dtype = aa.dtype
-    return dtype
-
-
 def xr_linregress(
     a, b, dim="time", convert_to_dataset=True, dtype=None, nanmask=False
 ):
@@ -92,7 +82,7 @@ def xr_linregress(
     """
 
     if dtype is None:
-        dtype = set_dtype(b)
+        dtype = detect_dtype(b)
 
     stats = xr.apply_ufunc(
         _linregress_ufunc,
@@ -970,7 +960,8 @@ def concat_dim_da(data, name):
 
 
 def xr_detrend(b, dim="time", trend_params=None, convert_datetime=True):
-    """Removes linear trend along dimension `dim` from dataarray `b`. If no `trend_params` are passed (default),
+    """Removes linear trend along dimension `dim` from dataarray `b`.
+    If no `trend_params` are passed (default),
     the linear trend is calculated using `xr_linregress`.
     Parameters
     ----------
@@ -979,10 +970,13 @@ def xr_detrend(b, dim="time", trend_params=None, convert_datetime=True):
     dim : str
         Dimension along which to remove linear trend
     trend_params: {xr.DataArray, xr.Dataset, None}
-        Precomputed output of xr_linregress. This can be usefull for large datasets where intermediate results are saved already.
-        Defaults to None, meaning the linear trend is computed within the function.
+        Precomputed output of xr_linregress.
+        This can be usefull for large datasets where intermediate results are
+        saved already. Defaults to None, meaning the linear trend is computed
+        within the function.
     convert_datetime: bool
-        If true (default), the dimension `dim` is converted from a datetime to float.
+        If true (default), the dimension `dim` is converted from a datetime to
+        float.
     """
     if convert_datetime:
         t_data = b[dim].astype(np.float64)
@@ -1032,12 +1026,12 @@ def lag_and_combine(ds, lags, dim="time"):
 
 ##################
 # Refactored stuff
-from xarrayutils.filtering import filter_1D as filter_1D_refactored
 
 
 def filter_1D(data, std, dim="time", dtype=None):
     warnings.warn(
-        "This version of 1D filter is outdated. Please import from xarrayutils.filtering",
+        "This version of 1D filter is outdated. \
+        Please import from xarrayutils.filtering",
         DeprecationWarning,
     )
     return filter_1D_refactored(data, std, dim="time", dtype=None)
