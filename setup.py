@@ -1,14 +1,6 @@
 import sys
-
+import versioneer
 from setuptools import setup, find_packages
-
-MAJOR = 0
-MINOR = 0
-MICRO = 0
-ISRELEASED = False
-VERSION = "%d.%d.%d" % (MAJOR, MINOR, MICRO)
-QUALIFIER = ""
-
 
 DISTNAME = "xarrayutils"
 LICENSE = "MIT"
@@ -43,7 +35,8 @@ LONG_DESCRIPTION = """To be written.
 
 setup(
     name=DISTNAME,
-    version=VERSION,
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
     license=LICENSE,
     author=AUTHOR,
     author_email=AUTHOR_EMAIL,
