@@ -10,7 +10,13 @@ try:
 except ImportError:
     pass
 
-import gsw
+try:
+    import gsw
+
+    gsw_available = True
+except ImportError:
+    gsw_available = False
+    pass
 from matplotlib.transforms import blended_transform_factory
 import string
 import cartopy
@@ -50,12 +56,7 @@ def xr_violinplot(ds, ax=None, x_dim="xt_ocean", width=1, color="0.5"):
     if ax is None:
         ax = plt.gca()
     vp = ax.violinplot(
-        y,
-        x,
-        widths=width,
-        showextrema=False,
-        showmedians=False,
-        showmeans=True,
+        y, x, widths=width, showextrema=False, showmedians=False, showmeans=True
     )
     [item.set_facecolor(color) for item in vp["bodies"]]
 
@@ -185,13 +186,7 @@ def depth_logscale(ax, yscale=400, ticks=None):
 
 
 def plot_line_shaded_std(
-    x,
-    y,
-    std_y,
-    horizontal=True,
-    ax=None,
-    line_kwargs=dict(),
-    fill_kwargs=dict(),
+    x, y, std_y, horizontal=True, ax=None, line_kwargs=dict(), fill_kwargs=dict()
 ):
     """Plot wrapper to draw line for y and shaded patch according to std_y.
     The shading represents one std on each side of the line...
@@ -328,9 +323,7 @@ def box_plot(box, ax=None, split_detection="True", **kwargs):
 
 
 def dict2box(di, xdim="lon", ydim="lat"):
-    return np.array(
-        [di[xdim].start, di[xdim].stop, di[ydim].start, di[ydim].stop]
-    )
+    return np.array([di[xdim].start, di[xdim].stop, di[ydim].start, di[ydim].stop])
 
 
 def box_plot_dict(di, xdim="lon", ydim="lat", **kwargs):
@@ -359,6 +352,11 @@ def draw_dens_contours_teos10(
     """draws density contours on the current plot.
     Assumes that the salinity and temperature values are given as SA and CT.
     Needs documentation... """
+    if not gsw_available:
+        raise RuntimeError(
+            "gsw not installed. Install in the current environment with `conda install -c conda-forge gsw`"
+        )
+
     if ax is None:
         ax = plt.gca()
 
