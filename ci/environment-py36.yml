@@ -13,7 +13,7 @@ dependencies:
   - astropy
   - matplotlib
   # Necesary additions for the plotting tools (might have to make thos optional)
-  - gsw
+  # - gsw # remove here to check missing gsw in ci
   - cartopy
   - xgcm
   - pip:

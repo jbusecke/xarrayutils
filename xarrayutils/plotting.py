@@ -22,6 +22,13 @@ import string
 import cartopy
 
 
+def gsw_check():
+    if not gsw_available:
+        raise RuntimeError(
+            "gsw not installed. Install in the current environment with `conda install -c conda-forge gsw`"
+        )
+
+
 def xr_violinplot(ds, ax=None, x_dim="xt_ocean", width=1, color="0.5"):
     """Wrapper of matplotlib violinplot for xarray.DataArray.
 
@@ -352,10 +359,7 @@ def draw_dens_contours_teos10(
     """draws density contours on the current plot.
     Assumes that the salinity and temperature values are given as SA and CT.
     Needs documentation... """
-    if not gsw_available:
-        raise RuntimeError(
-            "gsw not installed. Install in the current environment with `conda install -c conda-forge gsw`"
-        )
+    gsw_check()
 
     if ax is None:
         ax = plt.gca()
@@ -437,6 +441,7 @@ def tsdiagram(
     add_labels=True,
     **kwargs
 ):
+    gsw_check()
     if ax is None:
         ax = plt.gca()
 
