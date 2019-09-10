@@ -93,13 +93,7 @@ def xr_1d_groupby(data, group_data, bins, dim):
 
 
 def xr_remapping(
-    da_data,
-    da_group,
-    bins,
-    dim,
-    distance_coord,
-    content_var=False,
-    return_average=True,
+    da_data, da_group, bins, dim, distance_coord, content_var=False, return_average=True
 ):
     """Performs conservative remapping into another tracer coordinate system.
 
@@ -164,13 +158,9 @@ def xr_remapping(
     if return_average:
         data_remapped = data_remapped / thickness
 
-    data_remapped.coords[
-        "%s_layer_%s" % (da_group.name, thick_name)
-    ] = thickness
+    data_remapped.coords["%s_layer_%s" % (da_group.name, thick_name)] = thickness
     # calculate the mean depth of the layer
-    data_remapped.coords["%s_layer_%s" % (da_group.name, dim)] = (
-        layer_pos / thickness
-    )
+    data_remapped.coords["%s_layer_%s" % (da_group.name, dim)] = layer_pos / thickness
     data_remapped.name = da_data.name
 
     return data_remapped

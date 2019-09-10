@@ -60,12 +60,8 @@ def _infer_gridtype(grid, u, v, verbose=False):
     v_y_pos = _get_axis_pos(grid, "Y", v)
 
     # should I check if each of these has more than one element?
-    if any(
-        [a in ["outer", "inner"] for a in [u_x_pos, u_y_pos, v_x_pos, v_y_pos]]
-    ):
-        raise RuntimeError(
-            "`inner` or `outer` grid positions are not supported yet."
-        )
+    if any([a in ["outer", "inner"] for a in [u_x_pos, u_y_pos, v_x_pos, v_y_pos]]):
+        raise RuntimeError("`inner` or `outer` grid positions are not supported yet.")
 
     if verbose:
         print(
@@ -158,9 +154,7 @@ def xgcm_weighted_mean(grid, dat, axis, dim_metric_list, verbose=False):
     if isinstance(dat, xr.Dataset):
         ds_mean = xr.Dataset()
         for vv in dat.data_vars:
-            ds_mean[vv] = w_mean(
-                grid, dat[vv], axis, dim_metric_list, verbose=verbose
-            )
+            ds_mean[vv] = w_mean(grid, dat[vv], axis, dim_metric_list, verbose=verbose)
     elif isinstance(dat, xr.DataArray):
         ds_mean = w_mean(grid, dat, axis, dim_metric_list, verbose=verbose)
     return ds_mean
@@ -264,9 +258,7 @@ def interp_all(grid, ds, target="center", keep_coords=True):
             match = [a for a in da.dims if a in ax_coords]
             if len(match) > 0:
                 pos = [
-                    p
-                    for p, a in grid.axes[ax].coords.items()
-                    if _get_name(a) in match
+                    p for p, a in grid.axes[ax].coords.items() if _get_name(a) in match
                 ]
                 if target not in pos:
                     da = grid.interp(da, ax, to=target)

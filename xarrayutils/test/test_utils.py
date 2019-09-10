@@ -21,11 +21,7 @@ from xarrayutils.utils import (
 
 from numpy.testing import assert_allclose
 
-from .datasets import (
-    dataarray_2d_example,
-    dataarray_2d_ones,
-    dataarray_2d_ones_nan,
-)
+from .datasets import dataarray_2d_example, dataarray_2d_ones, dataarray_2d_ones_nan
 
 
 def test_filter_1D():
@@ -298,9 +294,7 @@ def test_aggregate_regular_func(dataarray_2d_example, func, expected_result):
         )
     ],
 )
-def test_aggregate_regular_blocks(
-    dataarray_2d_example, blocks, expected_result
-):
+def test_aggregate_regular_blocks(dataarray_2d_example, blocks, expected_result):
     func = np.nanmean
     a = aggregate(dataarray_2d_example, blocks, func=func)
     assert_allclose(a.data, expected_result)
