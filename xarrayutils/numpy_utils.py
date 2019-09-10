@@ -39,7 +39,8 @@ def interp_map_regular_grid(a, x, y, x_i, y_i, method="linear", debug=False, wra
         print("y_i values", y_i[:])
 
     xx_i, yy_i = np.meshgrid(x_i, y_i)
-    f = spi.RegularGridInterpolator((x, y), a.T, method=method, bounds_error=False)
+    f = spi.RegularGridInterpolator(
+        (x, y), a.T, method=method, bounds_error=False)
     int_points = np.vstack((xx_i.flatten(), yy_i.flatten())).T
     a_new = f(int_points)
 

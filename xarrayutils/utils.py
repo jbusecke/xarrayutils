@@ -220,7 +220,8 @@ def aggregate(da, blocks, func=np.nanmean, debug=False):
         raise RuntimeError("'blocks' contains non matching dimension")
 
     # Check the size of the excess in each aggregated axis
-    blocks = [(a[0], a[1], da.shape[da.get_axis_num(a[0])] % a[1]) for a in blocks]
+    blocks = [(a[0], a[1], da.shape[da.get_axis_num(a[0])] % a[1])
+              for a in blocks]
 
     # for now default to trimming the excess
     da_coarse = coarsen(func, da.data, block_dict, trim_excess=True)
@@ -286,7 +287,8 @@ def fancymean(raw, dim=None, axis=None, method="arithmetic", weights=None, debug
     elif isinstance(weights, str):
         w = raw[weights]
     elif isinstance(weights, np.ndarray):
-        w = xr.DataArray(np.ones_like(raw.data), coords=raw.coords, dims=raw.dims)
+        w = xr.DataArray(np.ones_like(raw.data),
+                         coords=raw.coords, dims=raw.dims)
 
     # make sure the w array is the same size as the raw array
     # This way also nans will be propagated correctly in a bidirectional way
@@ -345,7 +347,8 @@ def timefilter(
     out = xr.DataArray(
         filtered, dims=xr_in.dims, coords=xr_in.coords, attrs=xr_in.attrs
     )
-    out.attrs.update({"filterlength": (steps, step_spec), "filtertype": filtertype})
+    out.attrs.update(
+        {"filterlength": (steps, step_spec), "filtertype": filtertype})
     if xr_in.name:
         out.name = xr_in.name + "_lowpassed"
     return out
@@ -632,9 +635,11 @@ def corrmap(
 
                     # extract the matching timeseries
                     in_b = in_b.sel(xdim=in_x, ydim=in_y, method="nearest")
-                    reindexed_b = in_b.reindex_like(in_a.time, method="nearest")
+                    reindexed_b = in_b.reindex_like(
+                        in_a.time, method="nearest")
                 else:
-                    reindexed_b = shifted_b.reindex_like(in_a.time, method="nearest")
+                    reindexed_b = shifted_b.reindex_like(
+                        in_a.time, method="nearest")
 
                 x = reindexed_b.data
                 y = in_a.data
@@ -743,7 +748,8 @@ def coord_remapping(x, y, y_target, remap, x_dim=None, remap_dim=None):
 
     remapped_y = xr.apply_ufunc(_coord_remapping_interp, x, y, *args, **kwargs)
 
-    remapped_pos = xr.apply_ufunc(_coord_remapping_interp, x, x, *args, **kwargs)
+    remapped_pos = xr.apply_ufunc(
+        _coord_remapping_interp, x, x, *args, **kwargs)
     remapped_y.coords["remapped_%s" % x.name] = remapped_pos
     return remapped_y
 

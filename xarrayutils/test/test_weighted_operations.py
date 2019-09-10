@@ -81,7 +81,8 @@ def test_weighted_mean():
     a_dsa = xr.DataArray(
         dsa.from_array(data_test, chunks=chunks), dims=["x", "y"], attrs=attrs
     )
-    w_dsa = xr.DataArray(dsa.from_array(weight_test, chunks=chunks), dims=["y"])
+    w_dsa = xr.DataArray(dsa.from_array(
+        weight_test, chunks=chunks), dims=["y"])
 
     expected_mean = np.array(2.8)
     expected_ymean = np.array([2.0, 3.0])
@@ -90,7 +91,8 @@ def test_weighted_mean():
     mean = weighted_mean(a_dsa, w_dsa, dim=["x", "y"], dimcheck=False)
     ymean = weighted_mean(a_dsa, w_dsa, dim=["y"], dimcheck=False)
     xmean = weighted_mean(a_dsa, w_dsa, dim=["x"], dimcheck=False)
-    xmean_alt = weighted_mean(a_dsa, w_dsa, dim="x", dimcheck=False, keep_attrs=True)
+    xmean_alt = weighted_mean(a_dsa, w_dsa, dim="x",
+                              dimcheck=False, keep_attrs=True)
 
     with pytest.raises(RuntimeError):
         weighted_mean(a_dsa, w_dsa, dim=["x", "y"], dimcheck=True)
@@ -111,7 +113,8 @@ def test_weighted_sum():
     a_dsa = xr.DataArray(
         dsa.from_array(data_test, chunks=chunks), dims=["x", "y"], attrs=attrs
     )
-    w_dsa = xr.DataArray(dsa.from_array(weight_test, chunks=chunks), dims=["y"])
+    w_dsa = xr.DataArray(dsa.from_array(
+        weight_test, chunks=chunks), dims=["y"])
 
     expected_mean = np.array(16.0)
     expected_ymean = np.array([4.0, 12.0])
@@ -121,7 +124,8 @@ def test_weighted_sum():
 
     ymean = weighted_sum(a_dsa, w_dsa, dim=["y"], dimcheck=False)
     xmean = weighted_sum(a_dsa, w_dsa, dim=["x"], dimcheck=False)
-    xmean_alt = weighted_sum(a_dsa, w_dsa, dim="x", dimcheck=False, keep_attrs=True)
+    xmean_alt = weighted_sum(a_dsa, w_dsa, dim="x",
+                             dimcheck=False, keep_attrs=True)
 
     with pytest.raises(RuntimeError):
         weighted_sum(a_dsa, w_dsa, dim=["x", "y"], dimcheck=True)

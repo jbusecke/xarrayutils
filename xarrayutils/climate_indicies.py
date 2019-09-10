@@ -55,7 +55,8 @@ def calculate_ninox_index(
     # Normalize the smoothed values by its standard deviation over the
     # climatological period
     if clim_period:
-        clim_std = sst_anomaly_smooth.loc[{timedim: clim_period}].std([timedim])
+        clim_std = sst_anomaly_smooth.loc[{
+            timedim: clim_period}].std([timedim])
     else:
         clim_std = sst_anomaly_smooth.std(timedim)
 
