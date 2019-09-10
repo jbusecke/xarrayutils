@@ -16,6 +16,44 @@ import string
 import cartopy
 
 
+def fancy_plot(x, y, prop_dict, **kwargs):
+    """plots y against x but varies the key values of
+    `prop_dict`. This enables a change of e.g. linewidth along the line.
+
+    Parameters
+    ----------
+    x : np.array
+        Description of parameter `x`.
+    y : np.array
+        Description of parameter `y`.
+    prop_dict : dict
+        Dictionary of line properties to vary along the length of
+        the line plot. E.g. `{'linewidth':np.array([2,3,5])}`.
+        Values must be the same shape as `x` and `y`
+    **kwargs :
+        Keyword arguments for plt.plot()
+
+    """
+    base_line = []
+    for ii in range(len(x) - 1):
+        add_kwargs = dict(
+            solid_capstyle="round"
+        )  # some defaults. These will be overwritten if provided
+        # set color to baseline (if color is provided either in prop_dict or kwargs,
+        # this should be overwritten)
+
+        if ii > 0:
+            add_kwargs["color"] = base_line.get_color()
+        for k, v in prop_dict.items():
+            add_kwargs[k] = v[ii]
+        add_kwargs.update(kwargs)
+        section_idx = range(ii, ii + 2)
+        lh = plt.plot(x[section_idx], y[section_idx], **add_kwargs)
+        if ii == 0:
+            # set baseline plot
+            base_line, = lh
+
+
 def xr_violinplot(ds, ax=None, x_dim="xt_ocean", width=1, color="0.5"):
     """Wrapper of matplotlib violinplot for xarray.DataArray.
 
@@ -50,12 +88,7 @@ def xr_violinplot(ds, ax=None, x_dim="xt_ocean", width=1, color="0.5"):
     if ax is None:
         ax = plt.gca()
     vp = ax.violinplot(
-        y,
-        x,
-        widths=width,
-        showextrema=False,
-        showmedians=False,
-        showmeans=True,
+        y, x, widths=width, showextrema=False, showmedians=False, showmeans=True
     )
     [item.set_facecolor(color) for item in vp["bodies"]]
 
@@ -185,13 +218,7 @@ def depth_logscale(ax, yscale=400, ticks=None):
 
 
 def plot_line_shaded_std(
-    x,
-    y,
-    std_y,
-    horizontal=True,
-    ax=None,
-    line_kwargs=dict(),
-    fill_kwargs=dict(),
+    x, y, std_y, horizontal=True, ax=None, line_kwargs=dict(), fill_kwargs=dict()
 ):
     """Plot wrapper to draw line for y and shaded patch according to std_y.
     The shading represents one std on each side of the line...
@@ -328,9 +355,7 @@ def box_plot(box, ax=None, split_detection="True", **kwargs):
 
 
 def dict2box(di, xdim="lon", ydim="lat"):
-    return np.array(
-        [di[xdim].start, di[xdim].stop, di[ydim].start, di[ydim].stop]
-    )
+    return np.array([di[xdim].start, di[xdim].stop, di[ydim].start, di[ydim].stop])
 
 
 def box_plot_dict(di, xdim="lon", ydim="lat", **kwargs):
