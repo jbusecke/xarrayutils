@@ -1,16 +1,16 @@
+from dask.diagnostics import ProgressBar
+from dask.multiprocessing import get
+from dask.array import from_array
+from xmitgcm import open_mdsdataset
+import xarray as xr
+import numpy as np
+from mpl_toolkits.basemap import Basemap
+import matplotlib.pyplot as plt
+import time
+import os
 import matplotlib as mpl
 
 mpl.use("Agg")
-import os
-import time
-import matplotlib.pyplot as plt
-from mpl_toolkits.basemap import Basemap
-import numpy as np
-import xarray as xr
-from xmitgcm import open_mdsdataset
-from dask.array import from_array
-from dask.multiprocessing import get
-from dask.diagnostics import ProgressBar
 
 
 def mitgcm_Movie(
@@ -145,7 +145,8 @@ def Movie(
                 dpi=dpi,
             )
             if ii % 100 == 0:
-                remaining_time = (len(da.time) - ii) * (time.time() - start_time) / 60
+                remaining_time = (len(da.time) - ii) * \
+                    (time.time() - start_time) / 60
                 print("FRAME---%04d---" % ii)
                 print("Estimated time left : %d minutes" % remaining_time)
 

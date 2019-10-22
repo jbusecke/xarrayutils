@@ -158,9 +158,11 @@ def xr_remapping(
     if return_average:
         data_remapped = data_remapped / thickness
 
-    data_remapped.coords["%s_layer_%s" % (da_group.name, thick_name)] = thickness
+    data_remapped.coords["%s_layer_%s" %
+                         (da_group.name, thick_name)] = thickness
     # calculate the mean depth of the layer
-    data_remapped.coords["%s_layer_%s" % (da_group.name, dim)] = layer_pos / thickness
+    data_remapped.coords["%s_layer_%s" %
+                         (da_group.name, dim)] = layer_pos / thickness
     data_remapped.name = da_data.name
 
     return data_remapped

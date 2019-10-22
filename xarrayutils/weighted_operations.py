@@ -96,7 +96,8 @@ def weighted_sum_raw(
     else:
         keep_attrs = False
 
-    weight_expanded = _broadcast_weights(da_data, da_weight, keep_attrs=keep_attrs)
+    weight_expanded = _broadcast_weights(
+        da_data, da_weight, keep_attrs=keep_attrs)
 
     if preweighted:
         data = da_data

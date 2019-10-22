@@ -231,7 +231,8 @@ def grid_aggregate(grid, axis_bins):
     """
     bins = []
     for tt in axis_bins:
-        bins = bins + [(a, tt[1]) for a in get_dims_from_comodo_axes(grid, tt[0])]
+        bins = bins + [(a, tt[1])
+                       for a in get_dims_from_comodo_axes(grid, tt[0])]
 
     new_dims = dict([])
     for dd in grid.dims.keys():
@@ -253,8 +254,10 @@ def grid_aggregate(grid, axis_bins):
 
     c = dict([])
     # this needs to be automated but for now...lets do it manually
-    c["XC"] = aggregate(temp["XC"], [a for a in bins if a in temp["XC"].dims], np.mean)
-    c["YC"] = aggregate(temp["YC"], [a for a in bins if a in temp["YC"].dims], np.mean)
+    c["XC"] = aggregate(
+        temp["XC"], [a for a in bins if a in temp["XC"].dims], np.mean)
+    c["YC"] = aggregate(
+        temp["YC"], [a for a in bins if a in temp["YC"].dims], np.mean)
     # I am not sure how to aggregate the other things...
 
     out = out.assign_coords(**c)
