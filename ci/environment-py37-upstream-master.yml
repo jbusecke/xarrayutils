@@ -1,21 +1,24 @@
+# bleeding edge test case with xgcm, xarray from upstream master
 name: test_env_xarrayutils
 channels:
   - conda-forge
 dependencies:
-  - python=3.5
-  - xarray
+  - python=3.7
   - dask
-  - numpy > 1.13
+  - numpy
   - pytest
   - future
   - scipy
   - flake8
-  - astropy
   - matplotlib
+  # i would like to make this optional too
+  - astropy
   # Necesary additions for the plotting tools (might have to make thos optional)
   - gsw
   - cartopy
-  - xgcm
   - pip:
+    - git+https://github.com/pydata/xarray.git
+    - git+https://github.com/xgcm/xgcm.git
     - codecov
     - pytest-cov
+    - pre-commit
