@@ -10,6 +10,7 @@ matrix:
   - env: CONDA_ENV=py36
   - env: CONDA_ENV=py37
   - env: CONDA_ENV=py37-upstream_master
+  allow_failures:
   - env: CONDA_ENV=py38
 
 before_install:
