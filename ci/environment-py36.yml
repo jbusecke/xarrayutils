@@ -4,7 +4,7 @@ channels:
 dependencies:
   - python=3.6
   - xarray  # < 0.12 # this worked to restore the apply_ufunc stuff
-  - dask < 2.8 #< 2.0 this worked to restore the apply_ufunc stuff
+  - dask < 2.3 #< 2.0 this worked to restore the apply_ufunc stuff
   - numpy # < 1.14 # this worked to restore the apply_ufunc stuff
   - pytest
   - future
