@@ -7,10 +7,9 @@ notifications:
 matrix:
   fast_finish: true
   include:
-  - env: CONDA_ENV=py27
-  - env: CONDA_ENV=py35
   - env: CONDA_ENV=py36
-  - env: CONDA_ENV=py36
+  - env: CONDA_ENV=py37
+  - env: CONDA_ENV=py37-upstream_master
 
 before_install:
   - wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
