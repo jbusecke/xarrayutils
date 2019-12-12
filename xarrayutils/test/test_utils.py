@@ -13,7 +13,7 @@ from xarrayutils.utils import (
     linear_trend,
     _lin_trend_legacy,
     _linregress_ufunc,
-    # xr_linregress,
+    xr_linregress,
     xr_detrend,
     lag_and_combine,
     filter_1D,
@@ -147,23 +147,33 @@ def test_linregress_ufunc():
     assert np.isnan(_linregress_ufunc(x, y, nanmask=True)).all()
 
 
-# TODO: Needs a high level test for xr_linregress
-@pytest.mark.parametrize("chunks", {"x": -1, "y": 1}, {"x": 1, "y": 1})
-def test_xr_linregress(chunks):
-    # test dataset
-    dim_order = ("x", "y", "time")
+@pytest.mark.parametrize("chunks", [None, {"x": -1, "y": 1}, {"x": 1, "y": 1}])
+@pytest.mark.parametrize("variant", range(3))
+def test_xr_linregress(chunks, variant):
     a = xr.DataArray(np.random.rand(3, 13, 5), dims=["x", "time", "y"])
     b = xr.DataArray(np.random.rand(3, 5, 13), dims=["x", "y", "time"])
+    if chunks is not None:
+        if variant == 0:
+            a = a.chunk(chunks)
+        elif variant == 1:
+            b = b.chunk(chunks)
+        elif variant == 2:
+            a = a.chunk(chunks)
+            b = b.chunk(chunks)
+
     reg = xr_linregress(a, b)
     for xx in range(len(a.x)):
         for yy in range(len(a.y)):
             pos = dict(x=xx, y=yy)
             expected = _linregress_ufunc(a.isel(**pos), b.isel(**pos))
             reg_sub = reg.isel(**pos)
-            for ni, nn in ["slope", "intercept", "r_value", "p_value", "std_err"]:
+            for ni, nn in enumerate(
+                ["slope", "intercept", "r_value", "p_value", "std_err"]
+            ):
                 np.testing.assert_allclose(reg_sub[nn].data, expected[ni])
 
-    # introduce nans and mask
+
+# introduce nans and mask
 
 
 def test_linear_trend():
