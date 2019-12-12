@@ -3,7 +3,7 @@ channels:
   - conda-forge
 dependencies:
   - python=3.7
-  - dask < 2.1
+  - dask < 2
   - numpy
   - pytest
   - future
