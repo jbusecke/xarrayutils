@@ -3,9 +3,9 @@ channels:
   - conda-forge
 dependencies:
   - python=3.6
-  - xarray < 0.12 # Testing for old xarray version
+  - xarray  # < 0.12 # this worked to restore the apply_ufunc stuff
   - dask < 2.0
-  - numpy < 1.14
+  - numpy # < 1.14 # this worked to restore the apply_ufunc stuff
   - pytest
   - future
   - scipy
