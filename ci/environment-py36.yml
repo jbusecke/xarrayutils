@@ -3,7 +3,11 @@ channels:
   - conda-forge
 dependencies:
   - python=3.6
+<<<<<<< HEAD
   - xarray
+=======
+  - xarray < 0.13  # < 0.12 # this worked to restore the apply_ufunc stuff
+>>>>>>> 10d26a74ad3ed86893e376c148b3041695ff8ffd
   - dask < 2 #< 2.0 this worked to restore the apply_ufunc stuff
   - numpy
   - future
