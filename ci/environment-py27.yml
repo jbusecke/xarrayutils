@@ -1,0 +1,21 @@
+name: test_env_xarrayutils
+channels:
+  - conda-forge
+dependencies:
+  - python=2.7
+  - xarray < 0.12 # Testing for old xarray version
+  - dask
+  - numpy < 1.12
+  - pytest
+  - future
+  - scipy
+  - black
+  - astropy
+  - matplotlib
+  # Necesary additions for the plotting tools (might have to make thos optional)
+  - gsw
+  - cartopy
+  - xgcm
+  - pip:
+    - codecov
+    - pytest-cov
