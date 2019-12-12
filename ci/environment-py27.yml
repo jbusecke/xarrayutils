@@ -4,7 +4,7 @@ channels:
 dependencies:
   - python=2.7
   - xarray < 0.12 # Testing for old xarray version
-  - dask
+  - dask < 2.0
   - numpy < 1.12
   - pytest
   - future
