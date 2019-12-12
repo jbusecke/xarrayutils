@@ -3,7 +3,7 @@ channels:
   - conda-forge
 dependencies:
   - python=3.7
-  - xarray
+  - xarray < 0.14
   - dask < 2
   - numpy
   - pytest
