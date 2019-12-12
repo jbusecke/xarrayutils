@@ -3,9 +3,9 @@ channels:
   - conda-forge
 dependencies:
   - python=3.6
-  - xarray < 0.13 # Testing for old xarray version
-  - dask
-  - numpy < 1.16
+  - xarray < 0.12 # Testing for old xarray version
+  - dask < 2.0
+  - numpy < 1.14
   - pytest
   - future
   - scipy
