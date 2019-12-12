@@ -21,11 +21,7 @@ from xarrayutils.utils import (
 
 from numpy.testing import assert_allclose
 
-from .datasets import (
-    dataarray_2d_example,
-    dataarray_2d_ones,
-    dataarray_2d_ones_nan,
-)
+from .datasets import dataarray_2d_example, dataarray_2d_ones, dataarray_2d_ones_nan
 
 
 def test_filter_1D():
@@ -152,6 +148,22 @@ def test_linregress_ufunc():
 
 
 # TODO: Needs a high level test for xr_linregress
+@pytest.mark.parametrize("chunks", {"x": -1, "y": 1}, {"x": 1, "y": 1})
+def test_xr_linregress(chunks):
+    # test dataset
+    dim_order = ("x", "y", "time")
+    a = xr.DataArray(np.random.rand(3, 13, 5), dims=["x", "time", "y"])
+    b = xr.DataArray(np.random.rand(3, 5, 13), dims=["x", "y", "time"])
+    reg = xr_linregress(a, b)
+    for xx in range(len(a.x)):
+        for yy in range(len(a.y)):
+            pos = dict(x=xx, y=yy)
+            expected = _linregress_ufunc(a.isel(**pos), b.isel(**pos))
+            reg_sub = reg.isel(**pos)
+            for ni, nn in ["slope", "intercept", "r_value", "p_value", "std_err"]:
+                np.testing.assert_allclose(reg_sub[nn].data, expected[ni])
+
+    # introduce nans and mask
 
 
 def test_linear_trend():
@@ -298,9 +310,7 @@ def test_aggregate_regular_func(dataarray_2d_example, func, expected_result):
         )
     ],
 )
-def test_aggregate_regular_blocks(
-    dataarray_2d_example, blocks, expected_result
-):
+def test_aggregate_regular_blocks(dataarray_2d_example, blocks, expected_result):
     func = np.nanmean
     a = aggregate(dataarray_2d_example, blocks, func=func)
     assert_allclose(a.data, expected_result)

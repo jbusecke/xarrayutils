@@ -49,9 +49,7 @@ def _linregress_ufunc(a, b, nanmask=False):
     return np.array([slope, intercept, r_value, p_value, std_err])
 
 
-def xr_linregress(
-    a, b, dim="time", convert_to_dataset=True, dtype=None, nanmask=False
-):
+def xr_linregress(a, b, dim="time", convert_to_dataset=True, dtype=None, nanmask=False):
     """Applies scipy.stats.linregress over two xr.DataArrays or xr.Datasets.
 
     Parameters
@@ -97,8 +95,7 @@ def xr_linregress(
         output_sizes={"parameter": 5},
     )
     stats["parameter"] = xr.DataArray(
-        ["slope", "intercept", "r_value", "p_value", "std_err"],
-        dims=["parameter"],
+        ["slope", "intercept", "r_value", "p_value", "std_err"], dims=["parameter"],
     )
     if convert_to_dataset:
         # chug them all into a dataset
@@ -117,9 +114,7 @@ def linear_trend(obj, dim):
     trend is in units/yr.
     """
     x = xr.DataArray(
-        np.arange(len(obj[dim])).astype(np.float),
-        dims=dim,
-        coords={dim: obj[dim]},
+        np.arange(len(obj[dim])).astype(np.float), dims=dim, coords={dim: obj[dim]},
     )
     trend = xr_linregress(x, obj, dim=dim, convert_to_dataset=False)
     return trend
@@ -225,9 +220,7 @@ def aggregate(da, blocks, func=np.nanmean, debug=False):
         raise RuntimeError("'blocks' contains non matching dimension")
 
     # Check the size of the excess in each aggregated axis
-    blocks = [
-        (a[0], a[1], da.shape[da.get_axis_num(a[0])] % a[1]) for a in blocks
-    ]
+    blocks = [(a[0], a[1], da.shape[da.get_axis_num(a[0])] % a[1]) for a in blocks]
 
     # for now default to trimming the excess
     da_coarse = coarsen(func, da.data, block_dict, trim_excess=True)
@@ -251,9 +244,7 @@ def aggregate(da, blocks, func=np.nanmean, debug=False):
     return da_coarse
 
 
-def fancymean(
-    raw, dim=None, axis=None, method="arithmetic", weights=None, debug=False
-):
+def fancymean(raw, dim=None, axis=None, method="arithmetic", weights=None, debug=False):
     """ extenden mean function for xarray
 
     Applies various methods to estimate mean values
@@ -295,9 +286,7 @@ def fancymean(
     elif isinstance(weights, str):
         w = raw[weights]
     elif isinstance(weights, np.ndarray):
-        w = xr.DataArray(
-            np.ones_like(raw.data), coords=raw.coords, dims=raw.dims
-        )
+        w = xr.DataArray(np.ones_like(raw.data), coords=raw.coords, dims=raw.dims)
 
     # make sure the w array is the same size as the raw array
     # This way also nans will be propagated correctly in a bidirectional way
@@ -356,9 +345,7 @@ def timefilter(
     out = xr.DataArray(
         filtered, dims=xr_in.dims, coords=xr_in.coords, attrs=xr_in.attrs
     )
-    out.attrs.update(
-        {"filterlength": (steps, step_spec), "filtertype": filtertype}
-    )
+    out.attrs.update({"filterlength": (steps, step_spec), "filtertype": filtertype})
     if xr_in.name:
         out.name = xr_in.name + "_lowpassed"
     return out
@@ -476,9 +463,7 @@ def dll_dist(dlon, dlat, lon, lat):
 # Module'
 def convert_flux_array(da, da_full, dim, top=True, fillval=0):
     dummy = xr.DataArray(
-        ones_like(da_full.data) * fillval,
-        coords=da_full.coords,
-        dims=da_full.dims,
+        ones_like(da_full.data) * fillval, coords=da_full.coords, dims=da_full.dims,
     )
     if top:
         da.coords[dim] = da_full[dim][0]
@@ -647,24 +632,22 @@ def corrmap(
 
                     # extract the matching timeseries
                     in_b = in_b.sel(xdim=in_x, ydim=in_y, method="nearest")
-                    reindexed_b = in_b.reindex_like(
-                        in_a.time, method="nearest"
-                    )
+                    reindexed_b = in_b.reindex_like(in_a.time, method="nearest")
                 else:
-                    reindexed_b = shifted_b.reindex_like(
-                        in_a.time, method="nearest"
-                    )
+                    reindexed_b = shifted_b.reindex_like(in_a.time, method="nearest")
 
                 x = reindexed_b.data
                 y = in_a.data
 
                 idx = np.logical_and(~np.isnan(y), ~np.isnan(x))
                 if y[idx].size:
-                    s[{a_x_dim: ii, a_y_dim: jj}], _, c[
-                        {a_x_dim: ii, a_y_dim: jj}
-                    ], p[{a_x_dim: ii, a_y_dim: jj}], _ = linregress(
-                        x[idx], y[idx]
-                    )
+                    (
+                        s[{a_x_dim: ii, a_y_dim: jj}],
+                        _,
+                        c[{a_x_dim: ii, a_y_dim: jj}],
+                        p[{a_x_dim: ii, a_y_dim: jj}],
+                        _,
+                    ) = linregress(x[idx], y[idx])
         slope.append(s)
         corr.append(c)
         p_value.append(p)
@@ -688,9 +671,9 @@ def _coord_remapping_interp(x, y, y_target, remap):
     if sum(~idx) < 2:
         y_remapped = remap * np.nan
     else:
-        y_remapped = interpolate.interp1d(
-            y_target[~idx], y[~idx], bounds_error=False
-        )(remap)
+        y_remapped = interpolate.interp1d(y_target[~idx], y[~idx], bounds_error=False)(
+            remap
+        )
     return y_remapped
 
 
@@ -764,9 +747,7 @@ def coord_remapping(x, y, y_target, remap, x_dim=None, remap_dim=None):
 
     remapped_y = xr.apply_ufunc(_coord_remapping_interp, x, y, *args, **kwargs)
 
-    remapped_pos = xr.apply_ufunc(
-        _coord_remapping_interp, x, x, *args, **kwargs
-    )
+    remapped_pos = xr.apply_ufunc(_coord_remapping_interp, x, x, *args, **kwargs)
     remapped_y.coords["remapped_%s" % x.name] = remapped_pos
     return remapped_y
 
@@ -954,9 +935,7 @@ def extract_surf_legacy(
 def concat_dim_da(data, name):
     """creates an xarray.Dataarray to label the concat dim in xarray.concat.
     data is the dimension array and name is the name (DuHHHHH)"""
-    return xr.DataArray(
-        data, dims=[name], coords={name: (name, data)}, name=name
-    )
+    return xr.DataArray(data, dims=[name], coords={name: (name, data)}, name=name)
 
 
 def xr_detrend(b, dim="time", trend_params=None, convert_datetime=True):

@@ -1,15 +1,15 @@
-name: test_env
+name: test_env_xarrayutils
 channels:
   - conda-forge
 dependencies:
   - python=3.6
-  - xarray
+  - xarray < 0.13
   - dask
   - numpy
   - pytest
   - future
   - scipy
-  - flake8
+  - black
   - astropy
   - matplotlib
   # Necesary additions for the plotting tools (might have to make thos optional)

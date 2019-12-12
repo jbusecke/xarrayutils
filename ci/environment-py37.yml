@@ -1,4 +1,4 @@
-name: test_env
+name: test_env_xarrayutils
 channels:
   - conda-forge
 dependencies:
@@ -9,7 +9,7 @@ dependencies:
   - pytest
   - future
   - scipy
-  - flake8
+  - black
   - astropy
   - matplotlib
   # Necesary additions for the plotting tools (might have to make thos optional)
