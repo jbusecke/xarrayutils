@@ -17,6 +17,7 @@ dependencies:
   - gsw
   - cartopy
   - xgcm
+  - pip
   - pip:
     - codecov
     - pytest-cov

@@ -15,6 +15,7 @@ dependencies:
   # Necesary additions for the plotting tools (might have to make thos optional)
   - gsw
   - cartopy
+  - pip
   - pip:
     - git+https://github.com/pydata/xarray.git
     - git+https://github.com/xgcm/xgcm.git
