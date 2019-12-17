@@ -149,7 +149,8 @@ def test_linregress_ufunc():
 
 @pytest.mark.parametrize("chunks", [None, {"x": -1, "y": 1}, {"x": 1, "y": 1}])
 @pytest.mark.parametrize("variant", range(3))
-def test_xr_linregress(chunks, variant):
+@pytest.mark.parametrize("dtype", [None, np.float])
+def test_xr_linregress(chunks, variant, dtype):
     a = xr.DataArray(np.random.rand(3, 13, 5), dims=["x", "time", "y"])
     b = xr.DataArray(np.random.rand(3, 5, 13), dims=["x", "y", "time"])
     if chunks is not None:
@@ -161,7 +162,7 @@ def test_xr_linregress(chunks, variant):
             a = a.chunk(chunks)
             b = b.chunk(chunks)
 
-    reg = xr_linregress(a, b)
+    reg = xr_linregress(a, b, dtype=dtype)
     for xx in range(len(a.x)):
         for yy in range(len(a.y)):
             pos = dict(x=xx, y=yy)
