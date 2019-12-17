@@ -1,21 +1,23 @@
-name: test_env
+name: test_env_xarrayutils
 channels:
   - conda-forge
 dependencies:
-  - python=2.7
+  - python=3.8
   - xarray
-  - dask
+  - dask < 2 #remove this once upstream problem
+             # (https://github.com/pydata/xarray/issues/3574) is fixed
   - numpy
   - pytest
   - future
   - scipy
-  - flake8
+  - black
   - astropy
   - matplotlib
   # Necesary additions for the plotting tools (might have to make thos optional)
   - gsw
   - cartopy
   - xgcm
+  - pip
   - pip:
     - codecov
     - pytest-cov
