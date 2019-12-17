@@ -155,8 +155,9 @@ def test_xr_linregress(chunks, variant, dtype, nans):
     a = xr.DataArray(np.random.rand(3, 13, 5), dims=["x", "time", "y"])
     b = xr.DataArray(np.random.rand(3, 5, 13), dims=["x", "y", "time"])
     if nans:
-        a.data[np.unravel_index(np.random.randint(0, 3 * 5 * 13, 10), a.shape)] = np.nan
-        b.data[np.unravel_index(np.random.randint(0, 3 * 5 * 13, 10), a.shape)] = np.nan
+        # add nans at random positions
+        a.data[np.unravel_index(np.random.randint(0, 2 * 4 * 12, 10), a.shape)] = np.nan
+        b.data[np.unravel_index(np.random.randint(0, 2 * 4 * 12, 10), b.shape)] = np.nan
 
     if chunks is not None:
         if variant == 0:
@@ -177,9 +178,6 @@ def test_xr_linregress(chunks, variant, dtype, nans):
                 ["slope", "intercept", "r_value", "p_value", "std_err"]
             ):
                 np.testing.assert_allclose(reg_sub[nn].data, expected[ni])
-
-
-# introduce nans and mask
 
 
 def test_linear_trend():
