@@ -155,8 +155,8 @@ def test_xr_linregress(chunks, variant, dtype, nans):
     a = xr.DataArray(np.random.rand(3, 13, 5), dims=["x", "time", "y"])
     b = xr.DataArray(np.random.rand(3, 5, 13), dims=["x", "y", "time"])
     if nans:
-        a.data[np.random.randint(0, 3 * 5 * 13, 10)] = np.nan
-        b.data[np.random.randint(0, 3 * 5 * 13, 10)] = np.nan
+        a.data[np.unravel_index(np.random.randint(0, 3 * 5 * 13, 10), a.shape)] = np.nan
+        b.data[np.unravel_index(np.random.randint(0, 3 * 5 * 13, 10), a.shape)] = np.nan
 
     if chunks is not None:
         if variant == 0:
