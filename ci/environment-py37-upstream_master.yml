@@ -3,7 +3,8 @@ channels:
   - conda-forge
 dependencies:
   - python=3.7
-  - dask < 2
+  - dask < 2 #remove this once upstream problem
+             # (https://github.com/pydata/xarray/issues/3574) is fixed
   - numpy
   - pytest
   - future

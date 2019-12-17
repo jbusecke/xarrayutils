@@ -78,6 +78,12 @@ def xr_linregress(a, b, dim="time", convert_to_dataset=True, dtype=None, nanmask
         scipy.stats.linregress for each data_variable in `b`.
 
     """
+    # Temporary warning. Remove when upstream problem
+    # (https://github.com/pydata/xarray/issues/3574) is fixed
+    warnings.warn(
+        "This function currently does not work with dask >= 2.0. \
+    Consider downgrading until a fix is available upstream (https://github.com/pydata/xarray/issues/3574) "
+    )
 
     if dtype is None:
         dtype = detect_dtype(b)
@@ -95,7 +101,7 @@ def xr_linregress(a, b, dim="time", convert_to_dataset=True, dtype=None, nanmask
         output_sizes={"parameter": 5},
     )
     stats["parameter"] = xr.DataArray(
-        ["slope", "intercept", "r_value", "p_value", "std_err"], dims=["parameter"],
+        ["slope", "intercept", "r_value", "p_value", "std_err"], dims=["parameter"]
     )
     if convert_to_dataset:
         # chug them all into a dataset
@@ -114,7 +120,7 @@ def linear_trend(obj, dim):
     trend is in units/yr.
     """
     x = xr.DataArray(
-        np.arange(len(obj[dim])).astype(np.float), dims=dim, coords={dim: obj[dim]},
+        np.arange(len(obj[dim])).astype(np.float), dims=dim, coords={dim: obj[dim]}
     )
     trend = xr_linregress(x, obj, dim=dim, convert_to_dataset=False)
     return trend
@@ -463,7 +469,7 @@ def dll_dist(dlon, dlat, lon, lat):
 # Module'
 def convert_flux_array(da, da_full, dim, top=True, fillval=0):
     dummy = xr.DataArray(
-        ones_like(da_full.data) * fillval, coords=da_full.coords, dims=da_full.dims,
+        ones_like(da_full.data) * fillval, coords=da_full.coords, dims=da_full.dims
     )
     if top:
         da.coords[dim] = da_full[dim][0]
