@@ -150,9 +150,14 @@ def test_linregress_ufunc():
 @pytest.mark.parametrize("chunks", [None, {"x": -1, "y": 1}, {"x": 1, "y": 1}])
 @pytest.mark.parametrize("variant", range(3))
 @pytest.mark.parametrize("dtype", [None, np.float])
-def test_xr_linregress(chunks, variant, dtype):
+@pytest.mark.parametrize("nans", [False, True])
+def test_xr_linregress(chunks, variant, dtype, nans):
     a = xr.DataArray(np.random.rand(3, 13, 5), dims=["x", "time", "y"])
     b = xr.DataArray(np.random.rand(3, 5, 13), dims=["x", "y", "time"])
+    if nans:
+        a.data[np.random.randint(0, 3 * 5 * 13, 10)] = np.nan
+        b.data[np.random.randint(0, 3 * 5 * 13, 10)] = np.nan
+
     if chunks is not None:
         if variant == 0:
             a = a.chunk(chunks)
