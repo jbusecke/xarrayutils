@@ -88,6 +88,7 @@ def weighted_sum_raw(da_data, da_weight, dim=None,
             if not set(dim).issubset(da_weight.dims):
                 raise RuntimeError("Dimensions of 'da_weight' do not include all averaging dimensions.\
                 Broadcast da_weight or deactivate 'dim_check'.")
+
     if 'keep_attrs' in kwargs.keys():
         keep_attrs = kwargs['keep_attrs']
     else:
