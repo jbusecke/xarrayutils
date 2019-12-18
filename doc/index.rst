@@ -6,10 +6,14 @@
 Welcome to xarrayutils's documentation!
 =======================================
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+Contents
+--------
 
+.. toctree::
+   :maxdepth: 1
+
+   climate_indicies
+   statistics
 
 
 Indices and tables
