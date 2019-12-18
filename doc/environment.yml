@@ -1,0 +1,28 @@
+name: xarrayutils-docs
+dependencies:
+  - python=3.6
+  - future
+  - pytest
+  - numpydoc
+  - sphinx
+  - sphinx_rtd_theme
+  - ipykernel
+  # Packages which are needed to execute your examples
+  # These will vary
+  - ipython
+  - matplotlib
+  - xarray
+  - netcdf4
+  - astropy
+  - dask
+  - numpy
+  - xgcm
+  - scipy
+  - cartopy
+  - gsw # remove once dependencies are optional (https://github.com/jbusecke/xarrayutils/issues/38)
+  #
+  - pip:
+    - docrep
+    - nbsphinx
+    - jupyter_client
+    - jupyter-sphinx

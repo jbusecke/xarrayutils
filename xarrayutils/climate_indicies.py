@@ -7,19 +7,43 @@ def calculate_ninox_index(ds_surf, area, timedim='time', xdim='xt_ocean',
                           ydim='yt_ocean', clim_period=None, detrend=False):
     """Calculates NINOx index following the methodology in
     `climatedataguide.ucar.edu/climate-data/nino-sst-indices-nino-12-3-34-4-oni-and-tni`
-    If detrend is true, a linear trend is removed for each gridpoint 
+    If detrend is true, a linear trend is removed for each gridpoint
     seperately, before applying the processing.
     Note that dask arrays cannot be chunked along `timedim`.
     Use (ds_surf.chunk({timedim:-1}), before processing.
     Warning: This can significantly increase memory usage,
     and chunking along another dimension might be necessary.
-        """
+
+    Parameters
+    ----------
+    ds_surf : type
+        Description of parameter `ds_surf`.
+    area : type
+        Description of parameter `area`.
+    timedim : type
+        Description of parameter `timedim`.
+    xdim : type
+        Description of parameter `xdim`.
+    ydim : type
+        Description of parameter `ydim`.
+    clim_period : slice
+        time period, given as e.g. `slice('1950','1979')` for observational data.
+    detrend : type
+        Description of parameter `detrend`.
+
+    Returns
+    -------
+    type
+        Description of returned object.
+
+    """
+
 
     if detrend:
         ds_surf = xr_detrend(ds_surf, dim=timedim)
 
     # (a) Compute area averaged total SST from Niño X region
-    sst_mean = weighted_mean(ds_surf, area, dim=[xdim, ydim]).load()
+    sst_mean = weighted_mean(ds_surf, area, dim=[xdim, ydim], dim_check=False).load()
 
     # (b) Compute monthly climatology (e.g., 1950-1979) for area averaged
     # total SST from Niño X region,
@@ -33,7 +57,7 @@ def calculate_ninox_index(ds_surf, area, timedim='time', xdim='xt_ocean',
     # !!! generalize this for weeks, days if the data is of higher resolution?
     # for now it only works for monthly data
 
-    clim_time_spec = '%s.month' % timedim
+    clim_time_spec = '%s.month' %timedim
     sst_clim = sst_clim.groupby(clim_time_spec).mean('time')
     sst_anomaly = sst_mean.groupby(clim_time_spec) - sst_clim
 
@@ -57,17 +81,54 @@ def calculate_ninox_index(ds_surf, area, timedim='time', xdim='xt_ocean',
     return index
 
 
+
 def extract_climate_indicies(ds, timedim='time', depth_dim='st_ocean',
                              xdim='xt_ocean', ydim='yt_ocean', temp_var='temp',
-                             area_coord='area_t', print_map=False, **kwargs):
+                             area_coord='area_t', boxes=None,
+                             print_map=False, **kwargs):
+
     """Calculates various climate indicies from an xarray dataset.
 
-	kwargs are passed to the climate indicies processing functions.
-	Most notable right now would be the `detrend` option (disabled by default), 
+	kwargs are passed to `calculate_ninox_index`.
+	Most notable right now would be the `detrend` option (disabled by default),
 	which removes a linear trend from each gridbox before processing.
+
+
+    Parameters
+    ----------
+    ds : type
+        Description of parameter `ds`.
+    timedim : type
+        Description of parameter `timedim`.
+    depth_dim : type
+        Description of parameter `depth_dim`.
+    xdim : type
+        Description of parameter `xdim`.
+    ydim : type
+        Description of parameter `ydim`.
+    temp_var : type
+        Description of parameter `temp_var`.
+    area_coord : type
+        Description of parameter `area_coord`.
+    boxes : {None, list, dict}
+        Specifies the boxes to be used for the index calculation. Defaults
+        to `None` (all NINO indicies + TNI in -270E - 70E coordinates). Use a
+        list of inidicies to select only few indicies
+        (e.g. `boxes=['NINO3.4']` to compute only this index), or pass an
+        entirely new dict to e.g. accomodate other lon conventions, like
+        `boxes={'NINO_new':{xdim: slice(-170, -120), ydim: slice(-5, 5)}}`
+    print_map : bool
+        Plot a map to visualize the data and make sure that all areas are covered.
+    **kwargs : type
+        Kwargs passed to `calculate_ninox_index`.
+
+    Returns
+    -------
+    type
+        Description of returned object.
+
     """
     # !!! TODO, make this work with other lon conventions like -180-180 etc.
-
     # NINO boxes
     NINO_boxes = {
         'NINO1+2': {xdim: slice(-90, -80), ydim: slice(-10, 0)},
@@ -76,16 +137,30 @@ def extract_climate_indicies(ds, timedim='time', depth_dim='st_ocean',
         'NINO4': {xdim: slice(-200, -150), ydim: slice(-5, 5)},
     }
 
-    # visualize the data to make sure that all indicies areas are covered
+    if isinstance(boxes, dict):
+        NINO_boxes = boxes
+    elif isinstance(boxes, list):
+        NINO_boxes = {k:v for k,v in NINO_boxes.items() if k in boxes}
+    elif boxes is None:
+        pass
+    else:
+        raise ValueError('input for `boxes` not compatible. Expected dict, list or None. Got [%s]' %boxes)
+
+    #extract temp variable if source is Dataset (otherwise just pass)
+    if isinstance(ds, xr.Dataset):
+        ds = ds[temp_var]
+
+    # extract surface (if depth dim is present in dataset)
+    if depth_dim in ds.dims:
+        ds = ds[{depth_dim: 0}]
+
     if print_map:
         from xarrayutils.plotting import box_plot_dict
         import cartopy.crs as ccrs
         import matplotlib.pyplot as plt
-        surface_fld = ds[temp_var]
 
-        for slice_dim in [timedim, depth_dim]:
-            if slice_dim in ds.dims:
-                surface_fld = surface_fld[{slice_dim: 0}]
+        if timedim in ds.dims:
+            surface_fld = ds[{timedim: 0}]
 
         ax = plt.axes(projection=ccrs.Robinson(180))
         surface_fld.plot(ax=ax, transform=ccrs.PlateCarree())
@@ -95,16 +170,17 @@ def extract_climate_indicies(ds, timedim='time', depth_dim='st_ocean',
         ax.set_global()
         ax.coastlines()
 
+
     # calulate indicies
     ds_indicies = xr.Dataset()
     for nb in NINO_boxes.keys():
         print('Calculating %s index' % nb)
         box = ds.sel(**NINO_boxes[nb])
-        if depth_dim in ds.dims:
-            box = box[{depth_dim: 0}]
-        ds_indicies[nb] = calculate_ninox_index(box[temp_var], box[area_coord], **kwargs)
+        ds_indicies[nb] = calculate_ninox_index(box, box[area_coord],
+                                                xdim=xdim, ydim=ydim, **kwargs)
 
     # Calculate additional ENSO inicies
-    print('Calculating TNI index')
-    ds_indicies['TNI'] = ds_indicies['NINO4'] - ds_indicies['NINO1+2']
+    if ('NINO4' in ds_indicies.keys()) and ('NINO1+2' in ds_indicies.keys()):
+        print('Calculating TNI index')
+        ds_indicies['TNI'] = ds_indicies['NINO4'] - ds_indicies['NINO1+2']
     return ds_indicies

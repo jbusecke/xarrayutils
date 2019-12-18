@@ -58,7 +58,7 @@ def weighted_sum(da_data, da_weight, **kwargs):
 
 
 def weighted_sum_raw(da_data, da_weight, dim=None,
-                     preweighted=False, dimcheck=True, **kwargs):
+                     preweighted=False, dim_check=True, **kwargs):
     """calculate sum of da_data weighted by da_weight and the weights themselves
 
     Parameters
@@ -84,7 +84,7 @@ def weighted_sum_raw(da_data, da_weight, dim=None,
 
     # Check dimension consistency
     if dim:
-        if dimcheck:
+        if dim_check:
             if not set(dim).issubset(da_weight.dims):
                 raise RuntimeError("Dimensions of 'da_weight' do not include all averaging dimensions.\
                 Broadcast da_weight or deactivate 'dim_check'.")
