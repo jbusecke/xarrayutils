@@ -2,6 +2,7 @@ from __future__ import print_function
 import numpy as np
 import xarray as xr
 from scipy.signal import filtfilt, gaussian
+from scipy import stats
 from dask.array import coarsen, ones_like
 from dask.array.core import Array
 import warnings
