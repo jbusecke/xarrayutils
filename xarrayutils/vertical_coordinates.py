@@ -6,7 +6,10 @@ from scipy import interpolate
 def _strip_dim(da, dim):
     """if `dim` has coordinate values drop them"""
     if dim in da.coords:
-        da = da.drop_vars(dim)
+        # da = da.drop_vars(
+        #     dim
+        # )  # this doesnt work with xarray <0.14, reacativate once dependencies are updataed
+        da = da.drop(dim)  # th
     return da
 
 
