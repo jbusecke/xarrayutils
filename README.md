@@ -11,3 +11,8 @@ This package contains a variety of utility functions I have used in the past few
 Please be aware that I am currently refactoring a lot of the code, which might cause breaking changes.
 
 Hopefully soon it will be better tested and documented.
+
+
+To install from source use pip:
+
+`pip install git+https://github.com/jbusecke/xarrayutils.git`
