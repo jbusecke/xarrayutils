@@ -132,6 +132,9 @@ def _regular_interp(x, y, target_values):
     x = x[~idx]
     y = y[~idx]
 
+    # replace nans in target_values with out of bound Values
+    target_values = np.where(~np.isnan(target_values), target_values, np.nanmax(x) + 1)
+
     interpolated = interpolate.interp1d(x, y, bounds_error=False)(target_values)
     return interpolated
 

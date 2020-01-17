@@ -3,8 +3,10 @@ import numpy as np
 import pytest
 from xarrayutils.vertical_coordinates import (
     conservative_remap,
+    linear_interpolation_remap,
     _strip_dim,
     _coord_interp,
+    _regular_interp,
 )
 
 
@@ -71,10 +73,6 @@ def test_strip_dim():
 def test_conservative_remap(mask, multi_dim, dask, dat, src, tar, coords):
     # create test datasets
     if coords:
-        z_bounds_source = xr.DataArray(src, dims=["z_bounds"])
-        z_bounds_target = xr.DataArray(tar, dims=["z_bounds"])
-        # test for input values which have coordinate value in their dimension
-        # (not just empty dimensions like above)
         z_raw = 0.5 * (src[1:] + src[0:-1])
         data = xr.DataArray(np.array(dat), dims=["z"], coords=[("z", z_raw)])
 
@@ -127,6 +125,123 @@ def test_conservative_remap(mask, multi_dim, dask, dat, src, tar, coords):
     print(raw)
     print(remapped)
     xr.testing.assert_allclose(raw, remapped)
+
+
+def test_regular_interp():
+    x = np.arange(5, dtype=np.float)
+    y = np.linspace(3, 7, 5)
+    target = np.array([0.5, 3.0, np.nan, 7.0])  #
+    interpolated = _regular_interp(x, y, target)
+    expected = np.array([3.5, 6.0, np.nan, np.nan])
+    np.testing.assert_allclose(interpolated, expected)
+
+    # so when I specify the literal boundary value it returns nan...
+    # not sure if this is causing and problems. Ill leave it here commented
+    # target = np.array([5.0])
+    # interpolated = _regular_interp(x, y, target)
+    # expected = np.array([7.0])
+
+
+@pytest.mark.parametrize("multi_dim", [True, False])
+@pytest.mark.parametrize("coords", [True, False])
+@pytest.mark.parametrize("z_dim", ["z", "blob"])
+@pytest.mark.parametrize("z_regridded_dim", ["z_new", "blab"])
+@pytest.mark.parametrize("output_dim", ["remapped", "boink"])
+@pytest.mark.parametrize(
+    "dat, src, tar",
+    [
+        (
+            # first example, going from low res to high res
+            # NOTE: the target bounds always need to cover all values of the
+            # source, otherwise properties are not conserved
+            np.array([30, 12.3, 5]),
+            np.array([4.5, 9, 23]),
+            np.array([0, 2, 4, 10, 11, 13.4, 23, 55.6, 80, 100]),
+        ),
+        (
+            # second example, going from high res to low res
+            # NOTE: the target bounds always need to cover all values of the
+            # source, otherwise properties are not conserved
+            np.array([30, 12.3, 5, 2, -1, 4]),
+            np.array([4.5, 9, 23, 45.6, 46, 70]),
+            np.array([0, 10, 100]),
+        ),
+        (
+            # third example, using negative depth values sorted
+            np.array([30, 12.3, 5, 2, -1, 4]),
+            np.array([-90, -70, -46, -45.6, -23, -9]),
+            np.array([-100, -10, -0]),
+        ),
+        (
+            # forth example, using negative depth values unsorted
+            # this is not supported atm, because I need to find a way to sort a
+            # multidim depth array consistently (would be easy with 1d.)
+            np.array([30, 12.3, 5, 2, -1, 4]),
+            np.array([-4.5, -9, -23, -45.6, -46, -70]),
+            np.array([-0, -10, -100]),
+        ),
+        (
+            # fifth example, using negative AND positive depth values sorted
+            np.array([30, 12.3, 5, 2, -1, 4]),
+            np.array([-90, -70, -45.6, -23, 0, 1]),
+            np.array([-100, -10, 0, 10]),
+        ),
+    ],
+)
+def test_linear_interpolation_remap(
+    dat, src, tar, coords, multi_dim, z_dim, z_regridded_dim, output_dim
+):
+    # create test datasets
+    if coords:
+        data = xr.DataArray(np.array(dat), dims=[z_dim], coords=[(z_dim, src)])
+
+        z_source = xr.DataArray(src, dims=[z_dim], coords=[(z_dim, src)])
+        z_target = xr.DataArray(
+            tar, dims=[z_regridded_dim], coords=[(z_regridded_dim, tar)]
+        )
+    else:
+        data = xr.DataArray(np.array(dat), dims=[z_dim])
+        z_source = xr.DataArray(src, dims=[z_dim])
+        z_target = xr.DataArray(tar, dims=[z_regridded_dim])
+
+    # the target and data should always have other dimensions
+    data = random_broadcast(data)
+    z_target = random_broadcast(z_target)
+    if multi_dim:
+        z_source = random_broadcast(z_source)
+
+    remapped = linear_interpolation_remap(
+        z_source,
+        data,
+        z_target,
+        z_dim=z_dim,
+        z_regridded_dim=z_regridded_dim,
+        output_dim=output_dim,
+    )
+    print(remapped)
+    # select random sample for 3 times
+    for iteration in range(3):
+        sample = {
+            "test_a": np.random.randint(0, len(remapped.test_a)),
+            "test_b": np.random.randint(0, len(remapped.test_b)),
+            "test_c": np.random.randint(0, len(remapped.test_c)),
+        }
+        profile = remapped.isel(**sample).load().data
+        if multi_dim:
+            x = z_source.isel(**sample)
+        else:
+            x = z_source
+
+        target = z_target.isel(**sample)
+        y = data.isel(**sample)
+        expected_profile = _regular_interp(x.data, y.data, target.data)
+
+        np.testing.assert_allclose(profile, expected_profile)
+
+    # check output coords
+    np.testing.assert_allclose(
+        remapped.coords[output_dim].data, z_target.coords[z_regridded_dim].data
+    )
 
 
 def test_coord_interp():
@@ -188,28 +303,6 @@ def test_coord_interp():
             np.testing.assert_allclose(
                 z_new, np.array([pad_left, 1.0, 13.0, pad_right])
             )
-
-    # assert z_new == 780
-
-    # # test out of range (above) flipped
-    # z = np.array([0, 2, 6, 20, 400])
-    # data = np.array([4, 5, 10, 20, 30])
-    # z_new = _coord_interp(z, data, 34)
-    # assert z_new == 400
-    # # assert z_new == 780
-    #
-    # # test out of range (below) flipped
-    # z = np.array([0, 2, 6, 20, 400])
-    # data = np.array([4, 5, 10, 20, 30])
-    # z_new = _coord_interp(z, data, 2)
-    # assert z_new == 0
-    # # assert z_new == -2
-    #
-    # # test out of range with multiple vals
-    # z = np.array([0, 2, 6, 20, 400])
-    # data = np.array([30, 20, 10, 5, 4])
-    # z_new = _coord_interp(z, data, np.array([34, 30, 15, 4.5, 2]))
-    # np.testing.assert_allclose(z_new, np.array([0, 0, 4.0, 210.0, 400]))
 
     # test super short array
     z = np.array([2, 4])
