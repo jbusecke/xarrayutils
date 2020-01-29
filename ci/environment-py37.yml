@@ -4,7 +4,7 @@ channels:
 dependencies:
   - python=3.7
   - xarray < 0.14
-  - dask
+  - dask < 2 
   - numpy
   - pytest
   - future
