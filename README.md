@@ -18,6 +18,10 @@ To install from source use pip:
 
 `pip install git+https://github.com/jbusecke/xarrayutils.git`
 
+> Make sure to install these packages to your environment `conda install astropy gsw cartopy`
+
+> In order to use dask > 2.0 you need the newest upstream xarray version. For xarray <= 0.14.1, please downgrade to dask < 2.0
+
 
 ## Contents (not complete yet)
 
