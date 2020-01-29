@@ -11,3 +11,18 @@ This package contains a variety of utility functions I have used in the past few
 Please be aware that I am currently refactoring a lot of the code, which might cause breaking changes.
 
 Hopefully soon it will be better tested and documented.
+
+## Installation
+
+To install from source use pip:
+
+`pip install git+https://github.com/jbusecke/xarrayutils.git`
+
+
+## Contents (not complete yet)
+
+### Converting between vertical coordinate systems
+
+`xarrayutils.vertical_coordinates` provides several tool to move between various vertical ocean grids, e.g. z, density, sigma or hybrid coordinates. See [this notebook](https://github.com/jbusecke/xarrayutils/blob/master/doc/vertical_coords.ipynb) for an early example.
+
+
