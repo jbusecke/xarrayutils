@@ -78,12 +78,6 @@ def xr_linregress(a, b, dim="time", convert_to_dataset=True, dtype=None, nanmask
         scipy.stats.linregress for each data_variable in `b`.
 
     """
-    # Temporary warning. Remove when upstream problem
-    # (https://github.com/pydata/xarray/issues/3574) is fixed
-    warnings.warn(
-        "This function currently does not work with dask >= 2.0. \
-    Consider downgrading until a fix is available upstream (https://github.com/pydata/xarray/issues/3574) "
-    )
 
     if dtype is None:
         dtype = detect_dtype(b)
