@@ -217,6 +217,7 @@ def shaded_line_plot(da,
                      spread_style='std',
                      line_kwargs=dict(),
                      fill_kwargs=dict(),
+                     preload=False,
                      **kwargs):
     """Produces a line plot with shaded intervals based on the spread of `da` in `dim`.
 
@@ -256,6 +257,9 @@ def shaded_line_plot(da,
         
     fill_kwargs : dict
         optional parameters for std fill plot.
+        
+    preload : bool
+        If active preloads std for faster plotting with large datasets. Off by default
     
     **kwargs
         Keyword arguments passed to both line plot and fill_between.
@@ -298,7 +302,9 @@ def shaded_line_plot(da,
         y = da.quantile(0.5, dim)
     else:
         raise ValueError(f"Got unknown option ['{spread_style}'] for  `spread_style`. Supported options are : ['std', 'quantile']")
-        
+    
+    if preload:
+        y = y.load()
         
     # set line kwargs
     line_defaults = {}
@@ -319,12 +325,16 @@ def shaded_line_plot(da,
     fill_defaults.update(fill_kwargs)
     ff = []
     
+    if spread_style == 'std':
+        y_std = da.std(dim)
+        if preload:
+            y_std = y_std.load()
+    
     for spread, alpha in zip((spreads), (alphas)):# np.flip(this ensures that the shadings are drawn from outer to inner otherwise they blend too much into each other
         f_kwargs = {k:v for k,v in fill_defaults.items()}
         f_kwargs['alpha']=alpha
         
         if spread_style == 'std':
-            y_std = da.std(dim) # i could probably precompute that.
             y_lower = y-(y_std/(2*spread))
             y_upper = y+(y_std/(2*spread))
             

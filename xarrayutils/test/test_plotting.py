@@ -20,14 +20,15 @@ def test_plot_line_shaded_std():
 @pytest.mark.parametrize('horizontal',[True, False])
 @pytest.mark.parametrize('spreads',[[1, 2], [1], [2,5,8]])
 @pytest.mark.parametrize('alphas',[[0.5], [0.3], [0.8, 0.5, 0.2]])
-def test_shaded_line_plot(dim, horizontal, spreads, alphas):
+@pytest.mark.parametrize('preload',[True, False])
+def test_shaded_line_plot(dim, horizontal, spreads, alphas, preload):
     x = np.linspace(0,2*np.pi, 10)
     y = np.sin(x)
     y_full = np.stack([y+np.random.rand(len(y))-0.5 for e in range(6)])
     da = xr.DataArray(y_full, coords=[('member',range(6)),('time',x)])
     # standard version
     plt.figure()
-    ll, ff = shaded_line_plot(da, dim, spreads=spreads, alphas=alphas, horizontal=horizontal)
+    ll, ff = shaded_line_plot(da, dim, spreads=spreads, alphas=alphas, horizontal=horizontal, preload=preload)
     assert isinstance(ll[0], matplotlib.lines.Line2D)
     assert len(ff) == min(len(spreads), len(alphas))
     
