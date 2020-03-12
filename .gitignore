@@ -57,7 +57,7 @@ docs/_build/
 target/
 
 # notebook
-.ipynb_checkpoints/*
+.ipynb_checkpoints
 
 # notebook example files
 *.nc

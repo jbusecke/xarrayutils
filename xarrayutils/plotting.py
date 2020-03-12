@@ -319,7 +319,7 @@ def shaded_line_plot(da,
     fill_defaults.update(fill_kwargs)
     ff = []
     
-    for spread, alpha in zip(np.flip(spreads), np.flip(alphas)):# np.flip(this ensures that the shadings are drawn from outer to inner otherwise they blend too much into each other
+    for spread, alpha in zip((spreads), (alphas)):# np.flip(this ensures that the shadings are drawn from outer to inner otherwise they blend too much into each other
         f_kwargs = {k:v for k,v in fill_defaults.items()}
         f_kwargs['alpha']=alpha
         
