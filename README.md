@@ -29,4 +29,7 @@ To install from source use pip:
 
 `xarrayutils.vertical_coordinates` provides several tool to move between various vertical ocean grids, e.g. z, density, sigma or hybrid coordinates. See [this notebook](https://github.com/jbusecke/xarrayutils/blob/master/doc/vertical_coords.ipynb) for an early example.
 
+### Plotting utilities
+`xarrayutils.plotting` provides several small utility functions to make common tasks I find in my workflow in matplotlib easier. [Examples](doc/plotting.ipynb)
+
 
