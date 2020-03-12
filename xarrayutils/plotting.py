@@ -159,6 +159,27 @@ def map_util_plot(
     ax.add_feature(cartopy.feature.LAKES, alpha=lake_alpha)
     # add option for gridlines and labelling
 
+def same_y_range(axes):
+    """Adjusts multiple axes so that the range of y values is the same everywhere, but not the actual values.
+
+    Parameters
+    ----------
+    axes : np.array
+        An array of matplotlib.axes objects produced by e.g. plt.subplots()
+
+    """
+
+    ylims = [ax.get_ylim() for ax in axes.flat]
+    yranges = [lim[1]-lim[0] for lim in ylims]
+    # find the max range
+    yrange_max = np.max(yranges)
+    # determine the difference from max range for other ranges
+    y_range_missing = [yrange_max - rang for rang in yranges]
+        
+    # define new ylims by expanding with  (missing range / 2) at each end 
+    y_lims_new = [np.array(lim) + np.array([-1,1]) * yrm /2 for lim, yrm in zip(ylims, y_range_missing)]
+    
+    for ax,lim in zip(axes.flat,y_lims_new): ax.set_ylim(lim)
 
 def center_lim(ax, which="y"):
     if which == "y":
@@ -172,6 +193,8 @@ def center_lim(ax, which="y"):
         center_lim(ax, "y")
     else:
         raise ValueError("`which` is not in (`x,`y`, `xy`) found %s" % which)
+        
+
 
 
 def depth_logscale(ax, yscale=400, ticks=None):
