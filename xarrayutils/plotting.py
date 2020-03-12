@@ -1,5 +1,6 @@
 import numpy as np
 import xarray as xr
+import warnings
 
 # import mpl and change the backend before other mpl imports
 try:
@@ -206,6 +207,138 @@ def depth_logscale(ax, yscale=400, ticks=None):
     ax.set_yticklabels(ticklabels)
     ax.invert_yaxis()
 
+    
+def shaded_line_plot(da,
+                     dim,
+                     ax=None,
+                     horizontal = True,
+                     spreads=[1,3],
+                     alphas=[0.25,0.4],
+                     spread_style='std',
+                     line_kwargs=dict(),
+                     fill_kwargs=dict(),
+                     **kwargs):
+    """Produces a line plot with shaded intervals based on the spread of `da` in `dim`.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        The input data. Needs to be 2 dimensional, so that when `dim` is reduced, it is a line plot.
+        
+    dim : str
+        Dimension of `da` which is used to calculate spread
+        
+    ax : matplotlib.axes
+        Matplotlib axes object to plot on (the default is plt.gca()).
+    
+    horizontal : bool
+        Determines if the plot is horizontal or vertical (e.g. x is plotted
+        on the y-axis).
+        
+    spread : np.array, optional
+        Values specifying the 'spread-values', dependent on `spread_style`. Defaults to shading the 
+        range of 1 and 2 standard deviations in `dim`
+        
+    alpha: np.array, optional
+        Transparency values of the shaded ranges. Defaults to [0.5,0.15]. 
+    
+    spread_style : str
+        Metric used to define spread on `dim`.
+        Options: 
+            'std': Calculates standard deviation along `dim` and shading indicates multiples of std centered on the mean
+            
+            'quantile': Calculates quantile ranges. An input of `spread=[0.2,0.5]` would show an inner shading for 
+            the 40th-60th percentile, and an outer shading for the 25th-75th percentile, centered on the 50th quantile (~median).
+            Must be within [0,100]. 
+            
+    line_kwargs : dict
+        optional parameters for line plot.
+        
+    fill_kwargs : dict
+        optional parameters for std fill plot.
+    
+    **kwargs
+        Keyword arguments passed to both line plot and fill_between.
+
+    Example
+    ------
+    
+
+    """
+    # check input
+    if isinstance(spreads, float) or isinstance(spreads, int):
+        spreads = [spreads]
+        
+    if isinstance(alphas, float):
+        alphas = [alphas]
+    
+    if isinstance(dim, float):
+        dim = [dim]
+            
+    # set axis
+    if not ax:
+        ax = plt.gca()
+        
+    # Option to plot a straight line when the dim is not present (TODO)
+    
+    
+    # check if the data is 2 dimensional
+    dims = da.mean(dim).dims
+    if len(dims) !=1:
+        raise ValueError(f'`da` must be 1 dimensional after reducing over {dim}. Found {dims}')
+        
+    # assemble plot elements
+    xdim = dims[0]
+    x = da[xdim]
+    
+    # define the line plot values
+    if spread_style == 'std':
+        y = da.mean(dim)
+    elif spread_style in ['quantile', 'percentile']:
+        y = da.quantile(0.5, dim)
+    else:
+        raise ValueError(f"Got unknown option ['{spread_style}'] for  `spread_style`. Supported options are : ['std', 'quantile']")
+        
+        
+    # set line kwargs
+    line_defaults = {}
+    line_defaults.update(line_kwargs)
+    
+    if horizontal:
+        ll = ax.plot(x, y, **line_defaults)
+    else:
+        ll = ax.plot(y, x, **line_defaults)
+        
+    # now loop over the spreads:
+    fill_defaults = {
+        "facecolor": ll[-1].get_color(),
+        "edgecolor": "none",
+    }
+
+    # Apply defaults but respect input
+    fill_defaults.update(fill_kwargs)
+    ff = []
+    
+    for spread, alpha in zip((spreads), (alphas)):# np.flip(this ensures that the shadings are drawn from outer to inner otherwise they blend too much into each other
+        f_kwargs = {k:v for k,v in fill_defaults.items()}
+        f_kwargs['alpha']=alpha
+        
+        if spread_style == 'std':
+            y_std = da.std(dim) # i could probably precompute that.
+            y_lower = y-(y_std/(2*spread))
+            y_upper = y+(y_std/(2*spread))
+            
+        elif spread_style in ['quantile', 'percentile']:
+            y_lower = da.quantile(0.5-(spread/2), dim)
+            y_upper = da.quantile(0.5+(spread/2), dim)
+        
+        if horizontal:
+            ff.append(ax.fill_between(x.data, y_lower.data, y_upper.data, **f_kwargs))
+        else:
+            ff.append(ax.fill_betweenx(x.data, y_lower.data, y_upper.data, **f_kwargs))
+    return ll, ff
+        
+
 
 def plot_line_shaded_std(
     x,
@@ -243,6 +376,8 @@ def plot_line_shaded_std(
         Tuple of line and patch objects.
 
     """
+    
+    warnings.warn('This is an outdated function. Use `shaded_line_plot` instead', DeprecationWarning)
 
     line_defaults = {}
 
