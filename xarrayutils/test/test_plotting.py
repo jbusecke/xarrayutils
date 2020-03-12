@@ -1,7 +1,8 @@
-from xarrayutils.plotting import plot_line_shaded_std
+from xarrayutils.plotting import plot_line_shaded_std, same_y_range
 from matplotlib.colors import to_rgb
 import matplotlib.pyplot as plt
 import numpy as np
+
 
 def test_plot_line_shaded_std():
     a = np.arange(10)
