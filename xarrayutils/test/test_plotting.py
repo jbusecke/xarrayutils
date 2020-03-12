@@ -3,6 +3,7 @@ from matplotlib.colors import to_rgb
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 def test_plot_line_shaded_std():
     a = np.arange(10)
     noise = np.random.rand(len(a))
