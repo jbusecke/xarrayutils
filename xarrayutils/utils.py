@@ -197,6 +197,10 @@ def aggregate(da, blocks, func=np.nanmean, debug=False):
         Coarsened with: <function mean at 0x111754230>
         Coarsenblocks: [('x', 2), ('y', 10)]
     """
+    warnings.warn('This functionality has been implemented in xarray.DataArray.coarsen \
+    (http://xarray.pydata.org/en/stable/generated/xarray.DataArray.coarsen.html). \
+    This function will soon be deprecated.',DeprecationWarning)
+
     # Check if the input is a dask array (I might want to convert this
     # automaticlaly in the future)
     if not isinstance(da.data, Array):
