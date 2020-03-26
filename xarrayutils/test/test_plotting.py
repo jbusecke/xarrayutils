@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 import xarray as xr
 import matplotlib
-
+from xarrayutils.plotting import linear_piecewise_scale
 
 def test_plot_line_shaded_std():
     a = np.arange(10)
@@ -71,4 +71,26 @@ def test_same_y_range():
     yranges = [lim[1]-lim[0] for lim in ylims]
     assert all([np.isclose(a,yranges[0]) for a in yranges])
 
-# TODO: test passed options...
+    
+@pytest.mark.parametrize('cut',[10, 40, 50])
+@pytest.mark.parametrize('scale',[pytest.param(-2, marks=pytest.mark.xfail), 0, 3, 10])
+@pytest.mark.parametrize('axis',['x', 'y', pytest.param('wrong', marks=pytest.mark.xfail)])
+@pytest.mark.parametrize('scaled_half',['upper', 'lower', pytest.param('wrong', marks=pytest.mark.xfail)])
+def test_linear_piecewise_scale(cut, scale, axis, scaled_half):
+    da_z = xr.DataArray(np.arange(100), dims=['x'])
+    da_x = xr.DataArray(np.arange(50), dims=['z'])
+    da_data = da_z*xr.ones_like(da_x)
+    plt.contourf(da_x,da_z,da_data)
+
+    linear_piecewise_scale(cut,
+                           scale,
+                           axis=axis,
+                           scaled_half=scaled_half)
+    
+    if axis == 'x':
+        if scale != 0:
+            assert plt.gca().get_xscale() == 'function'
+        # this is not a great test. Need something more definitive...
+    elif axis == 'y':
+        if scale != 0:
+            assert plt.gca().get_yscale() == 'function'
