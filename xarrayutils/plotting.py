@@ -639,3 +639,74 @@ def tsdiagram(
         else:
             raise RuntimeError("`color` not recognized. %s" % type(color))
     return s
+
+
+def linear_piecewise_scale(cut, scale, ax=None, axis='y', scaled_half='upper', add_cut_line=False):
+    """This function sets a piecewise linear scaling for a given axis to highlight e.g. processes in the upper ocean vs deep ocean. 
+
+    Parameters
+    ----------
+    cut : float
+        value along the chosen axis used as transition between the two linear scalings.
+    scale : float
+        scaling coefficient for the chosen axis portion (determined by `axis` and `scaled_half`).
+        A higher number means the chosen portion of the axis will be more compressed. Must be positive. 0 means no compression.
+    ax : matplotlib.axis, optional
+        The plot axis object. Defaults to current matplotlib axis
+    axis : str, optional
+        Which axis of the plot to act on.
+        * 'y' (Default)
+        * 'x'
+    scaled_half: str, optional
+        Determines which half of the axis is scaled (compressed). 
+        * 'upper' (default). Values larger than `cut` are compressed
+        * 'lower'. Values smaller than `cut` are compressed
+        
+
+    Returns
+    -------
+    ax_scaled : matplotlib.axis
+
+    """
+    
+    if ax is None:
+        ax = plt.gca()
+    
+    if scale < 0:
+        raise ValueError(f'`Scale can not be negative. Got value of {scale}')
+    
+    if scale == 0:
+        # do nothing
+        return ax
+    else:
+        if scaled_half == 'upper':
+            def inverse(x):
+                return np.piecewise(x, [x<=cut, x>cut], [lambda x: x+(scale*(x-cut)), lambda x: x])
+
+            def forward(x):
+                return np.piecewise(x, [x<=cut, x>cut], [lambda x: x+(scale*(x-cut)), lambda x: x])
+    
+        elif scaled_half == 'lower':
+            def inverse(x):
+                return np.piecewise(x, [x>=cut, x<cut], [lambda x: x+(scale*(x-cut)), lambda x: x])
+
+            def forward(x):
+                return np.piecewise(x, [x>=cut, x<cut], [lambda x: x+(scale*(x-cut)), lambda x: x])
+        
+        else: 
+            raise ValueError(f"`scaled_half` value not recognized. Must be ['upper', 'lower']. Got {scaled_half}")
+        
+
+        
+        if axis == 'y':
+            axlim = ax.get_ylim()
+            ax.set_yscale('function', functions=(forward, inverse))
+            ax.set_ylim(axlim)
+        elif axis == 'x':
+            axlim = ax.get_xlim()
+            ax.set_xscale('function', functions=(forward, inverse))
+            ax.set_xlim(axlim)
+        else: 
+            raise ValueError(f"`axis` value not recognized. Must be ['x', 'y']. Got {axis}")
+        
+        return ax

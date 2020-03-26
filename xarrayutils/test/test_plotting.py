@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 import xarray as xr
 import matplotlib
-
+from xarrayutils.plotting import linear_piecewise_scale
 
 def test_plot_line_shaded_std():
     a = np.arange(10)
@@ -71,4 +71,11 @@ def test_same_y_range():
     yranges = [lim[1]-lim[0] for lim in ylims]
     assert all([np.isclose(a,yranges[0]) for a in yranges])
 
-# TODO: test passed options...
+def test_linear_piecewise_scale():
+    da_z = xr.DataArray(np.arange(100), dims=['x'])
+    da_x = xr.DataArray(np.arange(50), dims=['z'])
+    da_data = da_z*xr.ones_like(da_x)
+
+    plt.contourf(da_x,da_z,da_data)
+    linear_piecewise_scale(35, 5)
+    assert plt.gca().get_yscale() == 'function'
