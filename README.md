@@ -1,7 +1,8 @@
-[![Build Status](https://travis-ci.org/jbusecke/xarrayutils.svg?branch=master)](https://travis-ci.org/jbusecke/xarrayutils)
+[![Build Status](https://travis-ci.com/jbusecke/xarrayutils.svg?branch=master)](https://travis-ci.com/jbusecke/xarrayutils)
 [![codecov](https://codecov.io/gh/jbusecke/xarrayutils/branch/master/graph/badge.svg)](https://codecov.io/gh/jbusecke/xarrayutils)
 [![License:MIT](https://img.shields.io/badge/License-MIT-lightgray.svg?style=flt-square)](https://opensource.org/licenses/MIT)
 [![pypi](https://img.shields.io/pypi/v/xarrayutils.svg)](https://pypi.org/project/xarrayutils)
+[![conda-forge](https://img.shields.io/conda/dn/conda-forge/xarrayutils?label=conda-forge)](https://anaconda.org/conda-forge/xarrayutils)
 
 
 # A collection of various tools for data analysis built on top of xarray and xgcm
