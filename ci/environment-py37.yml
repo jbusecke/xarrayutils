@@ -16,6 +16,7 @@ dependencies:
   - gsw
   - cartopy
   - xgcm
+  - cftime
   - pip
   - pip:
     - codecov

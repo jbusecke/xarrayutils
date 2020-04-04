@@ -13,6 +13,7 @@ dependencies:
   - matplotlib
   # Necesary additions for the plotting tools (might have to make thos optional)
   - gsw
+  - cftime # !!! omit in one once the tests are optional
   - cartopy
   - xgcm
   - pip
