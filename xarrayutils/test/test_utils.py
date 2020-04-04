@@ -371,12 +371,17 @@ def test_aggregate_w_nanmean(dataarray_2d_ones, dataarray_2d_ones_nan):
         weights = dataarray_2d_ones_nan
         a = aggregate_w_nanmean(data, weights, blocks)
 
-
-def test_detrend():
+@pytest.mark.parametrize('nanmask', [False, True])
+@pytest.mark.parametrize('trend_params', [False, True])
+@pytest.mark.parametrize('real_time', [False, True])
+def test_detrend(trend_params, real_time, nanmask):#
     # based on test_linear_trend
     # TODO implement a test for nans
     data = dsa.from_array(np.random.random([10, 2, 2]), chunks=(10, 1, 1))
-    t = range(10)
+    if real_time:
+        t = xr.cftime_range('2000', periods=10)
+    else:
+        t = range(10)
     x = range(2)
     y = range(2)
     data_da = xr.DataArray(
@@ -384,8 +389,13 @@ def test_detrend():
         dims=["time", "x", "y"],
         coords={"time": ("time", t), "x": ("x", x), "y": ("y", y)},
     )
-
-    detrended_da = xr_detrend(data_da)
+        
+    if trend_params:
+        trend_p = xr_linregress(data_da.time, data_da, nanmask=nanmask)
+    else:
+        trend_p = None
+    
+    detrended_da = xr_detrend(data_da, trend_params=trend_p, nanmask=nanmask)
 
     for xi in x:
         for yi in y:

@@ -670,7 +670,7 @@ def concat_dim_da(data, name):
     return xr.DataArray(data, dims=[name], coords={name: (name, data)}, name=name)
 
 
-def xr_detrend(b, dim="time", trend_params=None, convert_datetime=True):
+def xr_detrend(b, dim="time", trend_params=None, use_intercept=True, convert_datetime=True, **kwargs):
     """Removes linear trend along dimension `dim` from dataarray `b`.
     If no `trend_params` are passed (default),
     the linear trend is calculated using `xr_linregress`.
@@ -680,7 +680,7 @@ def xr_detrend(b, dim="time", trend_params=None, convert_datetime=True):
         Data source to be detrended.
     dim : str
         Dimension along which to remove linear trend
-    trend_params: {xr.DataArray, xr.Dataset, None}
+    trend_params: {xr.Dataset, None}
         Precomputed output of xr_linregress.
         This can be usefull for large datasets where intermediate results are
         saved already. Defaults to None, meaning the linear trend is computed
@@ -688,14 +688,19 @@ def xr_detrend(b, dim="time", trend_params=None, convert_datetime=True):
     convert_datetime: bool
         If true (default), the dimension `dim` is converted from a datetime to
         float.
+    kwargs : 
+        Keyword arguments passed to `xr_linregress`
     """
     if convert_datetime:
+        # this converts the time to a float number. Should be used for uneven spacing
         t_data = b[dim].astype(np.float64)
     else:
+        #TODO: this does not work with cftime....
+        
         t_data = b[dim]
 
     if trend_params is None:
-        out = xr_linregress(t_data, b)
+        out = xr_linregress(t_data, b, dim=dim, **kwargs)
     else:
         out = trend_params
 
