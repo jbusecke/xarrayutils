@@ -49,7 +49,9 @@ def _linregress_ufunc(a, b, nanmask=False):
     return np.array([slope, intercept, r_value, p_value, std_err])
 
 
-def xr_linregress(a, b, dim="time", convert_to_dataset=True, dtype=None, nanmask=False):
+def xr_linregress_scipy(
+    a, b, dim="time", convert_to_dataset=True, dtype=None, nanmask=False
+):
     """Applies scipy.stats.linregress over two xr.DataArrays or xr.Datasets.
 
     Parameters
@@ -108,6 +110,60 @@ def xr_linregress(a, b, dim="time", convert_to_dataset=True, dtype=None, nanmask
     return out
 
 
+def xr_linregress(x, y, dim="time"):
+    """ufunc to wrap scipy.stats.linregress for xr_linregress"""
+    # align the nan Values before...
+    x = x.where(~np.isnan(y))
+    y = y.where(~np.isnan(x))
+    # TODO: think about making this optional? Right now I err on the side of caution
+
+    # Inspired by this post https://stackoverflow.com/a/60352716 but adjusted, so that
+    # results are exactly as with scipy.stats.linregress for 1d vectors.
+
+    n = y.notnull().sum(dim)
+
+    nanmask = np.isnan(y).all(dim)
+
+    xmean = x.mean(dim)
+    ymean = y.mean(dim)
+    xstd = x.std(dim)
+    ystd = y.std(dim)
+
+    cov = ((x - xmean) * (y - ymean)).sum(dim) / (n)
+    cor = cov / (xstd * ystd)
+
+    slope = cov / (xstd ** 2)
+    intercept = ymean - xmean * slope
+
+    # tstats = cor * np.sqrt(n - 2) / np.sqrt(1 - cor ** 2)
+    # slightly altered version from scipy.stats.linregress
+    df = n - 2
+    TINY = 1.0e-20
+    tstats = cor * np.sqrt(df / ((1.0 - cor + TINY) * (1.0 + cor + TINY)))
+    stderr = slope / tstats
+
+    pval = (
+        xr.apply_ufunc(
+            stats.distributions.t.sf,
+            abs(tstats),
+            df,
+            dask="parallelized",
+            output_dtypes=[y.dtype],
+        )
+        * 2
+    )
+
+    return xr.Dataset(
+        {
+            "slope": slope,
+            "intercept": intercept,
+            "r_value": cor.fillna(0).where(~nanmask),
+            "p_value": pval,
+            "std_err": stderr,
+        }
+    )
+
+
 def linear_trend(obj, dim):
     """Convenience wrapper for 'xr_linregress'. Calculates the trend per
     given timestep. E.g. if the data is passed as yearly values, the
@@ -116,7 +172,7 @@ def linear_trend(obj, dim):
     x = xr.DataArray(
         np.arange(len(obj[dim])).astype(np.float), dims=dim, coords={dim: obj[dim]}
     )
-    trend = xr_linregress(x, obj, dim=dim, convert_to_dataset=False)
+    trend = xr_linregress(x, obj, dim=dim)
     return trend
 
 

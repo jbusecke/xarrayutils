@@ -14,6 +14,7 @@ from xarrayutils.utils import (
     _lin_trend_legacy,
     _linregress_ufunc,
     xr_linregress,
+    xr_linregress_scipy,
     xr_detrend,
     lag_and_combine,
     filter_1D,
@@ -147,17 +148,41 @@ def test_linregress_ufunc():
     assert np.isnan(_linregress_ufunc(x, y, nanmask=True)).all()
 
 
-@pytest.mark.parametrize("chunks", [None, {"x": -1, "y": 1}, {"x": 1, "y": 1}])
-@pytest.mark.parametrize("variant", range(3))
-@pytest.mark.parametrize("dtype", [None, np.float])
-@pytest.mark.parametrize("nans", [False, True])
-def test_xr_linregress(chunks, variant, dtype, nans):
-    a = xr.DataArray(np.random.rand(3, 13, 5), dims=["x", "time", "y"])
-    b = xr.DataArray(np.random.rand(3, 5, 13), dims=["x", "y", "time"])
+@pytest.mark.parametrize(
+    "chunks, dim",
+    [
+        (None, "time"),
+        ({"x": -1, "y": 1}, "time"),
+        ({"x": 1, "y": 1}, "time"),
+        ({"x": -1, "y": 1}, "x"),
+    ],
+)
+# @pytest.mark.parametrize("variant", range(3))
+@pytest.mark.parametrize("variant", [0])
+# @pytest.mark.parametrize("dtype", [None, np.float])
+@pytest.mark.parametrize("dtype", [None])
+# @pytest.mark.parametrize("nans", [False, True])
+@pytest.mark.parametrize("nans", [True, "all"])
+@pytest.mark.parametrize("nanmask", [False, True])  # ,
+@pytest.mark.parametrize(
+    "ni, parameter", enumerate(["slope", "intercept", "r_value", "p_value", "std_err"])
+)
+def test_xr_linregress(chunks, dim, variant, dtype, nans, nanmask, parameter, ni):
+    a = xr.DataArray(np.random.rand(6, 8, 5), dims=["x", "time", "y"])
+    b = xr.DataArray(np.random.rand(6, 5, 8), dims=["x", "y", "time"])
     if nans:
-        # add nans at random positions
-        a.data[np.unravel_index(np.random.randint(0, 2 * 4 * 12, 10), a.shape)] = np.nan
-        b.data[np.unravel_index(np.random.randint(0, 2 * 4 * 12, 10), b.shape)] = np.nan
+        if nans == "all":
+            a = xr.ones_like(a) * np.nan
+            b = xr.ones_like(b) * np.nan
+
+        else:
+            # add nans at random positions
+            a.data[
+                np.unravel_index(np.random.randint(0, 5 * 7 * 3, 10), a.shape)
+            ] = np.nan
+            b.data[
+                np.unravel_index(np.random.randint(0, 5 * 7 * 3, 10), b.shape)
+            ] = np.nan
 
     if chunks is not None:
         if variant == 0:
@@ -168,16 +193,24 @@ def test_xr_linregress(chunks, variant, dtype, nans):
             a = a.chunk(chunks)
             b = b.chunk(chunks)
 
-    reg = xr_linregress(a, b, dtype=dtype)
-    for xx in range(len(a.x)):
-        for yy in range(len(a.y)):
-            pos = dict(x=xx, y=yy)
-            expected = _linregress_ufunc(a.isel(**pos), b.isel(**pos))
+    reg = xr_linregress(a, b, dim=dim)
+    reg_scipy = xr_linregress_scipy(a, b, dtype=dtype, dim=dim, nanmask=nanmask)
+
+    dims = list(set(a.dims) - set([dim]))
+    for ii in range(len(a[dims[0]])):
+        for jj in range(len(a[dims[1]])):
+            pos = dict({dims[0]: ii, dims[1]: jj})
+            print(f"A:{a.isel(**pos).load().data}")
+            print(f"B:{b.isel(**pos).load().data}\n\n")
+            expected = _linregress_ufunc(a.isel(**pos), b.isel(**pos), nanmask=nanmask)
             reg_sub = reg.isel(**pos)
-            for ni, nn in enumerate(
-                ["slope", "intercept", "r_value", "p_value", "std_err"]
-            ):
-                np.testing.assert_allclose(reg_sub[nn].data, expected[ni])
+            reg_scipy_sub = reg_scipy.isel(**pos)
+
+            np.testing.assert_allclose(reg_scipy_sub[parameter].data, expected[ni])
+            if nanmask:
+                # the nanmask is automatically implemented in the new function.
+                # So there is no point in testing it without
+                np.testing.assert_allclose(reg_sub[parameter].data, expected[ni])
 
 
 def test_linear_trend():
@@ -199,7 +232,12 @@ def test_linear_trend():
             x_fit = t
             y_fit = data[:, xi, yi]
             fit = np.array(stats.linregress(x_fit, y_fit))
-            test = fit_da.sel(x=xi, y=yi).data
+            test = np.array(
+                [
+                    fit_da.sel(x=xi, y=yi)[param].data
+                    for param in ["slope", "intercept", "r_value", "p_value", "std_err"]
+                ]
+            )
             assert np.allclose(fit, test)
 
     # Test with other timedim (previously was not caught)
@@ -217,7 +255,13 @@ def test_linear_trend():
             x_fit = t
             y_fit = data[xi, :, yi]
             fit = np.array(stats.linregress(x_fit, y_fit))
-            assert np.allclose(fit, fit_da.sel(x=xi, y=yi).data)
+            test = test = np.array(
+                [
+                    fit_da.sel(x=xi, y=yi)[param].data
+                    for param in ["slope", "intercept", "r_value", "p_value", "std_err"]
+                ]
+            )
+            assert np.allclose(fit, test)
 
 
 # @pytest.mark.parametrize(
