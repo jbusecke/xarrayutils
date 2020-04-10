@@ -757,8 +757,7 @@ def xr_detrend(b, dim="time", trend_params=None, convert_datetime=True):
 
     # Create new time dataarray
     trend_full = t_data * out.slope + out.intercept
-    trend_full[dim].data = b[dim].data
-
+    trend_full = trend_full.assign_coords({dim:b[dim].data})
     return b - trend_full
 
 
