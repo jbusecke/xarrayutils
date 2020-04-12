@@ -40,21 +40,11 @@ def test_xr_1d_groupby(bins):
     data_dens = abs(data) + dens[np.newaxis, np.newaxis, :, np.newaxis]
     da = xr.DataArray(
         data,
-        coords=[
-            ("x", range(2)),
-            ("y", range(2)),
-            ("depth", depth),
-            ("time", range(3)),
-        ],
+        coords=[("x", range(2)), ("y", range(2)), ("depth", depth), ("time", range(3))],
     )
     da_group = xr.DataArray(
         data_dens,
-        coords=[
-            ("x", range(2)),
-            ("y", range(2)),
-            ("depth", depth),
-            ("time", range(3)),
-        ],
+        coords=[("x", range(2)), ("y", range(2)), ("depth", depth), ("time", range(3))],
     )
     da_group_unnamed = da_group.copy()
     da_group.name = "density"

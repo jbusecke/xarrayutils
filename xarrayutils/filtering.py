@@ -1,10 +1,6 @@
 import xarray as xr
 import numpy as np
-from astropy.convolution import (
-    convolve_fft,
-    Gaussian1DKernel,
-    Gaussian2DKernel,
-)
+from astropy.convolution import convolve_fft, Gaussian1DKernel, Gaussian2DKernel
 
 from xarrayutils.utilities import detect_dtype
 
