@@ -51,7 +51,7 @@ def xr_violinplot(ds, ax=None, x_dim="xt_ocean", width=1, color="0.5"):
     if ax is None:
         ax = plt.gca()
     vp = ax.violinplot(
-        y, x, widths=width, showextrema=False, showmedians=False, showmeans=True,
+        y, x, widths=width, showextrema=False, showmedians=False, showmeans=True
     )
     [item.set_facecolor(color) for item in vp["bodies"]]
 
@@ -313,10 +313,7 @@ def shaded_line_plot(
         ll = ax.plot(y, x, **line_defaults)
 
     # now loop over the spreads:
-    fill_defaults = {
-        "facecolor": ll[-1].get_color(),
-        "edgecolor": "none",
-    }
+    fill_defaults = {"facecolor": ll[-1].get_color(), "edgecolor": "none"}
 
     # Apply defaults but respect input
     fill_defaults.update(fill_kwargs)
@@ -345,7 +342,7 @@ def shaded_line_plot(
 
 
 def plot_line_shaded_std(
-    x, y, std_y, horizontal=True, ax=None, line_kwargs=dict(), fill_kwargs=dict(),
+    x, y, std_y, horizontal=True, ax=None, line_kwargs=dict(), fill_kwargs=dict()
 ):
     """Plot wrapper to draw line for y and shaded patch according to std_y.
     The shading represents one std on each side of the line...

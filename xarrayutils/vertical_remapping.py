@@ -93,13 +93,7 @@ def xr_1d_groupby(data, group_data, bins, dim):
 
 
 def xr_remapping(
-    da_data,
-    da_group,
-    bins,
-    dim,
-    distance_coord,
-    content_var=False,
-    return_average=True,
+    da_data, da_group, bins, dim, distance_coord, content_var=False, return_average=True
 ):
     """Performs conservative remapping into another tracer coordinate system.
 

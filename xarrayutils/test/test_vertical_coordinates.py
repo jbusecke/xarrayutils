@@ -457,7 +457,7 @@ def test_linear_interpolation_regrid(
             pad_left = pad_right = None
 
         expected_profile = _coord_interp(
-            z.data, d.data, target.data, pad_left=pad_left, pad_right=pad_right,
+            z.data, d.data, target.data, pad_left=pad_left, pad_right=pad_right
         )
 
         np.testing.assert_allclose(profile, expected_profile)

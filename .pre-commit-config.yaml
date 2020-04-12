@@ -5,4 +5,4 @@ repos:
       name: black
       language: system
       entry: black
-      types: [python]
+      types: ["python"]

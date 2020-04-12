@@ -81,11 +81,11 @@ def rebuild_grid(
         coords={
             x_index_name
             + g_index_suffix: (
-                [x_index_name + g_index_suffix,],
+                [x_index_name + g_index_suffix],
                 grid.coords[x_index_name].data,
             )
         },
-        dims=[x_index_name + g_index_suffix,],
+        dims=[x_index_name + g_index_suffix],
     )
 
     grid.coords[y_index_name + g_index_suffix] = xr.DataArray(
@@ -93,11 +93,11 @@ def rebuild_grid(
         coords={
             y_index_name
             + g_index_suffix: (
-                [y_index_name + g_index_suffix,],
+                [y_index_name + g_index_suffix],
                 grid.coords[y_index_name].data,
             )
         },
-        dims=[y_index_name + g_index_suffix,],
+        dims=[y_index_name + g_index_suffix],
     )
 
     # assign xgcm compatible attributes

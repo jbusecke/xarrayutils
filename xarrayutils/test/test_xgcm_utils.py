@@ -292,7 +292,7 @@ def test_calculate_rel_vorticity():
     ) / ds_b.area_t
 
     zeta_b = calculate_rel_vorticity(
-        grid_b, ds_b.u, ds_b.v, ds_b.dx_ne, ds_b.dy_ne, ds_b.area_t, gridtype=None,
+        grid_b, ds_b.u, ds_b.v, ds_b.dx_ne, ds_b.dy_ne, ds_b.area_t, gridtype=None
     )
 
     test_c = (
@@ -300,7 +300,7 @@ def test_calculate_rel_vorticity():
     ) / ds_c.area_ne
 
     zeta_c = calculate_rel_vorticity(
-        grid_c, ds_c.u, ds_c.v, ds_c.dx_e, ds_c.dy_n, ds_c.area_ne, gridtype=None,
+        grid_c, ds_c.u, ds_c.v, ds_c.dx_e, ds_c.dy_n, ds_c.area_ne, gridtype=None
     )
 
     assert_allclose(test_b, zeta_b)
@@ -329,7 +329,7 @@ def test_interp_all():
     for var in ["u", "v", "tracer"]:
         for ds, grid in zip([ds_b, ds_c], [grid_b, grid_c]):
             for target, control_dims in zip(
-                ["center", "right"], [["xt", "yt", "time"], ["xu", "yu", "time"]],
+                ["center", "right"], [["xt", "yt", "time"], ["xu", "yu", "time"]]
             ):
                 print(ds)
                 print(grid)
