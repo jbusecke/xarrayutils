@@ -1,11 +1,7 @@
 import xarray as xr
 import numpy as np
 import pytest
-from astropy.convolution import (
-    convolve_fft,
-    Gaussian1DKernel,
-    Gaussian2DKernel,
-)
+from astropy.convolution import convolve_fft, Gaussian1DKernel, Gaussian2DKernel
 
 from xarrayutils.filtering import filter_1D, filter_2D
 
