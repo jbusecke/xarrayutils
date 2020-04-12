@@ -1,11 +1,20 @@
 import xarray as xr
 import numpy as np
-from astropy.convolution import convolve_fft, Gaussian1DKernel, Gaussian2DKernel
+
+try:
+    from astropy.convolution import convolve_fft, Gaussian1DKernel, Gaussian2DKernel
+except ImportError:
+    astropy = None
 
 from xarrayutils.utilities import detect_dtype
 
 
 def filter_1D(data, std, dim="time", dtype=None):
+    if astropy is None:
+        raise RuntimeError(
+            "Module `astropy` not found. Please install optional dependency with `conda install -c conda-forge astropy"
+        )
+
     if dtype is None:
         dtype = detect_dtype(data)
 
@@ -33,6 +42,11 @@ def filter_1D(data, std, dim="time", dtype=None):
 
 
 def filter_2D(data, std, dim, dtype=None):
+    if astropy is None:
+        raise RuntimeError(
+            "Module `astropy` not found. Please install optional dependency with `conda install -c conda-forge astropy"
+        )
+
     if dtype is None:
         dtype = detect_dtype(data)
 
