@@ -7,12 +7,7 @@ from dask.array import coarsen, ones_like
 from dask.array.core import Array
 import warnings
 from xarrayutils.utilities import detect_dtype
-
-# from xarrayutils.filtering import filter_1D as filter_1D_refactored
 from xarrayutils.filtering import filter_1D as filter_1D_refactored
-
-# from scipy import optimize
-# import dask.array as dsa
 
 
 """
@@ -36,76 +31,76 @@ def shift_lon(ds, londim, shift=360, crit=0, smaller=True, sort=True):
     return ds
 
 
-def _linregress_ufunc(a, b, nanmask=False):
-    """ufunc to wrap scipy.stats.linregress for xr_linregress"""
-    if nanmask:
-        idxa = np.isnan(a)
-        idxb = np.isnan(b)
-        mask = np.logical_and(~idxa, ~idxb)
-        if sum(~mask) < len(b):  # only applies the mask if not all nan
-            a = a[mask]
-            b = b[mask]
-    slope, intercept, r_value, p_value, std_err = stats.linregress(a, b)
-    return np.array([slope, intercept, r_value, p_value, std_err])
-
-
-def xr_linregress(a, b, dim="time", convert_to_dataset=True, dtype=None, nanmask=False):
-    """Applies scipy.stats.linregress over two xr.DataArrays or xr.Datasets.
+def xr_linregress(x, y, dim="time"):
+    """Calculates linear regression along dimension `dim`.
+    Results are equivalent to `scipy.stats.linregress`.
 
     Parameters
     ----------
-    a : {xr.DataArray}
+    x : {xr.DataArray}
         Independent variable for linear regression. E.g. time.
-    b : {xr.DataArray, xr.Dataset}
+    y : {xr.DataArray, xr.Dataset}
         Dependent variable.
     dim : str
         Dimension over which to perform linear regression.
         Must be present in both `a` and `b` (the default is 'time').
-    convert_to_dataset : bool
-        Converts the output parameter to data_variables instead of an
-        additional dimension (the default is True).
-    dtype : dtype
-         Dtype for the output. If None, defaults to dtype of `b`, or `b`s
-         first data variable(the default is None).
-    nanmask: bool
-        optional masking of nans in the data to avoid nan output from
-        regression (the default is False)
 
     Returns
     -------
     type(b)
-        Returns a dataarray containing the parameter values of
-        scipy.stats.linregress for each data_variable in `b`.
+        Returns a dataarray containing the parameter values
+        for each data_variable in `b`. The naming convention
+        follows `scipy.stats.linregress`
 
     """
+    # align the nan Values before...
+    x = x.where(~np.isnan(y))
+    y = y.where(~np.isnan(x))
+    # TODO: think about making this optional? Right now I err on the side of caution
 
-    if dtype is None:
-        dtype = detect_dtype(b)
+    # Inspired by this post https://stackoverflow.com/a/60352716 but adjusted, so that
+    # results are exactly as with scipy.stats.linregress for 1d vectors.
 
-    stats = xr.apply_ufunc(
-        _linregress_ufunc,
-        a,
-        b,
-        nanmask,
-        input_core_dims=[[dim], [dim], []],
-        output_core_dims=[["parameter"]],
-        vectorize=True,
-        dask="parallelized",
-        output_dtypes=[dtype],
-        output_sizes={"parameter": 5},
+    n = y.notnull().sum(dim)
+
+    nanmask = np.isnan(y).all(dim)
+
+    xmean = x.mean(dim)
+    ymean = y.mean(dim)
+    xstd = x.std(dim)
+    ystd = y.std(dim)
+
+    cov = ((x - xmean) * (y - ymean)).sum(dim) / (n)
+    cor = cov / (xstd * ystd)
+
+    slope = cov / (xstd ** 2)
+    intercept = ymean - xmean * slope
+
+    df = n - 2
+    TINY = 1.0e-20
+    tstats = cor * np.sqrt(df / ((1.0 - cor + TINY) * (1.0 + cor + TINY)))
+    stderr = slope / tstats
+
+    pval = (
+        xr.apply_ufunc(
+            stats.distributions.t.sf,
+            abs(tstats),
+            df,
+            dask="parallelized",
+            output_dtypes=[y.dtype],
+        )
+        * 2
     )
-    stats["parameter"] = xr.DataArray(
-        ["slope", "intercept", "r_value", "p_value", "std_err"], dims=["parameter"]
+
+    return xr.Dataset(
+        {
+            "slope": slope,
+            "intercept": intercept,
+            "r_value": cor.fillna(0).where(~nanmask),
+            "p_value": pval,
+            "std_err": stderr,
+        }
     )
-    if convert_to_dataset:
-        # chug them all into a dataset
-        ds_stats = xr.Dataset()
-        for ff in stats.parameter.data:
-            ds_stats[ff] = stats.sel(parameter=ff)
-        out = ds_stats
-    else:
-        out = stats
-    return out
 
 
 def linear_trend(obj, dim):
@@ -116,7 +111,7 @@ def linear_trend(obj, dim):
     x = xr.DataArray(
         np.arange(len(obj[dim])).astype(np.float), dims=dim, coords={dim: obj[dim]}
     )
-    trend = xr_linregress(x, obj, dim=dim, convert_to_dataset=False)
+    trend = xr_linregress(x, obj, dim=dim)
     return trend
 
 
@@ -701,7 +696,7 @@ def xr_detrend(b, dim="time", trend_params=None, convert_datetime=True):
 
     # Create new time dataarray
     trend_full = t_data * out.slope + out.intercept
-    trend_full = trend_full.assign_coords({dim:b[dim].data})
+    trend_full = trend_full.assign_coords({dim: b[dim].data})
     return b - trend_full
 
 
