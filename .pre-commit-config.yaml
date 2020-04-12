@@ -5,5 +5,5 @@ repos:
       name: black
       language: system
       entry: black
-      files: ^xarrayutils/xarrayutils/
-      types: [file, python]
+      files: '^xarrayutils/xarrayutils/'
+      types: [python]
