@@ -12,9 +12,7 @@ from xarrayutils.utils import (
     extractBox_dict,
     linear_trend,
     _lin_trend_legacy,
-    _linregress_ufunc,
     xr_linregress,
-    xr_linregress_scipy,
     xr_detrend,
     lag_and_combine,
     filter_1D,
@@ -148,6 +146,19 @@ def test_linregress_ufunc():
     assert np.isnan(_linregress_ufunc(x, y, nanmask=True)).all()
 
 
+def _linregress_ufunc(a, b, nanmask=False):
+    """ufunc to wrap check output of `xr_linregress` against pure scipy results"""
+    if nanmask:
+        idxa = np.isnan(a)
+        idxb = np.isnan(b)
+        mask = np.logical_and(~idxa, ~idxb)
+        if sum(~mask) < len(b):  # only applies the mask if not all nan
+            a = a[mask]
+            b = b[mask]
+    slope, intercept, r_value, p_value, std_err = stats.linregress(a, b)
+    return np.array([slope, intercept, r_value, p_value, std_err])
+
+
 @pytest.mark.parametrize(
     "chunks, dim",
     [
@@ -163,11 +174,10 @@ def test_linregress_ufunc():
 @pytest.mark.parametrize("dtype", [None])
 # @pytest.mark.parametrize("nans", [False, True])
 @pytest.mark.parametrize("nans", [True, "all"])
-@pytest.mark.parametrize("nanmask", [False, True])  # ,
 @pytest.mark.parametrize(
     "ni, parameter", enumerate(["slope", "intercept", "r_value", "p_value", "std_err"])
 )
-def test_xr_linregress(chunks, dim, variant, dtype, nans, nanmask, parameter, ni):
+def test_xr_linregress(chunks, dim, variant, dtype, nans, parameter, ni):
     a = xr.DataArray(np.random.rand(6, 8, 5), dims=["x", "time", "y"])
     b = xr.DataArray(np.random.rand(6, 5, 8), dims=["x", "y", "time"])
     if nans:
@@ -194,23 +204,16 @@ def test_xr_linregress(chunks, dim, variant, dtype, nans, nanmask, parameter, ni
             b = b.chunk(chunks)
 
     reg = xr_linregress(a, b, dim=dim)
-    reg_scipy = xr_linregress_scipy(a, b, dtype=dtype, dim=dim, nanmask=nanmask)
 
     dims = list(set(a.dims) - set([dim]))
     for ii in range(len(a[dims[0]])):
         for jj in range(len(a[dims[1]])):
             pos = dict({dims[0]: ii, dims[1]: jj})
-            print(f"A:{a.isel(**pos).load().data}")
-            print(f"B:{b.isel(**pos).load().data}\n\n")
-            expected = _linregress_ufunc(a.isel(**pos), b.isel(**pos), nanmask=nanmask)
-            reg_sub = reg.isel(**pos)
-            reg_scipy_sub = reg_scipy.isel(**pos)
 
-            np.testing.assert_allclose(reg_scipy_sub[parameter].data, expected[ni])
-            if nanmask:
-                # the nanmask is automatically implemented in the new function.
-                # So there is no point in testing it without
-                np.testing.assert_allclose(reg_sub[parameter].data, expected[ni])
+            expected = _linregress_ufunc(a.isel(**pos), b.isel(**pos), nanmask=True)
+            reg_sub = reg.isel(**pos)
+
+            np.testing.assert_allclose(reg_sub[parameter].data, expected[ni])
 
 
 def test_linear_trend():

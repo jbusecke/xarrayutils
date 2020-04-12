@@ -15,7 +15,9 @@ dependencies:
   - netcdf4
   - dask
   - numpy
-  # 
+  - nc-time-axis
+  - astropy
+  #
   - pip:
     - docrep
     - nbsphinx

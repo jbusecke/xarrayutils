@@ -33,4 +33,7 @@ To install from source use pip:
 ### Plotting utilities
 `xarrayutils.plotting` provides several small utility functions to make common tasks I find in my workflow in matplotlib easier. [Examples](doc/plotting.ipynb)
 
-
+### Utilities for large scale climate data analysis
+`xarrayutils.utils` provides some helpful tools to simplify common tasks in climate data
+analysis workflows. [This notebook](doc/utils.ipynb), provides some examples on how to
+use linear regression. 
