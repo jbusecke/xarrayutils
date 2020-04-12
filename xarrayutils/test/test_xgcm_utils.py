@@ -57,31 +57,15 @@ def datasets():
     dx = 0.3
     dy = 2
 
-    dx_ne = xr.DataArray(
-        np.ones([4, 4]) * dx - 0.1, coords=[("xu", xu), ("yu", yu)]
-    )
-    dx_n = xr.DataArray(
-        np.ones([4, 4]) * dx - 0.2, coords=[("xt", xt), ("yu", yu)]
-    )
-    dx_e = xr.DataArray(
-        np.ones([4, 4]) * dx - 0.3, coords=[("xu", xu), ("yt", yt)]
-    )
-    dx_t = xr.DataArray(
-        np.ones([4, 4]) * dx - 0.4, coords=[("xt", xt), ("yt", yt)]
-    )
+    dx_ne = xr.DataArray(np.ones([4, 4]) * dx - 0.1, coords=[("xu", xu), ("yu", yu)])
+    dx_n = xr.DataArray(np.ones([4, 4]) * dx - 0.2, coords=[("xt", xt), ("yu", yu)])
+    dx_e = xr.DataArray(np.ones([4, 4]) * dx - 0.3, coords=[("xu", xu), ("yt", yt)])
+    dx_t = xr.DataArray(np.ones([4, 4]) * dx - 0.4, coords=[("xt", xt), ("yt", yt)])
 
-    dy_ne = xr.DataArray(
-        np.ones([4, 4]) * dy + 0.1, coords=[("xu", xu), ("yu", yu)]
-    )
-    dy_n = xr.DataArray(
-        np.ones([4, 4]) * dy + 0.2, coords=[("xt", xt), ("yu", yu)]
-    )
-    dy_e = xr.DataArray(
-        np.ones([4, 4]) * dy + 0.3, coords=[("xu", xu), ("yt", yt)]
-    )
-    dy_t = xr.DataArray(
-        np.ones([4, 4]) * dy + 0.4, coords=[("xt", xt), ("yt", yt)]
-    )
+    dy_ne = xr.DataArray(np.ones([4, 4]) * dy + 0.1, coords=[("xu", xu), ("yu", yu)])
+    dy_n = xr.DataArray(np.ones([4, 4]) * dy + 0.2, coords=[("xt", xt), ("yu", yu)])
+    dy_e = xr.DataArray(np.ones([4, 4]) * dy + 0.3, coords=[("xu", xu), ("yt", yt)])
+    dy_t = xr.DataArray(np.ones([4, 4]) * dy + 0.4, coords=[("xt", xt), ("yt", yt)])
 
     area_ne = dx_ne * dy_ne
     area_n = dx_n * dy_n
@@ -140,25 +124,17 @@ def datasets():
     }
 
     ds_b = _add_metrics(
-        xr.Dataset(
-            {"u": u_b, "v": v_b, "tracer": tr, "timeseries": timeseries}
-        )
+        xr.Dataset({"u": u_b, "v": v_b, "tracer": tr, "timeseries": timeseries})
     )
     ds_c = _add_metrics(
-        xr.Dataset(
-            {"u": u_c, "v": v_c, "tracer": tr, "timeseries": timeseries}
-        )
+        xr.Dataset({"u": u_c, "v": v_c, "tracer": tr, "timeseries": timeseries})
     )
 
     ds_fail = _add_metrics(
-        xr.Dataset(
-            {"u": u_b, "v": v_c, "tracer": tr, "timeseries": timeseries}
-        )
+        xr.Dataset({"u": u_b, "v": v_c, "tracer": tr, "timeseries": timeseries})
     )
     ds_fail2 = _add_metrics(
-        xr.Dataset(
-            {"u": u_b, "v": v_c, "tracer": tr, "timeseries": timeseries}
-        )
+        xr.Dataset({"u": u_b, "v": v_c, "tracer": tr, "timeseries": timeseries})
     )
 
     return {
@@ -316,28 +292,15 @@ def test_calculate_rel_vorticity():
     ) / ds_b.area_t
 
     zeta_b = calculate_rel_vorticity(
-        grid_b,
-        ds_b.u,
-        ds_b.v,
-        ds_b.dx_ne,
-        ds_b.dy_ne,
-        ds_b.area_t,
-        gridtype=None,
+        grid_b, ds_b.u, ds_b.v, ds_b.dx_ne, ds_b.dy_ne, ds_b.area_t, gridtype=None,
     )
 
     test_c = (
-        grid_c.diff(ds_c.v * ds_c.dy_n, "X")
-        - grid_c.diff(ds_c.u * ds_c.dx_e, "Y")
+        grid_c.diff(ds_c.v * ds_c.dy_n, "X") - grid_c.diff(ds_c.u * ds_c.dx_e, "Y")
     ) / ds_c.area_ne
 
     zeta_c = calculate_rel_vorticity(
-        grid_c,
-        ds_c.u,
-        ds_c.v,
-        ds_c.dx_e,
-        ds_c.dy_n,
-        ds_c.area_ne,
-        gridtype=None,
+        grid_c, ds_c.u, ds_c.v, ds_c.dx_e, ds_c.dy_n, ds_c.area_ne, gridtype=None,
     )
 
     assert_allclose(test_b, zeta_b)
@@ -366,8 +329,7 @@ def test_interp_all():
     for var in ["u", "v", "tracer"]:
         for ds, grid in zip([ds_b, ds_c], [grid_b, grid_c]):
             for target, control_dims in zip(
-                ["center", "right"],
-                [["xt", "yt", "time"], ["xu", "yu", "time"]],
+                ["center", "right"], [["xt", "yt", "time"], ["xu", "yu", "time"]],
             ):
                 print(ds)
                 print(grid)
