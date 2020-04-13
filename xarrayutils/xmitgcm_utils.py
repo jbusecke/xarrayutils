@@ -1,6 +1,3 @@
-from __future__ import print_function
-
-
 def derivative(grid, data, axis, debug=False):
     """Calculate gradient along single axis.
     PARAMETERS

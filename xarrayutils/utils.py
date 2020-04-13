@@ -1,4 +1,3 @@
-from __future__ import print_function
 import numpy as np
 import xarray as xr
 from scipy.signal import filtfilt, gaussian

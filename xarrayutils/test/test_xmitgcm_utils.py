@@ -1,13 +1,6 @@
 import pytest
 import xgcm
-
-# import xarray as xr
-# import numpy as np
-# import os
 from xarrayutils.xmitgcm_utils import get_hfac, get_dx
-
-# from numpy.testing import assert_allclose
-
 from .datasets import datagrid_w_attrs
 
 

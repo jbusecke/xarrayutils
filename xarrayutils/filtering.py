@@ -3,6 +3,8 @@ import numpy as np
 
 try:
     from astropy.convolution import convolve_fft, Gaussian1DKernel, Gaussian2DKernel
+
+    astropy = True
 except ImportError:
     astropy = None
 

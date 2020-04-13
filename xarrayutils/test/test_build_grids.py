@@ -1,9 +1,4 @@
-from __future__ import print_function
 import pytest
-
-# import xarray as xr
-# import numpy as np
-# import os
 from xarrayutils.build_grids import rebuild_grid
 from numpy.testing import assert_allclose
 
