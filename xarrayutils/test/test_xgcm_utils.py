@@ -1,7 +1,9 @@
-from xgcm import Grid
+import pytest
+
+Grid = pytest.importorskip("xgcm.Grid")
 import xarray as xr
 import numpy as np
-import pytest
+
 from xarray.testing import assert_allclose
 from xarrayutils.weighted_operations import weighted_mean
 from xarrayutils.xgcm_utils import (
