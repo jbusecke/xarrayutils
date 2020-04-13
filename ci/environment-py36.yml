@@ -6,6 +6,7 @@ dependencies:
   - xarray < 0.15
   - numpy
   - black
+  - scipy
   - matplotlib
   - pip
   - pip:
