@@ -7,7 +7,6 @@ dependencies:
   - numpy
   - black
   - scipy
-  - matplotlib
   - pip
   - pip:
     - codecov
