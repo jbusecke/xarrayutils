@@ -2,6 +2,7 @@ import pytest
 from xarrayutils.build_grids import rebuild_grid
 from numpy.testing import assert_allclose
 
+xgcm = pytest.importorskip("xgcm")
 from .datasets import datagrid_dimtest, datagrid_dimtest_ll
 
 

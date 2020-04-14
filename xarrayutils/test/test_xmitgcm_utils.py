@@ -1,5 +1,6 @@
 import pytest
-import xgcm
+
+xgcm = pytest.importorskip("xgcm")
 from xarrayutils.xmitgcm_utils import get_hfac, get_dx
 from .datasets import datagrid_w_attrs
 
