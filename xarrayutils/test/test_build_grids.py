@@ -1,12 +1,8 @@
-from __future__ import print_function
 import pytest
 
-# import xarray as xr
-# import numpy as np
-# import os
+xgcm = pytest.importorskip("xgcm")
 from xarrayutils.build_grids import rebuild_grid
 from numpy.testing import assert_allclose
-
 from .datasets import datagrid_dimtest, datagrid_dimtest_ll
 
 

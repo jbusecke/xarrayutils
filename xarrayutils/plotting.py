@@ -5,16 +5,28 @@ import warnings
 # import mpl and change the backend before other mpl imports
 try:
     import matplotlib as mpl
+    from matplotlib.transforms import blended_transform_factory
 
     mpl.use("Agg")
     import matplotlib.pyplot as plt
-except ImportError:
-    pass
 
-import gsw
-from matplotlib.transforms import blended_transform_factory
+    mpl = True
+except ImportError:
+    raise RuntimeError(
+        "The `plotting` module requires `matplotlib`. Install using conda install -c conda-forge matplotlib "
+    )
+
+try:
+    import gsw
+except:
+    gsw = None
+
 import string
-import cartopy
+
+try:
+    import cartopy
+except ImportError:
+    cartopy = None
 
 
 def xr_violinplot(ds, ax=None, x_dim="xt_ocean", width=1, color="0.5"):
@@ -148,6 +160,11 @@ def map_util_plot(
         Not implemented.
 
     """
+    if cartopy is None:
+        raise RuntimeError(
+            "Mapping functions require `cartopy`. Install using conda install -c conda-forge cartopy "
+        )
+
     # I could default to plt.gca() for ax, but does it work when I just pass
     # the axis object as positonal argument?
     ax.add_feature(cartopy.feature.LAND, color=land_color)
@@ -225,45 +242,45 @@ def shaded_line_plot(
     ----------
     da : xr.DataArray
         The input data. Needs to be 2 dimensional, so that when `dim` is reduced, it is a line plot.
-        
+
     dim : str
         Dimension of `da` which is used to calculate spread
-        
+
     ax : matplotlib.axes
         Matplotlib axes object to plot on (the default is plt.gca()).
-    
+
     horizontal : bool
         Determines if the plot is horizontal or vertical (e.g. x is plotted
         on the y-axis).
-        
+
     spread : np.array, optional
-        Values specifying the 'spread-values', dependent on `spread_style`. Defaults to shading the 
+        Values specifying the 'spread-values', dependent on `spread_style`. Defaults to shading the
         range of 1 and 2 standard deviations in `dim`
-        
+
     alpha: np.array, optional
-        Transparency values of the shaded ranges. Defaults to [0.5,0.15]. 
-    
+        Transparency values of the shaded ranges. Defaults to [0.5,0.15].
+
     spread_style : str
         Metric used to define spread on `dim`.
-        Options: 
+        Options:
             'std': Calculates standard deviation along `dim` and shading indicates multiples of std centered on the mean
-            
-            'quantile': Calculates quantile ranges. An input of `spread=[0.2,0.5]` would show an inner shading for 
+
+            'quantile': Calculates quantile ranges. An input of `spread=[0.2,0.5]` would show an inner shading for
             the 40th-60th percentile, and an outer shading for the 25th-75th percentile, centered on the 50th quantile (~median).
-            Must be within [0,100]. 
-            
+            Must be within [0,100].
+
     line_kwargs : dict
         optional parameters for line plot.
-        
+
     fill_kwargs : dict
         optional parameters for std fill plot.
-    
+
     **kwargs
         Keyword arguments passed to both line plot and fill_between.
 
     Example
     ------
-    
+
 
     """
     # check input
@@ -513,6 +530,11 @@ def draw_dens_contours_teos10(
     """draws density contours on the current plot.
     Assumes that the salinity and temperature values are given as SA and CT.
     Needs documentation... """
+    if gsw is None:
+        raise RuntimeError(
+            "`gsw` is not available. Install with `conda install -c conda-forge gsw`"
+        )
+
     if ax is None:
         ax = plt.gca()
 
@@ -640,7 +662,7 @@ def tsdiagram(
 def linear_piecewise_scale(
     cut, scale, ax=None, axis="y", scaled_half="upper", add_cut_line=False
 ):
-    """This function sets a piecewise linear scaling for a given axis to highlight e.g. processes in the upper ocean vs deep ocean. 
+    """This function sets a piecewise linear scaling for a given axis to highlight e.g. processes in the upper ocean vs deep ocean.
 
     Parameters
     ----------
@@ -656,10 +678,10 @@ def linear_piecewise_scale(
         * 'y' (Default)
         * 'x'
     scaled_half: str, optional
-        Determines which half of the axis is scaled (compressed). 
+        Determines which half of the axis is scaled (compressed).
         * 'upper' (default). Values larger than `cut` are compressed
         * 'lower'. Values smaller than `cut` are compressed
-        
+
 
     Returns
     -------

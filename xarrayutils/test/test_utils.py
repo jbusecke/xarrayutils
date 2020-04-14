@@ -4,6 +4,8 @@ import numpy as np
 import dask.array as dsa
 from scipy import stats
 
+xgcm = pytest.importorskip("xgcm")
+
 # import os
 
 from xarrayutils.utils import (

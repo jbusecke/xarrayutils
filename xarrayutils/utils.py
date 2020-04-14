@@ -1,8 +1,8 @@
-from __future__ import print_function
 import numpy as np
 import xarray as xr
 from scipy.signal import filtfilt, gaussian
 from scipy import stats
+
 from dask.array import coarsen, ones_like
 from dask.array.core import Array
 import warnings
@@ -98,7 +98,7 @@ def xr_linregress(x, y, dim="time"):
             "intercept": intercept,
             "r_value": cor.fillna(0).where(~nanmask),
             "p_value": pval,
-            "std_err": stderr,
+            "std_err": stderr.where(~np.isinf(stderr), 0),
         }
     )
 

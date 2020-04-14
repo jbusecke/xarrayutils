@@ -1,11 +1,7 @@
-from __future__ import print_function
 import xgcm
 import xarray as xr
 import dask.array as da
 import numpy as np
-
-# import warnings
-
 from .utils import aggregate
 
 
