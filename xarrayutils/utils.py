@@ -98,7 +98,7 @@ def xr_linregress(x, y, dim="time"):
             "intercept": intercept,
             "r_value": cor.fillna(0).where(~nanmask),
             "p_value": pval,
-            "std_err": stderr,
+            "std_err": stderr.where(~stderr.isinf, 0),
         }
     )
 
