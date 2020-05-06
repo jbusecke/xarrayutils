@@ -250,7 +250,7 @@ def linear_interpolation_regrid(
                 "When `z_bounds` is given, `z_bounds_dim` has to be specified"
             )
         else:
-            pad_left = z_bounds[{z_bounds_dim: 0}]
+            pad_left = 0
             pad_right = z_bounds[{z_bounds_dim: -1}]
 
     kwargs = dict(
