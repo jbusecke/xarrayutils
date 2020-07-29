@@ -5,16 +5,28 @@ import warnings
 # import mpl and change the backend before other mpl imports
 try:
     import matplotlib as mpl
+    from matplotlib.transforms import blended_transform_factory
 
     mpl.use("Agg")
     import matplotlib.pyplot as plt
-except ImportError:
-    pass
 
-import gsw
-from matplotlib.transforms import blended_transform_factory
+    mpl = True
+except ImportError:
+    raise RuntimeError(
+        "The `plotting` module requires `matplotlib`. Install using conda install -c conda-forge matplotlib "
+    )
+
+try:
+    import gsw
+except:
+    gsw = None
+
 import string
-import cartopy
+
+try:
+    import cartopy
+except ImportError:
+    cartopy = None
 
 
 def xr_violinplot(ds, ax=None, x_dim="xt_ocean", width=1, color="0.5"):
@@ -51,12 +63,7 @@ def xr_violinplot(ds, ax=None, x_dim="xt_ocean", width=1, color="0.5"):
     if ax is None:
         ax = plt.gca()
     vp = ax.violinplot(
-        y,
-        x,
-        widths=width,
-        showextrema=False,
-        showmedians=False,
-        showmeans=True,
+        y, x, widths=width, showextrema=False, showmedians=False, showmeans=True
     )
     [item.set_facecolor(color) for item in vp["bodies"]]
 
@@ -99,7 +106,7 @@ def axis_arrow(ax, x_loc, text, arrowprops={}, **kwargs):
         ha="center",
         va="center",
         arrowprops=ar_props,
-        **kwargs
+        **kwargs,
     )
 
 
@@ -128,7 +135,7 @@ def letter_subplots(axes, start_idx=0, box_color=None, **kwargs):
             horizontalalignment="center",
             verticalalignment="center",
             transform=ax.transAxes,
-            **kwargs
+            **kwargs,
         )
         if box_color:
             t.set_bbox(dict(facecolor=box_color, alpha=0.5, edgecolor=None))
@@ -153,12 +160,18 @@ def map_util_plot(
         Not implemented.
 
     """
+    if cartopy is None:
+        raise RuntimeError(
+            "Mapping functions require `cartopy`. Install using conda install -c conda-forge cartopy "
+        )
+
     # I could default to plt.gca() for ax, but does it work when I just pass
     # the axis object as positonal argument?
     ax.add_feature(cartopy.feature.LAND, color=land_color)
     ax.add_feature(cartopy.feature.COASTLINE, edgecolor=coast_color)
     ax.add_feature(cartopy.feature.LAKES, alpha=lake_alpha)
     # add option for gridlines and labelling
+
 
 def same_y_range(axes):
     """Adjusts multiple axes so that the range of y values is the same everywhere, but not the actual values.
@@ -171,16 +184,21 @@ def same_y_range(axes):
     """
 
     ylims = [ax.get_ylim() for ax in axes.flat]
-    yranges = [lim[1]-lim[0] for lim in ylims]
+    yranges = [lim[1] - lim[0] for lim in ylims]
     # find the max range
     yrange_max = np.max(yranges)
     # determine the difference from max range for other ranges
     y_range_missing = [yrange_max - rang for rang in yranges]
-        
-    # define new ylims by expanding with  (missing range / 2) at each end 
-    y_lims_new = [np.array(lim) + np.array([-1,1]) * yrm /2 for lim, yrm in zip(ylims, y_range_missing)]
-    
-    for ax,lim in zip(axes.flat,y_lims_new): ax.set_ylim(lim)
+
+    # define new ylims by expanding with  (missing range / 2) at each end
+    y_lims_new = [
+        np.array(lim) + np.array([-1, 1]) * yrm / 2
+        for lim, yrm in zip(ylims, y_range_missing)
+    ]
+
+    for ax, lim in zip(axes.flat, y_lims_new):
+        ax.set_ylim(lim)
+
 
 def center_lim(ax, which="y"):
     if which == "y":
@@ -194,8 +212,6 @@ def center_lim(ax, which="y"):
         center_lim(ax, "y")
     else:
         raise ValueError("`which` is not in (`x,`y`, `xy`) found %s" % which)
-        
-
 
 
 def depth_logscale(ax, yscale=400, ticks=None):
@@ -207,147 +223,143 @@ def depth_logscale(ax, yscale=400, ticks=None):
     ax.set_yticklabels(ticklabels)
     ax.invert_yaxis()
 
-    
-def shaded_line_plot(da,
-                     dim,
-                     ax=None,
-                     horizontal = True,
-                     spreads=[1,3],
-                     alphas=[0.25,0.4],
-                     spread_style='std',
-                     line_kwargs=dict(),
-                     fill_kwargs=dict(),
-                     **kwargs):
+
+def shaded_line_plot(
+    da,
+    dim,
+    ax=None,
+    horizontal=True,
+    spreads=[1, 3],
+    alphas=[0.25, 0.4],
+    spread_style="std",
+    line_kwargs=dict(),
+    fill_kwargs=dict(),
+    **kwargs,
+):
     """Produces a line plot with shaded intervals based on the spread of `da` in `dim`.
 
     Parameters
     ----------
     da : xr.DataArray
         The input data. Needs to be 2 dimensional, so that when `dim` is reduced, it is a line plot.
-        
+
     dim : str
         Dimension of `da` which is used to calculate spread
-        
+
     ax : matplotlib.axes
         Matplotlib axes object to plot on (the default is plt.gca()).
-    
+
     horizontal : bool
         Determines if the plot is horizontal or vertical (e.g. x is plotted
         on the y-axis).
-        
+
     spread : np.array, optional
-        Values specifying the 'spread-values', dependent on `spread_style`. Defaults to shading the 
+        Values specifying the 'spread-values', dependent on `spread_style`. Defaults to shading the
         range of 1 and 2 standard deviations in `dim`
-        
+
     alpha: np.array, optional
-        Transparency values of the shaded ranges. Defaults to [0.5,0.15]. 
-    
+        Transparency values of the shaded ranges. Defaults to [0.5,0.15].
+
     spread_style : str
         Metric used to define spread on `dim`.
-        Options: 
+        Options:
             'std': Calculates standard deviation along `dim` and shading indicates multiples of std centered on the mean
-            
-            'quantile': Calculates quantile ranges. An input of `spread=[0.2,0.5]` would show an inner shading for 
+
+            'quantile': Calculates quantile ranges. An input of `spread=[0.2,0.5]` would show an inner shading for
             the 40th-60th percentile, and an outer shading for the 25th-75th percentile, centered on the 50th quantile (~median).
-            Must be within [0,100]. 
-            
+            Must be within [0,100].
+
     line_kwargs : dict
         optional parameters for line plot.
-        
+
     fill_kwargs : dict
         optional parameters for std fill plot.
-    
+
     **kwargs
         Keyword arguments passed to both line plot and fill_between.
 
     Example
     ------
-    
+
 
     """
     # check input
     if isinstance(spreads, float) or isinstance(spreads, int):
         spreads = [spreads]
-        
+
     if isinstance(alphas, float):
         alphas = [alphas]
-    
+
     if isinstance(dim, float):
         dim = [dim]
-            
+
     # set axis
     if not ax:
         ax = plt.gca()
-        
+
     # Option to plot a straight line when the dim is not present (TODO)
-    
-    
+
     # check if the data is 2 dimensional
     dims = da.mean(dim).dims
-    if len(dims) !=1:
-        raise ValueError(f'`da` must be 1 dimensional after reducing over {dim}. Found {dims}')
-        
+    if len(dims) != 1:
+        raise ValueError(
+            f"`da` must be 1 dimensional after reducing over {dim}. Found {dims}"
+        )
+
     # assemble plot elements
     xdim = dims[0]
     x = da[xdim]
-    
+
     # define the line plot values
-    if spread_style == 'std':
+    if spread_style == "std":
         y = da.mean(dim)
-    elif spread_style in ['quantile', 'percentile']:
+    elif spread_style in ["quantile", "percentile"]:
         y = da.quantile(0.5, dim)
     else:
-        raise ValueError(f"Got unknown option ['{spread_style}'] for  `spread_style`. Supported options are : ['std', 'quantile']")
-        
-        
+        raise ValueError(
+            f"Got unknown option ['{spread_style}'] for  `spread_style`. Supported options are : ['std', 'quantile']"
+        )
+
     # set line kwargs
     line_defaults = {}
     line_defaults.update(line_kwargs)
-    
+
     if horizontal:
         ll = ax.plot(x, y, **line_defaults)
     else:
         ll = ax.plot(y, x, **line_defaults)
-        
+
     # now loop over the spreads:
-    fill_defaults = {
-        "facecolor": ll[-1].get_color(),
-        "edgecolor": "none",
-    }
+    fill_defaults = {"facecolor": ll[-1].get_color(), "edgecolor": "none"}
 
     # Apply defaults but respect input
     fill_defaults.update(fill_kwargs)
     ff = []
-    
-    for spread, alpha in zip((spreads), (alphas)):# np.flip(this ensures that the shadings are drawn from outer to inner otherwise they blend too much into each other
-        f_kwargs = {k:v for k,v in fill_defaults.items()}
-        f_kwargs['alpha']=alpha
-        
-        if spread_style == 'std':
-            y_std = da.std(dim) # i could probably precompute that.
-            y_lower = y-(y_std/(2*spread))
-            y_upper = y+(y_std/(2*spread))
-            
-        elif spread_style in ['quantile', 'percentile']:
-            y_lower = da.quantile(0.5-(spread/2), dim)
-            y_upper = da.quantile(0.5+(spread/2), dim)
-        
+
+    for spread, alpha in zip(
+        (spreads), (alphas)
+    ):  # np.flip(this ensures that the shadings are drawn from outer to inner otherwise they blend too much into each other
+        f_kwargs = {k: v for k, v in fill_defaults.items()}
+        f_kwargs["alpha"] = alpha
+
+        if spread_style == "std":
+            y_std = da.std(dim)  # i could probably precompute that.
+            y_lower = y - (y_std / (2 * spread))
+            y_upper = y + (y_std / (2 * spread))
+
+        elif spread_style in ["quantile", "percentile"]:
+            y_lower = da.quantile(0.5 - (spread / 2), dim)
+            y_upper = da.quantile(0.5 + (spread / 2), dim)
+
         if horizontal:
             ff.append(ax.fill_between(x.data, y_lower.data, y_upper.data, **f_kwargs))
         else:
             ff.append(ax.fill_betweenx(x.data, y_lower.data, y_upper.data, **f_kwargs))
     return ll, ff
-        
 
 
 def plot_line_shaded_std(
-    x,
-    y,
-    std_y,
-    horizontal=True,
-    ax=None,
-    line_kwargs=dict(),
-    fill_kwargs=dict(),
+    x, y, std_y, horizontal=True, ax=None, line_kwargs=dict(), fill_kwargs=dict()
 ):
     """Plot wrapper to draw line for y and shaded patch according to std_y.
     The shading represents one std on each side of the line...
@@ -376,8 +388,11 @@ def plot_line_shaded_std(
         Tuple of line and patch objects.
 
     """
-    
-    warnings.warn('This is an outdated function. Use `shaded_line_plot` instead', DeprecationWarning)
+
+    warnings.warn(
+        "This is an outdated function. Use `shaded_line_plot` instead",
+        DeprecationWarning,
+    )
 
     line_defaults = {}
 
@@ -446,26 +461,26 @@ def box_plot(box, ax=None, split_detection="True", **kwargs):
         ax.plot(
             [box[0], box[0], box[1], box[1], box[0]],
             [ylim[1], box[2], box[2], ylim[1], ylim[1]],
-            **kwargs
+            **kwargs,
         )
 
         ax.plot(
             [box[0], box[0], box[1], box[1], box[0]],
             [ylim[0], box[3], box[3], ylim[0], ylim[0]],
-            **kwargs
+            **kwargs,
         )
 
     elif x_split and not y_split:
         ax.plot(
             [xlim[1], box[0], box[0], xlim[1], xlim[1]],
             [box[2], box[2], box[3], box[3], box[2]],
-            **kwargs
+            **kwargs,
         )
 
         ax.plot(
             [xlim[0], box[1], box[1], xlim[0], xlim[0]],
             [box[2], box[2], box[3], box[3], box[2]],
-            **kwargs
+            **kwargs,
         )
 
     elif x_split and y_split:
@@ -481,14 +496,12 @@ def box_plot(box, ax=None, split_detection="True", **kwargs):
         ax.plot(
             [box[0], box[0], box[1], box[1], box[0]],
             [box[2], box[3], box[3], box[2], box[2]],
-            **kwargs
+            **kwargs,
         )
 
 
 def dict2box(di, xdim="lon", ydim="lat"):
-    return np.array(
-        [di[xdim].start, di[xdim].stop, di[ydim].start, di[ydim].stop]
-    )
+    return np.array([di[xdim].start, di[xdim].stop, di[ydim].start, di[ydim].stop])
 
 
 def box_plot_dict(di, xdim="lon", ydim="lat", **kwargs):
@@ -512,11 +525,16 @@ def draw_dens_contours_teos10(
     tlim=None,
     contour_kwargs={},
     c_label_kwargs={},
-    **kwargs
+    **kwargs,
 ):
     """draws density contours on the current plot.
     Assumes that the salinity and temperature values are given as SA and CT.
     Needs documentation... """
+    if gsw is None:
+        raise RuntimeError(
+            "`gsw` is not available. Install with `conda install -c conda-forge gsw`"
+        )
+
     if ax is None:
         ax = plt.gca()
 
@@ -595,7 +613,7 @@ def tsdiagram(
     draw_density_contours=True,
     draw_cbar=True,
     add_labels=True,
-    **kwargs
+    **kwargs,
 ):
     if ax is None:
         ax = plt.gca()
@@ -641,8 +659,10 @@ def tsdiagram(
     return s
 
 
-def linear_piecewise_scale(cut, scale, ax=None, axis='y', scaled_half='upper', add_cut_line=False):
-    """This function sets a piecewise linear scaling for a given axis to highlight e.g. processes in the upper ocean vs deep ocean. 
+def linear_piecewise_scale(
+    cut, scale, ax=None, axis="y", scaled_half="upper", add_cut_line=False
+):
+    """This function sets a piecewise linear scaling for a given axis to highlight e.g. processes in the upper ocean vs deep ocean.
 
     Parameters
     ----------
@@ -658,55 +678,75 @@ def linear_piecewise_scale(cut, scale, ax=None, axis='y', scaled_half='upper', a
         * 'y' (Default)
         * 'x'
     scaled_half: str, optional
-        Determines which half of the axis is scaled (compressed). 
+        Determines which half of the axis is scaled (compressed).
         * 'upper' (default). Values larger than `cut` are compressed
         * 'lower'. Values smaller than `cut` are compressed
-        
+
 
     Returns
     -------
     ax_scaled : matplotlib.axis
 
     """
-    
+
     if ax is None:
         ax = plt.gca()
-    
+
     if scale < 0:
-        raise ValueError(f'`Scale can not be negative. Got value of {scale}')
-    
+        raise ValueError(f"`Scale can not be negative. Got value of {scale}")
+
     if scale == 0:
         # do nothing
         return ax
     else:
-        if scaled_half == 'upper':
+        if scaled_half == "upper":
+
             def inverse(x):
-                return np.piecewise(x, [x<=cut, x>cut], [lambda x: x+(scale*(x-cut)), lambda x: x])
+                return np.piecewise(
+                    x,
+                    [x <= cut, x > cut],
+                    [lambda x: x + (scale * (x - cut)), lambda x: x],
+                )
 
             def forward(x):
-                return np.piecewise(x, [x<=cut, x>cut], [lambda x: x+(scale*(x-cut)), lambda x: x])
-    
-        elif scaled_half == 'lower':
+                return np.piecewise(
+                    x,
+                    [x <= cut, x > cut],
+                    [lambda x: x + (scale * (x - cut)), lambda x: x],
+                )
+
+        elif scaled_half == "lower":
+
             def inverse(x):
-                return np.piecewise(x, [x>=cut, x<cut], [lambda x: x+(scale*(x-cut)), lambda x: x])
+                return np.piecewise(
+                    x,
+                    [x >= cut, x < cut],
+                    [lambda x: x + (scale * (x - cut)), lambda x: x],
+                )
 
             def forward(x):
-                return np.piecewise(x, [x>=cut, x<cut], [lambda x: x+(scale*(x-cut)), lambda x: x])
-        
-        else: 
-            raise ValueError(f"`scaled_half` value not recognized. Must be ['upper', 'lower']. Got {scaled_half}")
-        
+                return np.piecewise(
+                    x,
+                    [x >= cut, x < cut],
+                    [lambda x: x + (scale * (x - cut)), lambda x: x],
+                )
 
-        
-        if axis == 'y':
+        else:
+            raise ValueError(
+                f"`scaled_half` value not recognized. Must be ['upper', 'lower']. Got {scaled_half}"
+            )
+
+        if axis == "y":
             axlim = ax.get_ylim()
-            ax.set_yscale('function', functions=(forward, inverse))
+            ax.set_yscale("function", functions=(forward, inverse))
             ax.set_ylim(axlim)
-        elif axis == 'x':
+        elif axis == "x":
             axlim = ax.get_xlim()
-            ax.set_xscale('function', functions=(forward, inverse))
+            ax.set_xscale("function", functions=(forward, inverse))
             ax.set_xlim(axlim)
-        else: 
-            raise ValueError(f"`axis` value not recognized. Must be ['x', 'y']. Got {axis}")
-        
+        else:
+            raise ValueError(
+                f"`axis` value not recognized. Must be ['x', 'y']. Got {axis}"
+            )
+
         return ax

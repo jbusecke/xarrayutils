@@ -1,31 +1,14 @@
-from __future__ import print_function
 import pytest
 
-# import xarray as xr
-# import numpy as np
-# import os
+xgcm = pytest.importorskip("xgcm")
 from xarrayutils.build_grids import rebuild_grid
 from numpy.testing import assert_allclose
-
 from .datasets import datagrid_dimtest, datagrid_dimtest_ll
 
 
 @pytest.mark.parametrize(
     "test_coord",
-    [
-        "i",
-        "j",
-        "i_g",
-        "j_g",
-        "XC",
-        "XG",
-        "YC",
-        "YG",
-        "dxC",
-        "dxG",
-        "dyC",
-        "dyG",
-    ],
+    ["i", "j", "i_g", "j_g", "XC", "XG", "YC", "YG", "dxC", "dxG", "dyC", "dyG"],
 )
 # TODO This should be able to read all coord variable from the dataset
 # so its not hardcoded, but I cant get it to work
@@ -41,20 +24,7 @@ def test_rebuild_grid(datagrid_dimtest, test_coord):
 
 @pytest.mark.parametrize(
     "test_coord",
-    [
-        "i",
-        "j",
-        "i_g",
-        "j_g",
-        "XC",
-        "XG",
-        "YC",
-        "YG",
-        "dxC",
-        "dxG",
-        "dyC",
-        "dyG",
-    ],
+    ["i", "j", "i_g", "j_g", "XC", "XG", "YC", "YG", "dxC", "dxG", "dyC", "dyG"],
 )
 # TODO This should be able to read all coord variable from the dataset
 # so its not hardcoded, but I cant get it to work

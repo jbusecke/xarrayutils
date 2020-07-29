@@ -1,0 +1,25 @@
+name: xarrayutils-docs
+dependencies:
+  - python
+  - future
+  - pytest
+  - numpydoc
+  - sphinx
+  - sphinx_rtd_theme
+  - ipykernel
+  # Packages which are needed to execute your examples
+  # These will vary
+  - ipython
+  - matplotlib
+  - xarray
+  - netcdf4
+  - dask
+  - numpy
+  - nc-time-axis
+  - astropy
+  #
+  - pip:
+    - docrep
+    - nbsphinx
+    - jupyter_client
+    - jupyter-sphinx

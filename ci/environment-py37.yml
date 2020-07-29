@@ -7,7 +7,6 @@ dependencies:
   - dask
   - numpy
   - pytest
-  - future
   - scipy
   - black
   - astropy
