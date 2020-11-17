@@ -1,6 +1,3 @@
-from __future__ import print_function
-
-# from future.utils import iteritems
 import numpy as np
 import scipy.interpolate as spi
 

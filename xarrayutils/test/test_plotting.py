@@ -1,11 +1,18 @@
-from xarrayutils.plotting import plot_line_shaded_std, same_y_range, shaded_line_plot
-from matplotlib.colors import to_rgb
-import matplotlib.pyplot as plt
-import numpy as np
 import pytest
+
+
+plt = pytest.importorskip("matplotlib.pyplot")
+from matplotlib.colors import to_rgb
+import numpy as np
+
 import xarray as xr
 import matplotlib
-from xarrayutils.plotting import linear_piecewise_scale
+from xarrayutils.plotting import (
+    plot_line_shaded_std,
+    same_y_range,
+    shaded_line_plot,
+    linear_piecewise_scale,
+)
 
 
 def test_plot_line_shaded_std():
