@@ -26,28 +26,28 @@ def derivative(grid, data, axis, debug=False):
 def gradient(grid, data, interpolate=False, debug=False):
     """compute the gradient in x,y direction.
 
-        PARAMETERS
-        ----------
-        grid : xgcm.Grid
-        data : xarray.DataArray
-            The data to interpolate
-        axis: {'X', 'Y'}
-            The name of the axis along which to calculate
+    PARAMETERS
+    ----------
+    grid : xgcm.Grid
+    data : xarray.DataArray
+        The data to interpolate
+    axis: {'X', 'Y'}
+        The name of the axis along which to calculate
 
-        interpolate : bool, optional
-            Should values be interpreted from grid face to center or v
-            ice versa.
+    interpolate : bool, optional
+        Should values be interpreted from grid face to center or v
+        ice versa.
 
-        RETURNS
-        -------
-        da_i : xarray.DataArray
-            gradient along axis
+    RETURNS
+    -------
+    da_i : xarray.DataArray
+        gradient along axis
 
-        TODO
-        ----
-            Currently only performs a first order forward gradient.
-            It could be good to implement different order gradients later
-        """
+    TODO
+    ----
+        Currently only performs a first order forward gradient.
+        It could be good to implement different order gradients later
+    """
 
     grad_x = derivative(grid, data, "X", debug=debug)
     grad_y = derivative(grid, data, "Y", debug=debug)

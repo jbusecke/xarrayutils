@@ -14,13 +14,13 @@ def calculate_ninox_index(
 ):
     """Calculates NINOx index following the methodology in
     `climatedataguide.ucar.edu/climate-data/nino-sst-indices-nino-12-3-34-4-oni-and-tni`
-    If detrend is true, a linear trend is removed for each gridpoint 
+    If detrend is true, a linear trend is removed for each gridpoint
     seperately, before applying the processing.
     Note that dask arrays cannot be chunked along `timedim`.
     Use (ds_surf.chunk({timedim:-1}), before processing.
     Warning: This can significantly increase memory usage,
     and chunking along another dimension might be necessary.
-        """
+    """
 
     if detrend:
         ds_surf = xr_detrend(ds_surf, dim=timedim)
@@ -77,9 +77,9 @@ def extract_climate_indicies(
 ):
     """Calculates various climate indicies from an xarray dataset.
 
-	kwargs are passed to the climate indicies processing functions.
-	Most notable right now would be the `detrend` option (disabled by default), 
-	which removes a linear trend from each gridbox before processing.
+    kwargs are passed to the climate indicies processing functions.
+    Most notable right now would be the `detrend` option (disabled by default),
+    which removes a linear trend from each gridbox before processing.
     """
     # !!! TODO, make this work with other lon conventions like -180-180 etc.
 

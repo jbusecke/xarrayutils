@@ -21,9 +21,9 @@ def get_dims_from_comodo_axes(ds, axis):
 def wrap_func(grid, data, dim, wrap, func="diff", idx=0):
     """interpolates data over discontuity (e.g. longitude values)
 
-        TODO
-        ----
-        Write tests that runs np and dask arrays through this
+    TODO
+    ----
+    Write tests that runs np and dask arrays through this
     """
     if isinstance(data.data, da.Array):
         data.load()
@@ -70,8 +70,7 @@ def rebuild_grid(
     y_wrap=180,
     ll_dist=True,
 ):
-    """rebuild a xgcm compatible grid from scratch
-    """
+    """rebuild a xgcm compatible grid from scratch"""
     grid.coords[x_index_name + g_index_suffix] = xr.DataArray(
         grid.coords[x_index_name].data,
         coords={
