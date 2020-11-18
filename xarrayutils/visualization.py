@@ -263,10 +263,7 @@ def FramePrint(
     time=None,
     norm=mpl.colors.Normalize(),
 ):
-    """Prints the plotted picture to file
-
-
-    """
+    """Prints the plotted picture to file"""
 
     if not odir:
         raise RuntimeError("need an output directory")

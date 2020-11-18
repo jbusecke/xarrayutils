@@ -63,3 +63,4 @@ target/
 # notebook example files
 *.nc
 *.zip
+.vscode/settings.json

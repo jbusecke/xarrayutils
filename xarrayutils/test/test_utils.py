@@ -295,7 +295,15 @@ def test_sign_agreement():
     )
 
     expected_100_perc = xr.DataArray(
-        [[np.nan, True, np.nan,], [False, True, True],], dims=["x", "y"],
+        [
+            [
+                np.nan,
+                True,
+                np.nan,
+            ],
+            [False, True, True],
+        ],
+        dims=["x", "y"],
     )
 
     sign_agreement(da, da.mean(target_dim), target_dim, threshold=0.5).equals(

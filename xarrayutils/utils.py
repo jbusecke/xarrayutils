@@ -240,7 +240,7 @@ def aggregate(da, blocks, func=np.nanmean, debug=False):
 
 
 def fancymean(raw, dim=None, axis=None, method="arithmetic", weights=None, debug=False):
-    """ extenden mean function for xarray
+    """extenden mean function for xarray
 
     Applies various methods to estimate mean values
     {arithmetic,geometric,harmonic} along specified
@@ -435,18 +435,18 @@ def extractBoxes(da, bo, xname=None, yname=None, xdim="lon", ydim="lat"):
 def dll_dist(dlon, dlat, lon, lat):
     """Converts lat/lon differentials into distances
 
-        PARAMETERS
-        ----------
-        dlon : xarray.DataArray longitude differentials
-        dlat : xarray.DataArray latitude differentials
-        lon  : xarray.DataArray longitude values
-        lat  : xarray.DataArray latitude values
+    PARAMETERS
+    ----------
+    dlon : xarray.DataArray longitude differentials
+    dlat : xarray.DataArray latitude differentials
+    lon  : xarray.DataArray longitude values
+    lat  : xarray.DataArray latitude values
 
-        RETURNS
-        -------
-        dx  : xarray.DataArray distance inferred from dlon
-        dy  : xarray.DataArray distance inferred from dlat
-        """
+    RETURNS
+    -------
+    dx  : xarray.DataArray distance inferred from dlon
+    dy  : xarray.DataArray distance inferred from dlat
+    """
 
     dll_factor = 111000.0
     dx = dlon * xr.ufuncs.cos(xr.ufuncs.deg2rad(lat)) * dll_factor
