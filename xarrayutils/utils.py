@@ -729,6 +729,32 @@ def lag_and_combine(ds, lags, dim="time"):
     return xr.concat(datasets, dim=concat_dim_da(lags, "lag"))
 
 
+def sign_agreement(da, ds_ref, dim, threshold=0.75, mask=True):
+    """[summary]
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        Input data
+    ds_ref : xr.DataArray
+        Reference data to compare the sign to . E.g. a mean over `dim`
+    dim : str
+        Dimension of `da` over which the sign agreement is evaluated
+    threshold : float, optional
+        The minimum fraction of elements that have to agree along `dim`, by default 0.75 (75%)
+    mask : bool, optional
+        If True nan values get masked out in the output, by default True
+
+    """
+    if mask:
+        mask_data = np.isnan(da).all(dim)
+    ndim = len(da[dim].data)
+    sign_agreement = (np.sign(da) == np.sign(ds_ref)).sum(dim) >= (threshold * ndim)
+    if mask:
+        sign_agreement = sign_agreement.where(~mask_data)
+    return sign_agreement
+
+
 ##################
 # Refactored stuff
 

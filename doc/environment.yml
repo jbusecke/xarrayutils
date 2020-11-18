@@ -3,6 +3,7 @@ dependencies:
   - python
   - future
   - pytest
+  - scipy
   - numpydoc
   - sphinx
   - sphinx_rtd_theme
