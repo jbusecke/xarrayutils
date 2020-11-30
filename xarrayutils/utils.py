@@ -240,7 +240,7 @@ def aggregate(da, blocks, func=np.nanmean, debug=False):
 
 
 def fancymean(raw, dim=None, axis=None, method="arithmetic", weights=None, debug=False):
-    """ extenden mean function for xarray
+    """extenden mean function for xarray
 
     Applies various methods to estimate mean values
     {arithmetic,geometric,harmonic} along specified
@@ -435,18 +435,18 @@ def extractBoxes(da, bo, xname=None, yname=None, xdim="lon", ydim="lat"):
 def dll_dist(dlon, dlat, lon, lat):
     """Converts lat/lon differentials into distances
 
-        PARAMETERS
-        ----------
-        dlon : xarray.DataArray longitude differentials
-        dlat : xarray.DataArray latitude differentials
-        lon  : xarray.DataArray longitude values
-        lat  : xarray.DataArray latitude values
+    PARAMETERS
+    ----------
+    dlon : xarray.DataArray longitude differentials
+    dlat : xarray.DataArray latitude differentials
+    lon  : xarray.DataArray longitude values
+    lat  : xarray.DataArray latitude values
 
-        RETURNS
-        -------
-        dx  : xarray.DataArray distance inferred from dlon
-        dy  : xarray.DataArray distance inferred from dlat
-        """
+    RETURNS
+    -------
+    dx  : xarray.DataArray distance inferred from dlon
+    dy  : xarray.DataArray distance inferred from dlat
+    """
 
     dll_factor = 111000.0
     dx = dlon * xr.ufuncs.cos(xr.ufuncs.deg2rad(lat)) * dll_factor
@@ -727,6 +727,32 @@ def lag_and_combine(ds, lags, dim="time"):
     for ll in lags:
         datasets.append(ds.shift(**{dim: ll}))
     return xr.concat(datasets, dim=concat_dim_da(lags, "lag"))
+
+
+def sign_agreement(da, ds_ref, dim, threshold=0.75, mask=True):
+    """[summary]
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        Input data
+    ds_ref : xr.DataArray
+        Reference data to compare the sign to . E.g. a mean over `dim`
+    dim : str
+        Dimension of `da` over which the sign agreement is evaluated
+    threshold : float, optional
+        The minimum fraction of elements that have to agree along `dim`, by default 0.75 (75%)
+    mask : bool, optional
+        If True nan values get masked out in the output, by default True
+
+    """
+    if mask:
+        mask_data = np.isnan(da).all(dim)
+    ndim = len(da[dim].data)
+    sign_agreement = (np.sign(da) == np.sign(ds_ref)).sum(dim) >= (threshold * ndim)
+    if mask:
+        sign_agreement = sign_agreement.where(~mask_data)
+    return sign_agreement
 
 
 ##################

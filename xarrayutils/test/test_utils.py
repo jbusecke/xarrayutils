@@ -18,6 +18,7 @@ from xarrayutils.utils import (
     xr_detrend,
     lag_and_combine,
     filter_1D,
+    sign_agreement,
 )
 
 from numpy.testing import assert_allclose
@@ -267,6 +268,51 @@ def test_linear_trend():
                 ]
             )
             assert np.allclose(fit, test)
+
+
+def test_sign_agreement():
+    # test dataset
+    target_dim = "member"
+    data = np.array(
+        [
+            [[np.nan, 1, np.nan], [-1, 0, 2]],
+            [[np.nan, 1, 1], [-1, 0, 100]],
+            [[np.nan, 1, 1], [1, 0, 7]],
+        ]
+    )
+    da = xr.DataArray(data, dims=["x", "y", target_dim])
+
+    expected_50_perc = xr.DataArray(
+        [
+            [
+                np.nan,
+                True,
+                np.nan,
+            ],  # I want any point that has nans to be set to nan, might change later?
+            [True, True, True],
+        ],
+        dims=["x", "y"],
+    )
+
+    expected_100_perc = xr.DataArray(
+        [
+            [
+                np.nan,
+                True,
+                np.nan,
+            ],
+            [False, True, True],
+        ],
+        dims=["x", "y"],
+    )
+
+    sign_agreement(da, da.mean(target_dim), target_dim, threshold=0.5).equals(
+        expected_50_perc
+    )
+
+    sign_agreement(da, da.mean(target_dim), target_dim, threshold=1).equals(
+        expected_100_perc
+    )
 
 
 # @pytest.mark.parametrize(
