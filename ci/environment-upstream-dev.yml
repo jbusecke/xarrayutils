@@ -14,11 +14,11 @@ dependencies:
   - gsw
   - cartopy
   - pip
-  - cf_xarray   
-  - pytest
+  - cf_xarray
   - pip:
     - git+https://github.com/pydata/xarray.git
     - git+https://github.com/xgcm/xgcm.git
+    - pytest
     - codecov
     - pytest-cov
     - pytest-xdist
