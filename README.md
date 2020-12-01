@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/jbusecke/xarrayutils.svg?branch=master)](https://travis-ci.com/jbusecke/xarrayutils)
+[![Build Status](https://img.shields.io/github/workflow/status/xgcm/xgcm/CI?logo=github)](https://github.com/xgcm/xgcm/actions)
 [![codecov](https://codecov.io/gh/jbusecke/xarrayutils/branch/master/graph/badge.svg)](https://codecov.io/gh/jbusecke/xarrayutils)
 [![License:MIT](https://img.shields.io/badge/License-MIT-lightgray.svg?style=flt-square)](https://opensource.org/licenses/MIT)
 [![pypi](https://img.shields.io/pypi/v/xarrayutils.svg)](https://pypi.org/project/xarrayutils)

@@ -3,6 +3,7 @@ channels:
   - conda-forge
 dependencies:
   - python=3.7
+  - xarray
   - dask
   - numpy
   - pytest
@@ -13,10 +14,10 @@ dependencies:
   # Necesary additions for the plotting tools (might have to make thos optional)
   - gsw
   - cartopy
+  - xgcm
   - pip
-  - cf_xarray   
+  - cf_xarray
   - pip:
-    - git+https://github.com/pydata/xarray.git
-    - git+https://github.com/xgcm/xgcm.git
     - codecov
     - pytest-cov
+    - pytest-xdist
