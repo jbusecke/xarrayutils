@@ -1,8 +1,5 @@
 repos:
--   repo: local
+  - repo: https://github.com/python/black
+    rev: stable
     hooks:
     - id: black
-      name: black
-      language: system
-      entry: black
-      types: ["python"]
