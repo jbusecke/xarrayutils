@@ -3,6 +3,7 @@ import xarray as xr
 import numpy as np
 import dask.array as dsa
 from scipy import stats
+import cf_xarray
 
 xgcm = pytest.importorskip("xgcm")
 
@@ -19,6 +20,7 @@ from xarrayutils.utils import (
     lag_and_combine,
     filter_1D,
     sign_agreement,
+    mask_mixedlayer,
 )
 
 from numpy.testing import assert_allclose
@@ -295,15 +297,7 @@ def test_sign_agreement():
     )
 
     expected_100_perc = xr.DataArray(
-        [
-            [
-                np.nan,
-                True,
-                np.nan,
-            ],
-            [False, True, True],
-        ],
-        dims=["x", "y"],
+        [[np.nan, True, np.nan], [False, True, True]], dims=["x", "y"]
     )
 
     sign_agreement(da, da.mean(target_dim), target_dim, threshold=0.5).equals(
@@ -313,6 +307,87 @@ def test_sign_agreement():
     sign_agreement(da, da.mean(target_dim), target_dim, threshold=1).equals(
         expected_100_perc
     )
+
+
+def test_mask_mixedlayer():
+    var_name = "o2"
+    z_dim = "lev"
+    z_bounds = "lev_bounds"
+    bound_dim = "bnds"
+    z = np.arange(5) + 0.5
+    z_b = np.arange(6)
+
+    bounds = cf_xarray.vertices_to_bounds(z_b, out_dims=[bound_dim, z_dim])
+
+    ds = xr.Dataset(
+        {
+            var_name: xr.DataArray(
+                np.random.rand(len(z)), dims=[z_dim], coords={z_dim: z}
+            )
+        }
+    )
+    ds = ds.assign_coords({z_bounds: bounds})
+    kwargs = dict(z_dim=z_dim, z_bounds=z_bounds, ref_var=var_name, bound_dim=bound_dim)
+
+    # create expected datasets for different scenarios
+    expected_none_removed = ds.copy(deep=True)
+    expected_first_removed = ds.copy(deep=True)
+    expected_first_removed[var_name].data[0] = np.nan
+
+    expected_all_removed = ((ds.copy(deep=True) * 0) + 1) * np.nan
+    expected_all_but_first_removed = ds.copy(deep=True)
+    expected_all_but_first_removed[var_name].data[1:] = np.nan
+    print(expected_all_but_first_removed)
+    print(expected_all_removed)
+
+    ds_wo_bounds = ds.copy(deep=True).drop_vars([z_bounds])
+
+    # Test a case where the mld is close (but above the first layer boundary)
+    mld = xr.DataArray(0.9)
+    result = mask_mixedlayer(ds, mld, **kwargs)
+    assert result.attrs["mixed_layer_values_removed_based_on"] == z_bounds
+    xr.testing.assert_allclose(result, expected_none_removed)
+
+    # Test a case where the mld is below the first layer boundary
+    mld = xr.DataArray(1.1)
+    result = mask_mixedlayer(ds, mld, **kwargs)
+    assert result.attrs["mixed_layer_values_removed_based_on"] == z_bounds
+    xr.testing.assert_allclose(result, expected_first_removed)
+
+    # Test a case where the mld is close (but above the first layer boundary) but no
+    # boundary coords are available
+    mld = xr.DataArray(0.9)
+    with pytest.warns(UserWarning):
+        result = mask_mixedlayer(ds_wo_bounds, mld, **kwargs)
+    assert result.attrs["mixed_layer_values_removed_based_on"] == z_dim
+    xr.testing.assert_allclose(result, expected_first_removed.drop_vars([z_bounds]))
+
+    ##### Test the same with 'inside' masking
+    # Test a case where the mld is close (but above the first layer boundary)
+    mld = xr.DataArray(0.9)
+    result = mask_mixedlayer(ds, mld, mask="inside", **kwargs)
+    assert result.attrs["mixed_layer_values_removed_based_on"] == z_bounds
+    xr.testing.assert_allclose(result, expected_all_removed)
+
+    # Test a case where the mld is below the first layer boundary
+    mld = xr.DataArray(1.1)
+    result = mask_mixedlayer(ds, mld, mask="inside", **kwargs)
+    assert result.attrs["mixed_layer_values_removed_based_on"] == z_bounds
+    xr.testing.assert_allclose(result, expected_all_but_first_removed)
+
+    # Test a case where the mld is close (but above the first layer boundary) but no
+    # boundary coords are available
+    mld = xr.DataArray(0.9)
+    with pytest.warns(UserWarning):
+        result = mask_mixedlayer(ds_wo_bounds, mld, mask="inside", **kwargs)
+    assert result.attrs["mixed_layer_values_removed_based_on"] == z_dim
+    xr.testing.assert_allclose(
+        result, expected_all_but_first_removed.drop_vars([z_bounds])
+    )
+
+    #### test error input
+    with pytest.raises(ValueError):
+        result = mask_mixedlayer(ds, mld, mask="wrong", **kwargs)
 
 
 # @pytest.mark.parametrize(

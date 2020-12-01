@@ -7,7 +7,6 @@ notifications:
 matrix:
   fast_finish: true
   include:
-  - env: CONDA_ENV=py36
   - env: CONDA_ENV=py37
   - env: CONDA_ENV=py37-upstream_master
   - env: CONDA_ENV=py38
@@ -29,7 +28,7 @@ install:
   - pip install --no-deps -e .
 
 script:
-  - black --check xarrayutils
+  - black --check -v xarrayutils
   - py.test xarrayutils --cov=xarrayutils --cov-config .coveragerc --cov-report term-missing
 
 after_success:
