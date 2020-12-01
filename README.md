@@ -36,4 +36,4 @@ To install from source use pip:
 ### Utilities for large scale climate data analysis
 `xarrayutils.utils` provides some helpful tools to simplify common tasks in climate data
 analysis workflows. [This notebook](doc/utils.ipynb), provides some examples on how to
-use linear regression. 
+use linear regression, work with multi-member data and seperate mixed layer values.
