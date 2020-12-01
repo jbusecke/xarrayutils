@@ -766,7 +766,7 @@ def mask_mixedlayer(
 ):
     """
     Remove all values from input data `ds` that are above the depth defined by `mld`.
-    If cell bounds are given in the input data, the selection is more accurate, otherwise 
+    If cell bounds are given in the input data, the selection is more accurate, otherwise
     masking will be perfomed based on cell center values.
 
     Parameters
