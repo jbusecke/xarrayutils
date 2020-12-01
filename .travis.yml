@@ -29,7 +29,7 @@ install:
   - pip install --no-deps -e .
 
 script:
-  - black --check xarrayutils
+  - black --check -v xarrayutils
   - py.test xarrayutils --cov=xarrayutils --cov-config .coveragerc --cov-report term-missing
 
 after_success:
