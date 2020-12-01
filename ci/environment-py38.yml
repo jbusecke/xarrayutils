@@ -16,6 +16,7 @@ dependencies:
   - cartopy
   - xgcm
   - pip
+  - cf_xarray
   - pip:
     - codecov
     - pytest-cov
