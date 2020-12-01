@@ -755,6 +755,72 @@ def sign_agreement(da, ds_ref, dim, threshold=0.75, mask=True):
     return sign_agreement
 
 
+def mask_mixedlayer(
+    ds,
+    mld,
+    mask="outside",
+    z_dim="lev",
+    z_bounds="lev_bounds",
+    ref_var=None,
+    bound_dim="bnds",
+):
+    """
+    Remove all values from input data `ds` that are above the depth defined by `mld`.
+    If cell bounds are given in the input data, the selection is more accurate, otherwise 
+    masking will be perfomed based on cell center values.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Input data
+    mld : xr.Dataarray
+        Mixed Layer Depth input
+    mask : str, optional
+        Switch that determines if values outside (`outside`) or (`inside`) are preserved by the masking
+    z_dim : str, optional
+        Depth dimension of `ds`, by default "lev"
+    z_bounds : str, optional
+        Cell bounds coordinates along `z_dim`, by default "lev_bounds"
+    ref_var : str, optional
+        Reference variable to broadcast against, by default None
+
+    Returns
+    -------
+    xr.Dataset
+        `ds` with mixed layer values replaced by missing values
+    """
+    if ref_var is None:
+        ref_var = list(ds.data_vars)[0]
+
+    # broadcast the mld against a full 3d variable to adjust the chunks...
+    mld = xr.ones_like(ds[ref_var]) * mld
+
+    crit_name = z_dim
+    if z_bounds in ds.coords:
+        crit = ds[z_bounds].isel({bound_dim: 1})
+        crit_name = z_bounds
+        # The proper way to select.
+        # This excludes all cells that have an upper bound bound shallower than the mld
+    else:
+        warnings.warn(
+            "Cell bounds [{z_bounds}] not found in input. Masking is performed with cell centers, which might be less accurate"
+        )
+        crit = ds[z_dim]
+        # Fallback. Use the center depth of the cell.
+        # Could still be influenced by ML, but probably not that bad.
+
+    if mask == "outside":
+        out = ds.where(mld < crit)
+    elif mask == "inside":
+        out = ds.where(mld >= crit)
+    else:
+        raise ValueError("`mask` has to be either `inside` or `outside`")
+    out.attrs.update({"mixed_layer_values_removed_based_on": crit_name})
+    if z_bounds in ds.coords:
+        out = out.assign_coords({z_bounds: ds[z_bounds]})
+    return out
+
+
 ##################
 # Refactored stuff
 

@@ -18,6 +18,8 @@ dependencies:
   - numpy
   - nc-time-axis
   - astropy
+  - intake-esm
+  - gcsfs
   #
   - pip:
     - docrep
