@@ -6,6 +6,8 @@
 Welcome to xarrayutils's documentation!
 =======================================
 
+The most bestest introduction ever.
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
