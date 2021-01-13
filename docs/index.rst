@@ -63,6 +63,7 @@ The utilities in `xarrayutils.vertical_coordinates` are superseeded by the new `
    utils
    plotting
    api
+   whats-new
 
 
 
