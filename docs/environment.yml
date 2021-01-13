@@ -1,4 +1,7 @@
 name: xarrayutils-docs
+channels:
+  - conda-forge
+  - defaults
 dependencies:
   - python
   - scipy
