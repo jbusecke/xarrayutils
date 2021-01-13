@@ -1,10 +1,15 @@
 name: xarrayutils-docs
+channels:
+  - conda-forge
+  - defaults
 dependencies:
   - python
-  - future
-  - pytest
   - scipy
+  - numpy
+  - xarray
   - numpydoc
+  - pandoc
+  - recommonmark
   - sphinx
   - sphinx_rtd_theme
   - ipykernel
@@ -21,8 +26,9 @@ dependencies:
   - intake-esm
   - gcsfs
   #
+  - pip
   - pip:
-    - docrep
     - nbsphinx
     - jupyter_client
-    - jupyter-sphinx
+    - sphinx_pangeo_theme
+    - sphinxcontrib-srclinks
