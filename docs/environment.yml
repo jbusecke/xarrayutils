@@ -2,6 +2,8 @@ name: xarrayutils-docs
 dependencies:
   - python
   - scipy
+  - numpy
+  - xarray
   - numpydoc
   - pandoc
   - recommonmark
