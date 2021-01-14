@@ -21,6 +21,7 @@ from xarrayutils.utils import (
     filter_1D,
     sign_agreement,
     mask_mixedlayer,
+    remove_bottom_values,
 )
 
 from numpy.testing import assert_allclose
@@ -388,6 +389,61 @@ def test_mask_mixedlayer():
     #### test error input
     with pytest.raises(ValueError):
         result = mask_mixedlayer(ds, mld, mask="wrong", **kwargs)
+
+
+@pytest.mark.parametrize("depth_dim", ["lev", "depth", "test"])
+def test_remove_bottom_values(depth_dim):
+    # make dataset with obvious bottom values
+
+    data = xr.DataArray(
+        [
+            [1, 1, 1, 10, np.nan],
+            [1, 10, np.nan, np.nan, np.nan],
+            [10, np.nan, np.nan, np.nan, np.nan],
+            [np.nan, np.nan, np.nan, np.nan, np.nan],
+        ],
+        dims=["otherdim", depth_dim],
+    )
+
+    data_expected = xr.DataArray(
+        [
+            [1, 1, 1, np.nan, np.nan],
+            [1, np.nan, np.nan, np.nan, np.nan],
+            [np.nan, np.nan, np.nan, np.nan, np.nan],
+            [np.nan, np.nan, np.nan, np.nan, np.nan],
+        ],
+        dims=["otherdim", depth_dim],
+    )
+
+    xr.testing.assert_equal(remove_bottom_values(data, dim=depth_dim), data_expected)
+
+    # Then test the dataset behavior
+
+    # one more dataarray with slightly different topography
+    data_alt = xr.DataArray(
+        [
+            [1, 1, 10, np.nan, np.nan],
+            [1, 10, np.nan, np.nan, np.nan],
+            [10, np.nan, np.nan, np.nan, np.nan],
+            [np.nan, np.nan, np.nan, np.nan, np.nan],
+        ],
+        dims=["otherdim", depth_dim],
+    )
+
+    data_alt_expected = xr.DataArray(
+        [
+            [1, 1, np.nan, np.nan, np.nan],
+            [1, np.nan, np.nan, np.nan, np.nan],
+            [np.nan, np.nan, np.nan, np.nan, np.nan],
+            [np.nan, np.nan, np.nan, np.nan, np.nan],
+        ],
+        dims=["otherdim", depth_dim],
+    )
+
+    ds = xr.Dataset({"data": data, "data_alt": data_alt})
+    ds_expected = xr.Dataset({"data": data_expected, "data_alt": data_alt_expected})
+
+    xr.testing.assert_equal(remove_bottom_values(ds, dim=depth_dim), ds_expected)
 
 
 # @pytest.mark.parametrize(
