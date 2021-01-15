@@ -1,18 +1,9 @@
 name: xarrayutils-docs
-channels:
-  - conda-forge
-  - defaults
 dependencies:
-  - python
-  - scipy
-  - numpy
-  - xarray
+  - python=3.8
   - numpydoc
-  - pandoc
-  - recommonmark
   - sphinx
   - sphinx_rtd_theme
-  - ipykernel
   # Packages which are needed to execute your examples
   # These will vary
   - ipython
@@ -21,14 +12,17 @@ dependencies:
   - netcdf4
   - dask
   - numpy
-  - nc-time-axis
-  - astropy
-  - intake-esm
-  - gcsfs
-  #
+  - xarray
   - pip
   - pip:
+    - scipy
+    - nc-time-axis
+    - astropy
+    - intake-esm
+    - gcsfs
     - nbsphinx
     - jupyter_client
     - sphinx_pangeo_theme
     - sphinxcontrib-srclinks
+    - pandoc
+    - recommonmark
