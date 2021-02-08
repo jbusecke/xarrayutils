@@ -821,6 +821,26 @@ def mask_mixedlayer(
     return out
 
 
+def remove_bottom_values(ds, dim="lev", fill_val=-1e10):
+    """Remove the deepest values that are not nan along the dimension `dim`"""
+    # for now assume that values of `dim` increase along the dimension
+    if ds[dim][0] > ds[dim][-1]:
+        raise ValueError(
+            f"It seems like `{dim}` has decreasing values. This is not supported yet. Please sort before."
+        )
+    else:
+        dim_broadcasted = ((ds * 0) + 1) * ds[
+            dim
+        ]  # broadcast and mask missing values according to each variable in the dataset
+        # fill with very large negative value
+        bottom_layer_val = dim_broadcasted.fillna(fill_val).max(dim=dim)
+
+        # now mask, by only retaining the values that are smaller than the bottom value.
+        # this takes also care of columns that have all the same values or are all nan
+        ds_masked = ds.where(dim_broadcasted < bottom_layer_val)
+        return ds_masked
+
+
 ##################
 # Refactored stuff
 
