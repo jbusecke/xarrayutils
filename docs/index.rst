@@ -31,7 +31,7 @@ Installation from GitHub
 
 You can get the newest version by installing directly from GitHub::
 
-    pip install git+https://github.com/xgcm/xgcm.git
+    pip install git+https://github.com/jbusecke/xarrayutils.git
 
 
 
