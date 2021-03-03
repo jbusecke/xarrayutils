@@ -6,8 +6,10 @@ from xarrayutils.file_handling import temp_write_split
 
 
 @pytest.mark.parametrize("dask", [True, False])
+@pytest.mark.parametrize("verbose", [True, False])
+@pytest.mark.parametrize("already_exists", [True, False])
 @pytest.mark.parametrize("method", ["dimension", "variables", "wrong"])
-def test_temp_write_split(dask, method, tmpdir):
+def test_temp_write_split(dask, method, verbose, already_exists, tmpdir):
     folder = tmpdir.mkdir("sub")
     folder = pathlib.Path(folder)
 
@@ -19,6 +21,11 @@ def test_temp_write_split(dask, method, tmpdir):
     )
     if dask:
         ds = ds.chunk({"time": 1})
+
+    # write a manual copy (with wrong data) to test the erasing
+    (ds.isel(time=0) + 100).to_zarr(
+        folder.joinpath("temp_write_split_0.zarr"), consolidated=True
+    )
 
     if method == "wrong":
         with pytest.raises(ValueError):
@@ -33,6 +40,7 @@ def test_temp_write_split(dask, method, tmpdir):
             ds,
             folder,
             method=method,
+            verbose=verbose,
             split_interval=1,
         )
         xr.testing.assert_allclose(ds, ds_reloaded)
