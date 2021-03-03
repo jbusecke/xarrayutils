@@ -17,6 +17,8 @@ dependencies:
   - xgcm
   - pip
   - cf_xarray
+  - cftime
+  - zarr
   - pip:
     - codecov
     - pytest-cov

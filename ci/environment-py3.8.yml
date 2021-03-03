@@ -16,7 +16,10 @@ dependencies:
   - cartopy
   - xgcm
   - pip
+  - fastprogress
   - cf_xarray
+  - cftime
+  - zarr
   - pip:
     - codecov
     - pytest-cov

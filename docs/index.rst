@@ -49,6 +49,13 @@ Plotting utilities
 
 `xarrayutils.plotting` provides several small utility functions to make common tasks I find in my workflow in matplotlib easier.
 
+Convenience functions for file handling
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+`xarrayutils.file_handling` contains a mix of functions that I found useful across a variety to save/load files. In particular there are functions in there to efficiently save large dask arrays out as temporary files to avoid large task graphs from causing memory problems. Hopefully these will become obsolete as dask continues to improve.
+
+The utilities in `xarrayutils.vertical_coordinates` are superseeded by the new `xgcm transform module <https://xgcm.readthedocs.io/en/latest/transform.html>`_.
+
 Converting between vertical coordinate systems
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
