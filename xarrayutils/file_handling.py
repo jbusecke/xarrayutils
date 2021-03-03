@@ -2,7 +2,6 @@ import xarray as xr
 
 try:
     from fastprogress.fastprogress import progress_bar
-    import fastprogress
 except ImportError:
     fastprogress = None
 
