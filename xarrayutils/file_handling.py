@@ -21,9 +21,38 @@ def temp_write_split(
     file_name_pattern="temp_write_split",
     verbose=False,
 ):
-    """Splits the input dataset `ds_in` up either along a dimension `method='dimension'` or per variable `method='variable'`,
-    and then writes these out to zarr. The data is then loaded back from the store.
-    This is primarliy used to avoid too complex dask graphs by saving some intermediate step"""
+    """[summary]
+
+    Parameters
+    ----------
+    ds_in : xr.Dataset
+        input
+    folder : pathlib.Path
+        Target folder for temporary files
+    method : str, optional
+        Defines if the temporary files are split by an increment along a certain
+        dimension("dimension") or by the variables of the dataset ("variables"),
+        by default "dimension"
+    dim : str, optional
+        Dimension to split along (only relevant for `method="dimension"`), by default "time"
+    split_interval : int, optional
+        Steps along `dim` for each temporary file (only relevant for `method="dimension"`), by default 40
+    zarr_write_kwargs : dict, optional
+        Kwargs parsed to `xr.to_zarr()`, by default {}
+    zarr_read_kwargs : dict, optional
+        Kwargs parsed to `xr.open_zarr()`, by default {}
+    file_name_pattern : str, optional
+        Pattern used to name the temporary files, by default "temp_write_split"
+    verbose : bool, optional
+        Activates printing, by default False
+
+    Returns
+    -------
+    ds_out : xr.Dataset
+        reloaded dataset, with value identical to `ds_in`
+    flist : list
+        List of paths to temporary datasets written.
+    """
 
     zarr_write_kwargs.setdefault("consolidated", False)
     zarr_read_kwargs.setdefault("use_cftime", True)
