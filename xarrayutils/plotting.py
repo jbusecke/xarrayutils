@@ -110,7 +110,7 @@ def axis_arrow(ax, x_loc, text, arrowprops={}, **kwargs):
     )
 
 
-def letter_subplots(axes, start_idx=0, box_color=None, **kwargs):
+def letter_subplots(axes, start_idx=0, box_color=None, labels=None, **kwargs):
     """Adds panel letters in boxes to each element of `axes` in the
     upper left corner.
 
@@ -122,12 +122,16 @@ def letter_subplots(axes, start_idx=0, box_color=None, **kwargs):
         Starting index in the alphabet (e.g. 0 is 'a').
     box_color : type
         Color of the box behind each letter (the default is None).
+    labels: list
+        List of strings used as labels (if None (default), uses lowercase alphabet followed by uppercase alphabet)
     **kwargs : type
         kwargs passed to matplotlib.axis.text
 
     """
-
-    for ax, letter in zip(axes.flat, list(string.ascii_lowercase)[start_idx:]):
+    if labels is None:
+        labels = list(string.ascii_letters)
+    
+    for ax, letter in zip(axes.flat, labels[start_idx:]):
         t = ax.text(
             0.1,
             0.85,
