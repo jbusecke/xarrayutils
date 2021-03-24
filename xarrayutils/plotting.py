@@ -130,7 +130,7 @@ def letter_subplots(axes, start_idx=0, box_color=None, labels=None, **kwargs):
     """
     if labels is None:
         labels = list(string.ascii_letters)
-    
+
     for ax, letter in zip(axes.flat, labels[start_idx:]):
         t = ax.text(
             0.1,
