@@ -59,6 +59,9 @@ jobs:
   upstream-dev:
     name: Build (upstream-dev)
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
     steps:
     - uses: actions/checkout@v2
     - name: Cache conda
