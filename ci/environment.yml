@@ -19,7 +19,6 @@ dependencies:
   - cf_xarray
   - cftime
   - zarr
-  - numcodecs
   - codecov
   - pytest-cov
   - pytest-xdist
