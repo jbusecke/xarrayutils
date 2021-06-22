@@ -2,7 +2,6 @@ name: test_env_xarrayutils
 channels:
   - conda-forge
 dependencies:
-  - python=3.8
   - dask
   - numpy
   - pytest
@@ -17,7 +16,6 @@ dependencies:
   - cf_xarray
   - cftime
   - zarr
-  - numcodecs
   - pytest
   - codecov
   - pytest-cov
