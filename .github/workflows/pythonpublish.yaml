@@ -107,7 +107,7 @@ jobs:
             # So I am installing the dependencies manually from pypi and the newest version from testpypi...not sure if this
             # defeats the purpose, but I am frankly fed up with this shit!
             python -m pip install xarray dask numpy scipy
-            python -m pip install --index-url https://test.pypi.org/simple --upgrade xarrayutils
+            python -m pip install --index-url https://test.pypi.org/simple --upgrade xarrayutils --pre
             python -c "import xarrayutils;print(xarrayutils.__version__)"
   check-version-pypi:
     needs: upload-to-pypi
@@ -119,6 +119,6 @@ jobs:
           python -m pip install --upgrade pip
           pip cache purge
           python -m pip install xarray dask numpy scipy #I thought this should happen automatically? I must still be packaging something wrong...
-          python -m pip install --upgrade xarrayutils
+          python -m pip install --upgrade xarrayutils --pre
           python -c "import xarrayutils;print(xarrayutils.__version__)"
         
