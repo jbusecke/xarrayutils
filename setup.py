@@ -6,7 +6,7 @@ here = os.path.dirname(__file__)
 with open(os.path.join(here, "README.md"), encoding="utf-8") as f:
     long_description = f.read()
 
-install_requires = ["xarray>=0.14.1", "dask", "numpy"]
+install_requires = ["xarray>=0.14.1", "dask", "numpy", "scipy"]
 doc_requires = [
     "sphinx",
     "sphinxcontrib-srclinks",
