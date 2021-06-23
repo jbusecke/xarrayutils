@@ -2,10 +2,7 @@ name: Build and Upload xarrayutils to PyPI
 on:
   release:
     types:
-      - published
-  push:
-    tags:
-      - 'v*rc*' # only trigger this for dev releases (which I currently call release candidates...
+      - published #this will be triggered by any kind of release. Pre releases are uploaded to testpypi and real releases to pypi
 
 jobs:
   build-artifacts:
