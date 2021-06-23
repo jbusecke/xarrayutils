@@ -82,7 +82,7 @@ jobs:
           # It would grab an older cmip6_pp version and with `--index-url=...` I cant get the proper dependencies from pypi
           # So I am installing the dependencies manually from pypi and the newest version from testpypi...not sure if this
           # defeats the purpose, but I am frankly fed up with this shit!
-          python -m pip install xgcm xarray numpy pandas cftime
+          python -m pip install xarray dask numpy scipy
           python -m pip install --index-url https://test.pypi.org/simple --upgrade xarrayutils
           python -c "import xarrayutils;print(xarrayutils.__version__)"
   upload-to-pypi:
