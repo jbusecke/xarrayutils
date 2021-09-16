@@ -6,7 +6,7 @@ here = os.path.dirname(__file__)
 with open(os.path.join(here, "README.md"), encoding="utf-8") as f:
     long_description = f.read()
 
-install_requires = ["xarray>=0.14.1", "dask", "numpy"]
+install_requires = ["xarray>=0.14.1", "dask", "numpy", "scipy"]
 doc_requires = [
     "sphinx",
     "sphinxcontrib-srclinks",
@@ -41,13 +41,13 @@ setup(
         "Topic :: Scientific/Engineering",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
     packages=find_packages(exclude=["docs", "tests", "tests.*", "docs.*"]),
     install_requires=install_requires,
     extras_require=extras_require,
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     long_description=long_description,
