@@ -729,7 +729,7 @@ def lag_and_combine(ds, lags, dim="time"):
     return xr.concat(datasets, dim=concat_dim_da(lags, "lag"))
 
 
-def sign_agreement(da, ds_ref, dim, threshold=0.75, mask=True, count_nans=False):
+def sign_agreement(da, ds_ref, dim, threshold=0.75, mask=True, count_nans=True):
     """[summary]
 
     Parameters
@@ -746,7 +746,7 @@ def sign_agreement(da, ds_ref, dim, threshold=0.75, mask=True, count_nans=False)
         If True, datapoints with all nan values along `dim` get masked out in the output, by default True
     count_nans : bool, optional
         If True, nans along `dim` are counted towards the threshold. If False sign agreement is
-        calculated according to non-nan values only, by default False
+        calculated according to non-nan values only, by default True
 
     """
     if mask:
