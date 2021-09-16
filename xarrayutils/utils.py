@@ -729,7 +729,7 @@ def lag_and_combine(ds, lags, dim="time"):
     return xr.concat(datasets, dim=concat_dim_da(lags, "lag"))
 
 
-def sign_agreement(da, ds_ref, dim, threshold=0.75, mask=True):
+def sign_agreement(da, ds_ref, dim, threshold=0.75, mask=True, count_nans=False):
     """[summary]
 
     Parameters
@@ -743,12 +743,18 @@ def sign_agreement(da, ds_ref, dim, threshold=0.75, mask=True):
     threshold : float, optional
         The minimum fraction of elements that have to agree along `dim`, by default 0.75 (75%)
     mask : bool, optional
-        If True nan values get masked out in the output, by default True
+        If True, datapoints with all nan values along `dim` get masked out in the output, by default True
+    count_nans : bool, optional
+        If True, nans along `dim` are counted towards the threshold. If False sign agreement is
+        calculated according to non-nan values only, by default False
 
     """
     if mask:
         mask_data = np.isnan(da).all(dim)
-    ndim = len(da[dim].data)
+    if count_nans:
+        ndim = len(da[dim].data)
+    else:
+        ndim = (~np.isnan(da)).sum(dim)
     sign_agreement = (np.sign(da) == np.sign(ds_ref)).sum(dim) >= (threshold * ndim)
     if mask:
         sign_agreement = sign_agreement.where(~mask_data)

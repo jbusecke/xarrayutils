@@ -273,6 +273,22 @@ def test_linear_trend():
             assert np.allclose(fit, test)
 
 
+def test_sign_agreement_count_nans():
+    a = xr.DataArray(
+        [
+            [1, -1, np.nan, 4],
+            [1, 1, -1, 4],
+            [1, -1, -1, 4],
+            [1, 1, -1, 4],
+            [1, -1, -1, 4],
+        ],
+        dims=["i", "j"],
+    )
+    sa = sign_agreement(a, a.mean("i"), "i", count_nans=False)
+    expected = xr.DataArray([1.0, 0.0, 1.0, 1.0], dims=["j"])
+    xr.testing.assert_allclose(expected, sa)
+
+
 def test_sign_agreement():
     # test dataset
     target_dim = "member"
