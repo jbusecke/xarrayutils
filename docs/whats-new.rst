@@ -2,6 +2,13 @@
 
 What's New
 ===========
+.. _whats-new.1.1.0:
+
+v1.1.0 (unreleased)
+
+New Features
+~~~~~~~~~~~~
+- `sing_agreement` now supports the option to not count nans along the given dimension (:pull:`118`). By `Julius Busecke <https://github.com/jbusecke>`_
 
 .. _whats-new.1.0.0:
 
