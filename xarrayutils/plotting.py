@@ -1,3 +1,4 @@
+from tkinter import Y
 import numpy as np
 import xarray as xr
 import warnings
@@ -233,7 +234,7 @@ def shaded_line_plot(
     dim,
     ax=None,
     horizontal=True,
-    spreads=[1, 3],
+    spreads=None,
     alphas=[0.25, 0.4],
     spread_style="std",
     line_kwargs=dict(),
@@ -317,8 +318,10 @@ def shaded_line_plot(
     # define the line plot values
     if spread_style == "std":
         y = da.mean(dim)
+        spreads = [1, 3]
     elif spread_style in ["quantile", "percentile"]:
         y = da.quantile(0.5, dim)
+        spreads = [0.5, 0.8]
     else:
         raise ValueError(
             f"Got unknown option ['{spread_style}'] for  `spread_style`. Supported options are : ['std', 'quantile']"
@@ -341,15 +344,16 @@ def shaded_line_plot(
     ff = []
 
     for spread, alpha in zip(
-        (spreads), (alphas)
+        (np.flip(spreads)), (np.flip(alphas))
     ):  # np.flip(this ensures that the shadings are drawn from outer to inner otherwise they blend too much into each other
         f_kwargs = {k: v for k, v in fill_defaults.items()}
         f_kwargs["alpha"] = alpha
 
         if spread_style == "std":
             y_std = da.std(dim)  # i could probably precompute that.
-            y_lower = y - (y_std / (2 * spread))
-            y_upper = y + (y_std / (2 * spread))
+            y_spread = y_std * spread
+            y_lower = y - (y_spread / 2)
+            y_upper = y + (y_spread / 2)
 
         elif spread_style in ["quantile", "percentile"]:
             y_lower = da.quantile(0.5 - (spread / 2), dim)
