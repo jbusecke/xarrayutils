@@ -73,7 +73,7 @@ def xr_linregress(x, y, dim="time"):
     cov = ((x - xmean) * (y - ymean)).sum(dim) / (n)
     cor = cov / (xstd * ystd)
 
-    slope = cov / (xstd ** 2)
+    slope = cov / (xstd**2)
     intercept = ymean - xmean * slope
 
     df = n - 2

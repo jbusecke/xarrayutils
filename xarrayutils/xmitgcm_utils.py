@@ -68,7 +68,7 @@ def laplacian(grid, data):
 
 def gradient_sq_amplitude(grid, data):
     gradx, grady = gradient(grid, data, interpolate=True)
-    return gradx ** 2 + grady ** 2
+    return gradx**2 + grady**2
 
 
 # Silly functions
