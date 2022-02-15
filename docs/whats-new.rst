@@ -10,6 +10,10 @@ New Features
 ~~~~~~~~~~~~
 - `sing_agreement` now supports the option to not count nans along the given dimension (:pull:`118`). By `Julius Busecke <https://github.com/jbusecke>`_
 
+Bugfixes
+~~~~~~~~
+- Fixed bug in `shaded_line_plot`, where std bounds were displayed incorrectly (:issue:`74`, :pull:`123`). By `Julius Busecke <https://github.com/jbusecke>`_
+
 .. _whats-new.1.0.0:
 
 v1.0.0 (2021/6/22)
