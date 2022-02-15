@@ -39,10 +39,11 @@ def test_shaded_line_plot(dim, horizontal, spreads, alphas):
     ll, ff = shaded_line_plot(
         da, dim, spreads=spreads, alphas=alphas, horizontal=horizontal
     )
+ 
     assert isinstance(ll[0], matplotlib.lines.Line2D)
     assert len(ff) == min(len(spreads), len(alphas))
 
-    for f, a in zip(ff, alphas):
+    for f, a in zip(ff, np.flip(alphas)):
         assert isinstance(f, matplotlib.collections.PolyCollection)
         assert f.get_alpha() == a
 
