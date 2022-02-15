@@ -39,7 +39,7 @@ def test_shaded_line_plot(dim, horizontal, spreads, alphas):
     ll, ff = shaded_line_plot(
         da, dim, spreads=spreads, alphas=alphas, horizontal=horizontal
     )
- 
+
     assert isinstance(ll[0], matplotlib.lines.Line2D)
     assert len(ff) == min(len(spreads), len(alphas))
 
