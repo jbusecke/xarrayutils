@@ -1,4 +1,6 @@
 name: xarrayutils-docs
+channels:
+  - conda-forge
 dependencies:
   - python=3.8
   - numpydoc
@@ -13,16 +15,16 @@ dependencies:
   - dask
   - numpy
   - xarray
+  - scipy
+  - nc-time-axis
+  - astropy
+  - intake-esm
+  - gcsfs
+  - nbsphinx
+  - jupyter_client
+  - sphinxcontrib-srclinks
+  - pandoc
+  - recommonmark
   - pip
   - pip:
-    - scipy
-    - nc-time-axis
-    - astropy
-    - intake-esm
-    - gcsfs
-    - nbsphinx
-    - jupyter_client
-    - sphinx_pangeo_theme
-    - sphinxcontrib-srclinks
-    - pandoc
-    - recommonmark
+     - sphinx_pangeo_theme
