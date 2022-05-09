@@ -6,6 +6,12 @@ What's New
 
 v1.2.0 (unreleased)
 
+Documentation
+~~~~~~~~~~~~~
+
+- Switch RTD env build to mamba (:pull:`132`).
+  By `Julius Busecke <https://github.com/jbusecke>`_
+
 
 .. _whats-new.1.1.0:
 
