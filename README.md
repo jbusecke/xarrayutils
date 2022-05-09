@@ -4,6 +4,8 @@
 [![pypi](https://img.shields.io/pypi/v/xarrayutils.svg)](https://pypi.org/project/xarrayutils)
 [![conda-forge](https://img.shields.io/conda/dn/conda-forge/xarrayutils?label=conda-forge)](https://anaconda.org/conda-forge/xarrayutils)
 [![Documentation Status](https://readthedocs.org/projects/xarrayutils/badge/?version=latest)](https://xarrayutils.readthedocs.io/en/latest/?badge=latest)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6360900.svg)](https://doi.org/10.5281/zenodo.6360900)
+
 
 
 # A collection of various tools for data analysis built on top of xarray and xgcm
