@@ -9,6 +9,9 @@ v1.2.0 (unreleased)
 Documentation
 ~~~~~~~~~~~~~
 
+- Added CITATION.cff to repo (:pull:`129`).
+  By `Julius Busecke <https://github.com/jbusecke>`_
+
 - Switch RTD env build to mamba (:pull:`132`).
   By `Julius Busecke <https://github.com/jbusecke>`_
 
