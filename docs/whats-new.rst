@@ -6,6 +6,11 @@ What's New
 
 v1.2.0 (unreleased)
 
+Breaking changes
+~~~~~~~~~~~~~~~~
+- Dropped support for python 3.8 (:pull:`141`)
+  By `Julius Busecke <https://github.com/jbusecke>`_
+
 Documentation
 ~~~~~~~~~~~~~
 
