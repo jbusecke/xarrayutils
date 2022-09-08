@@ -2,14 +2,21 @@
 
 What's New
 ===========
-.. _whats-new.1.2.0:
+.. _whats-new.2.0.0:
 
-v1.2.0 (unreleased)
+v2.0.0 (unreleased)
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
 - Dropped support for python 3.8 (:pull:`141`)
   By `Julius Busecke <https://github.com/jbusecke>`_
+
+- Deprecated multiple modules:
+  `visualization.py`
+  `vertical_coordinates.py/vertical_remapping.py`
+  `weighted_operations.py`
+  `numpy_utils.py`
+  (:pull:`146`, :issue:`84`)
 
 Documentation
 ~~~~~~~~~~~~~
@@ -27,7 +34,7 @@ v1.1.0 (2022/2/15)
 
 New Features
 ~~~~~~~~~~~~
-- `sing_agreement` now supports the option to not count nans along the given dimension (:pull:`118`). By `Julius Busecke <https://github.com/jbusecke>`_
+- `sign_agreement` now supports the option to not count nans along the given dimension (:pull:`118`). By `Julius Busecke <https://github.com/jbusecke>`_
 
 Bugfixes
 ~~~~~~~~
