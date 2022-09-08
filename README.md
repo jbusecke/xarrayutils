@@ -5,6 +5,7 @@
 [![conda-forge](https://img.shields.io/conda/dn/conda-forge/xarrayutils?label=conda-forge)](https://anaconda.org/conda-forge/xarrayutils)
 [![Documentation Status](https://readthedocs.org/projects/xarrayutils/badge/?version=latest)](https://xarrayutils.readthedocs.io/en/latest/?badge=latest)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6360900.svg)](https://doi.org/10.5281/zenodo.6360900)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/jbusecke/xarrayutils/master.svg)](https://results.pre-commit.ci/latest/github/jbusecke/xarrayutils/master)
 
 
 
