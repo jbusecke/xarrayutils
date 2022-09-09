@@ -17,6 +17,7 @@ Breaking changes
   `weighted_operations.py`
   `numpy_utils.py`
   (:pull:`146`, :issue:`84`)
+  By `Julius Busecke <https://github.com/jbusecke>`_
 
 Documentation
 ~~~~~~~~~~~~~
@@ -25,6 +26,12 @@ Documentation
   By `Julius Busecke <https://github.com/jbusecke>`_
 
 - Switch RTD env build to mamba (:pull:`132`).
+  By `Julius Busecke <https://github.com/jbusecke>`_
+  
+Internal Changes
+~~~~~~~~~~~~~~~~
+
+- Switch linting CI to pre-commit.ci github app (:pull:`147`).
   By `Julius Busecke <https://github.com/jbusecke>`_
 
 
