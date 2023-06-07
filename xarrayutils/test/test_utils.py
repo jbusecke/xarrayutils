@@ -214,7 +214,7 @@ def test_xr_linregress(chunks, dim, variant, dtype, nans, parameter, ni):
     dims = list(set(a.dims) - set([dim]))
     for ii in range(len(a[dims[0]])):
         for jj in range(len(a[dims[1]])):
-            pos = dict({dims[0]: ii, dims[1]: jj})
+            pos = dict({dims[0]: ii, dims[1]: jj}).load()
 
             expected = _linregress_ufunc(a.isel(**pos), b.isel(**pos), nanmask=True)
             reg_sub = reg.isel(**pos)
