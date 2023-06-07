@@ -201,7 +201,6 @@ def aggregate(da, blocks, func=np.nanmean, debug=False):
     if not all(isinstance(n[0], str) for n in blocks) or not all(
         isinstance(n[1], int) for n in blocks
     ):
-
         print("blocks input", str(blocks))
         raise RuntimeError(
             "block dimension must be dtype(str), \
@@ -592,7 +591,6 @@ def corrmap(
 
         for ii in range(len(a[a_x_dim])):
             for jj in range(len(a[a_y_dim])):
-
                 # Define the 'input' (position in a) correctly, accounting for
                 # the possibility that the
                 # lat/lon position can be defined in the coordinates

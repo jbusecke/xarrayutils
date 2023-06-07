@@ -70,7 +70,6 @@ def test_maybe_create_folder(sub, tmp_path):
 
 
 def test_total_nested_size(ds):
-
     # create a bunch of broadcasted copies of a dataset
     a = ds.copy(deep=True).expand_dims(new=2)
     b = ds.copy(deep=True).expand_dims(new=5)
