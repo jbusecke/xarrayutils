@@ -174,11 +174,8 @@ def _linregress_ufunc(a, b, nanmask=False):
         ({"x": -1, "y": 1}, "x"),
     ],
 )
-# @pytest.mark.parametrize("variant", range(3))
 @pytest.mark.parametrize("variant", [0])
-# @pytest.mark.parametrize("dtype", [None, np.float])
 @pytest.mark.parametrize("dtype", [None])
-# @pytest.mark.parametrize("nans", [False, True])
 @pytest.mark.parametrize("nans", [True, "all"])
 @pytest.mark.parametrize(
     "ni, parameter", enumerate(["slope", "intercept", "r_value", "p_value", "std_err"])
@@ -595,7 +592,7 @@ def test_aggregate_input_da(dataarray_2d_example):
 
 
 def test_aggregate_w_nanmean(dataarray_2d_ones, dataarray_2d_ones_nan):
-    expected_result = np.array([[1, 1], [1, 1]], dtype=np.float)
+    expected_result = np.array([[1, 1], [1, 1]], dtype=float)
     blocks = [("i", 3), ("j", 3)]
 
     data = dataarray_2d_ones_nan
