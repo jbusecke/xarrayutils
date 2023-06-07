@@ -13,10 +13,10 @@ a_2d_nan = np.array(
         [2, 2, 2, 4, 4, 4, 6, 6],
         [2, 2, 2, 4, 4, 4, 6, 6],
     ],
-    dtype=np.float,
+    dtype=float,
 )
 
-ones_2d = np.ones([6, 8], dtype=np.float)
+ones_2d = np.ones([6, 8], dtype=float)
 
 ones_2d_nan = ones_2d.copy()
 ones_2d_nan[2, 2] = np.nan
