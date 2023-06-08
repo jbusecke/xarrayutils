@@ -157,7 +157,7 @@ def _linregress_ufunc(a, b, nanmask=False):
     if nanmask:
         idxa = np.isnan(a)
         idxb = np.isnan(b)
-        mask = np.logical_and(~idxa, ~idxb)
+        mask = np.logical_and(~idxa, ~idxb).load()
         if sum(~mask) < len(b):  # only applies the mask if not all nan
             a = a[mask]
             b = b[mask]
