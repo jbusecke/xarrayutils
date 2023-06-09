@@ -152,14 +152,14 @@ def test_linregress_ufunc():
     assert np.isnan(_linregress_ufunc(x, y, nanmask=True)).all()
 
 
-def _linregress_ufunc(a:np.ndarray, b:np.ndarray, nanmask:bool =False):
+def _linregress_ufunc(a: np.ndarray, b: np.ndarray, nanmask: bool = False):
     """ufunc to wrap check output of `xr_linregress` against pure scipy results"""
     if nanmask:
         idxa = np.isnan(a)
         idxb = np.isnan(b)
-    
+
         mask = np.logical_and(~idxa, ~idxb)
-       
+
         if sum(~mask) < len(b):  # only applies the mask if not all nan
             a = a[mask]
             b = b[mask]
@@ -218,7 +218,9 @@ def test_xr_linregress(chunks, dim, variant, dtype, nans, parameter, ni):
         for jj in range(len(a[dims[1]])):
             pos = dict({dims[0]: ii, dims[1]: jj})
 
-            expected = _linregress_ufunc(a.isel(**pos).load().data, b.isel(**pos).load().data, nanmask=True)
+            expected = _linregress_ufunc(
+                a.isel(**pos).load().data, b.isel(**pos).load().data, nanmask=True
+            )
             reg_sub = reg.isel(**pos)
 
             np.testing.assert_allclose(reg_sub[parameter].data, expected[ni])
