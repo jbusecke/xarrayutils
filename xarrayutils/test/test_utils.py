@@ -162,7 +162,7 @@ def _linregress_ufunc(a, b, nanmask=False):
             idxa = idxa.load()
         if isinstance(idxb, dsa.core.Array):
             idxb = idxb.load()
-            
+
         mask = np.logical_and(~idxa, ~idxb)
         if sum(~mask) < len(b):  # only applies the mask if not all nan
             a = a[mask]
