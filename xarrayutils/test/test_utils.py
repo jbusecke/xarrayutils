@@ -155,8 +155,14 @@ def test_linregress_ufunc():
 def _linregress_ufunc(a, b, nanmask=False):
     """ufunc to wrap check output of `xr_linregress` against pure scipy results"""
     if nanmask:
-        idxa = np.isnan(a.load())
-        idxb = np.isnan(b.load())
+        idxa = np.isnan(a)
+        idxb = np.isnan(b)
+        # load dask arrays into memory
+        if isinstance(idxa, dsa.core.Array):
+            idxa = idxa.load()
+        if isinstance(idxb, dsa.core.Array):
+            idxb = idxb.load()
+            
         mask = np.logical_and(~idxa, ~idxb)
         if sum(~mask) < len(b):  # only applies the mask if not all nan
             a = a[mask]
