@@ -132,8 +132,8 @@ def letter_subplots(axes, start_idx=0, box_color=None, labels=None, **kwargs):
     # setting default values
     kwargs.setdefault("horizontalalignment", "center")
     kwargs.setdefault("verticalalignment", "center")
-    x = kwargs.get("x", 0.1)
-    y = kwargs.get("y", 0.85)
+    x = kwargs.pop("x", 0.1)
+    y = kwargs.pop("y", 0.85)
 
     if labels is None:
         labels = list(string.ascii_letters)
