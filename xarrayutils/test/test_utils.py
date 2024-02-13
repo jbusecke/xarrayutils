@@ -192,12 +192,12 @@ def test_xr_linregress(chunks, dim, variant, dtype, nans, parameter, ni):
 
         else:
             # add nans at random positions
-            a.data[
-                np.unravel_index(np.random.randint(0, 5 * 7 * 3, 10), a.shape)
-            ] = np.nan
-            b.data[
-                np.unravel_index(np.random.randint(0, 5 * 7 * 3, 10), b.shape)
-            ] = np.nan
+            a.data[np.unravel_index(np.random.randint(0, 5 * 7 * 3, 10), a.shape)] = (
+                np.nan
+            )
+            b.data[np.unravel_index(np.random.randint(0, 5 * 7 * 3, 10), b.shape)] = (
+                np.nan
+            )
 
     if chunks is not None:
         if variant == 0:
@@ -580,7 +580,7 @@ def test_aggregate_regular_blocks(dataarray_2d_example, blocks, expected_result)
         # non int interval
         [("blah", 2), ("blubb", 3)],
         # no matching labels
-        [(2, 2), ("j", 2)]
+        [(2, 2), ("j", 2)],
         # non str dim label
     ],
 )
