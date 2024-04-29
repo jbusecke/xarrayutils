@@ -1,6 +1,7 @@
 import numpy as np
 import xarray as xr
-from scipy.signal import filtfilt, gaussian
+from scipy.signal import filtfilt
+from scipy.signal.windows import gaussian
 from scipy import stats
 
 from dask.array import coarsen, ones_like
