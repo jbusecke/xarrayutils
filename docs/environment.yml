@@ -2,7 +2,7 @@ name: xarrayutils-docs
 channels:
   - conda-forge
 dependencies:
-  - python=3.8
+  - python=3.9
   - numpydoc
   - sphinx
   - sphinx_rtd_theme
@@ -23,7 +23,7 @@ dependencies:
   - nbsphinx
   - jupyter_client
   - sphinxcontrib-srclinks
-  - pandoc
+  - pandoc<3.0.0
   - recommonmark
   - pip
   - pip:
