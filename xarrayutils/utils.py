@@ -1,6 +1,7 @@
 import numpy as np
 import xarray as xr
-from scipy.signal import filtfilt, gaussian
+from scipy.signal import filtfilt
+from scipy.signal.windows import gaussian
 from scipy import stats
 
 from dask.array import coarsen, ones_like
@@ -109,7 +110,7 @@ def linear_trend(obj, dim):
     trend is in units/yr.
     """
     x = xr.DataArray(
-        np.arange(len(obj[dim])).astype(np.float), dims=dim, coords={dim: obj[dim]}
+        np.arange(len(obj[dim])).astype(float), dims=dim, coords={dim: obj[dim]}
     )
     trend = xr_linregress(x, obj, dim=dim)
     return trend
