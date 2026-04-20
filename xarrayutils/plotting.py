@@ -1,4 +1,3 @@
-from tkinter import Y
 import numpy as np
 import xarray as xr
 import warnings
