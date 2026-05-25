@@ -4,7 +4,6 @@ import functools
 import numpy as np
 import xarray as xr
 
-
 try:
     from fastprogress.fastprogress import progress_bar
 
