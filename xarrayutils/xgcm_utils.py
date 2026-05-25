@@ -16,11 +16,8 @@ def _get_name(coord):
     elif isinstance(coord, str):
         return coord
     else:
-        raise ValueError(
-            "coord input not recognized.\
-         Needs to be xr.DataArray or str. Is %s"
-            % (type(coord))
-        )
+        raise ValueError("coord input not recognized.\
+         Needs to be xr.DataArray or str. Is %s" % (type(coord)))
 
 
 def _get_axis_pos(grid, axis, da):
@@ -78,25 +75,19 @@ def _infer_gridtype(grid, u, v, verbose=False):
     ):
         gridtype = "C"
     else:
-        raise RuntimeError(
-            "Gridtype not recognized. \
+        raise RuntimeError("Gridtype not recognized. \
         Currently only supports \
         B-grids(u @X=right,Y=right and v @X=right,Y=right) and \
         C-grids (u @X=right,Y=center and v @X=center,Y=right). \
-        Found: (u @X=%s,Y=%s and v @X=%s,Y=%s)"
-            % (u_x_pos, u_y_pos, v_x_pos, v_y_pos)
-        )
+        Found: (u @X=%s,Y=%s and v @X=%s,Y=%s)" % (u_x_pos, u_y_pos, v_x_pos, v_y_pos))
     return gridtype
 
 
 def _check_dims(a, b, a_name):
     """Checks if all dims of a are found in b"""
     if not all([dd in a.dims for dd in b.dims]):
-        raise RuntimeError(
-            "%s does not have the appropriate dimensions. \
-            Expected %s, but found %s"
-            % (a_name, list(b.dims), list(a.dims))
-        )
+        raise RuntimeError("%s does not have the appropriate dimensions. \
+            Expected %s, but found %s" % (a_name, list(b.dims), list(a.dims)))
     else:
         return True
 
@@ -106,11 +97,8 @@ def _find_metric(da, dim_metric_list):
     find the one whos dims match `da`"""
     matches = [m for m in dim_metric_list if m in da.coords]
     if len(matches) > 1:
-        raise ValueError(
-            "found more than one matching metric(%s), \
-                something is wrong with the `metric_list`"
-            % matches
-        )
+        raise ValueError("found more than one matching metric(%s), \
+                something is wrong with the `metric_list`" % matches)
     elif len(matches) == 0:
         return None
     else:
