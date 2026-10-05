@@ -16,10 +16,8 @@ def derivative(grid, data, axis, debug=False):
     dx = get_dx(grid, delta, axis)
 
     if dx is None:
-        raise RuntimeError(
-            "grid distance could not be \
-                            extracted check grid input"
-        )
+        raise RuntimeError("grid distance could not be \
+                            extracted check grid input")
     return delta / dx
 
 
