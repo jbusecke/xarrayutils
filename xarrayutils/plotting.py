@@ -454,10 +454,8 @@ def box_plot(box, ax=None, split_detection="True", **kwargs):
     """
 
     if len(box) != 4:
-        raise RuntimeError(
-            "'box' must be a 4 element np.array, \
-            describing the box corners [x1, x2, y1, y2]"
-        )
+        raise RuntimeError("'box' must be a 4 element np.array, \
+            describing the box corners [x1, x2, y1, y2]")
     xlim = plt.gca().get_xlim()
     ylim = plt.gca().get_ylim()
     x_split = False
@@ -555,11 +553,8 @@ def draw_dens_contours_teos10(
         ax = plt.gca()
 
     if sigma not in ["sigma%i" % s for s in range(5)]:
-        raise ValueError(
-            "Sigma function has to be one of `sigma0`...`sigma4` \
-                         is: %s"
-            % (sigma)
-        )
+        raise ValueError("Sigma function has to be one of `sigma0`...`sigma4` \
+                         is: %s" % (sigma))
 
     # get salt (default: xaxis) and temp (default: yaxis) limits
     if salt_on_x:
@@ -641,10 +636,8 @@ def tsdiagram(
         temp_label = "Conservative Temperature [$^{\circ}C$]"
         salt_label = "Absolute Salinity [$g/kg$]"
         if any([a is None for a in [lon, lat, pressure]]):
-            raise ValueError(
-                "when converting to teos10 variables, \
-                             input for lon, lat and pressure is needed"
-            )
+            raise ValueError("when converting to teos10 variables, \
+                             input for lon, lat and pressure is needed")
         else:
             salt = gsw.SA_from_SP(salt, pressure, lon, lat)
             temp = gsw.CT_from_pt(salt, temp)

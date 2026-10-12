@@ -1,6 +1,5 @@
 import pytest
 
-
 plt = pytest.importorskip("matplotlib.pyplot")
 from matplotlib.colors import to_rgb
 import numpy as np

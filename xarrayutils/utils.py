@@ -10,7 +10,6 @@ import warnings
 from xarrayutils.utilities import detect_dtype
 from xarrayutils.filtering import filter_1D as filter_1D_refactored
 
-
 """
 Collection of several useful routines for xarray
 """
@@ -129,10 +128,8 @@ def aggregate_w_nanmean(da, weights, blocks, **kwargs):
     # make sure that the missing values are exactly equal to each otherwise
     weights = weights.where(~np.isnan(da))
     if not np.all(np.isnan(da) == np.isnan(weights)):
-        raise RuntimeError(
-            "weights cannot have more missing values \
-        then the data array"
-        )
+        raise RuntimeError("weights cannot have more missing values \
+        then the data array")
 
     weights_sum = aggregate(weights, blocks, func=np.nansum, **kwargs)
     da_sum = aggregate(da * weights, blocks, func=np.nansum, **kwargs)
@@ -203,10 +200,8 @@ def aggregate(da, blocks, func=np.nanmean, debug=False):
         isinstance(n[1], int) for n in blocks
     ):
         print("blocks input", str(blocks))
-        raise RuntimeError(
-            "block dimension must be dtype(str), \
-        e.g. ('lon',4)"
-        )
+        raise RuntimeError("block dimension must be dtype(str), \
+        e.g. ('lon',4)")
 
     # Check if the given array has the dimension specified in blocks
     try:
@@ -565,10 +560,8 @@ def corrmap(
     elif len(b.shape) == 1:
         arrayswitch = False
     else:
-        raise RuntimeWarning(
-            "this only works with a timseries \
-            or map of timeseries"
-        )
+        raise RuntimeWarning("this only works with a timseries \
+            or map of timeseries")
 
     # shift timeseries
     slope = []
